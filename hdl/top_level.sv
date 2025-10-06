@@ -32,7 +32,7 @@ module top_level (
   logic square_state;
 
   always_ff @(posedge clk_100mhz) begin
-    wave_period <= {27'b0, 1'b1, sw[15:12]} << sw[11:8];
+    wave_period <= {25'b0, 1'b1, sw[15:12], 2'b0} << sw[11:8];
   end
 
   counter wave_count (
