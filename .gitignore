@@ -1,0 +1,5 @@
+obj
+.Xil
+sim_build
+vivado*
+clockInfo.txt
