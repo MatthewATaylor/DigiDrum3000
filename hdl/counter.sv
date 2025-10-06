@@ -6,7 +6,7 @@ module counter (
 );
 
   always_ff @(posedge clk) begin
-    if ((count == period - 1) || rst) begin
+    if ((count >= period - 1) || rst) begin
       count <= 0;
     end else begin
       count <= count + 1;

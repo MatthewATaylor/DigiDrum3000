@@ -14,7 +14,7 @@ module top_level (
   //shut up those rgb LEDs for now (active high):
   assign rgb1 = 0;  //set to 0.
   assign rgb0 = 0;  //set to 0.
-  assign led  = btn;
+  assign led  = sw;
 
   //have btnd control system reset
   logic sys_rst;
@@ -25,21 +25,27 @@ module top_level (
   assign spkr = spk_out;
 
   logic square_wave;
-  logic impulse_approx;
+  logic impulse_approx;  // same as square at very high frequency
 
+  logic [31:0] wave_period;
   logic [31:0] square_count;
   logic square_state;
+
+  always_ff @(posedge clk_100mhz) begin
+    wave_period <= {27'b0, 1'b1, sw[15:12]} << sw[11:8];
+  end
+
   counter wave_count (
       .clk(clk_100mhz),
       .rst(sys_rst),
-      .period(50000),
+      .period(wave_period),
       .count(square_count)
   );
 
   always_ff @(posedge clk_100mhz) begin
     square_state <= (square_count == 0) ^ square_state;
 
-    impulse_approx <= square_state && (square_count < 1000);  // impulse approximation
+    impulse_approx <= square_state && (square_count < 1000);
     square_wave <= square_state;
   end
 
