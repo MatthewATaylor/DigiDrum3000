@@ -1,14 +1,67 @@
 `default_nettype none
 
+// delays by 3 (or more at very high angular frequencies) samples
+// to reduce cycle delay
 module sin_gen (
     input wire clk,
     input wire rst,
-    input wire signed [30:0] delta_angle,  // -2 to  1.9999...
+    input wire [29:0] delta_angle,  // 0 to 1.9999...
     input wire get_next_sample,
-    output wire current_sample
+    output wire [15:0] current_sample
 );
+  logic [30:0] current_angle;
+  logic [31:0] next_angle;
+  logic        next_angle_ready;
+  logic [31:0] pi;
+  logic [15:0] next_sample;
 
-endmodule
+  logic [15:0] cordic_out;
+  logic        cordic_busy;
+  logic        cordic_out_valid;
+
+  CORDIC_sin cordic (
+      .clk(clk),
+      .rst(rst),
+      .angle_in(current_angle[30:7]),
+      .input_valid(get_next_sample && !cordic_busy),
+      .out(cordic_out),
+      .out_valid(cordic_out_valid),
+      .busy(cordic_busy),
+  );
+
+  always_comb begin
+    next_angle = {current_angle[30], current_angle} + {2'b0, delta_angle};
+    next_angle = next_angle > {1'b0, pi[31:1]} ? next_angle - pi : next_angle;
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      current_angle <= 32'b0;
+      next_angle <= 32'b0;
+      next_angle_ready <= 1'b0;
+      current_sample <= 16'b0;
+      next_sample <= 16'b0;
+      pi <= 32'h6487ED51;
+    end else begin
+      if (get_next_sample) begin
+        next_angle <= {current_angle[30], current_angle} + {2'b0, delta_angle};
+        next_angle_ready <= 1'b1;
+        current_sample <= next_sample;
+      end else begin
+        next_angle_ready <= 1'b0;
+      end
+
+      if (next_angle_ready) begin
+        current_angle <= next_angle;
+      end
+
+      if (cordic_out_valid) begin
+        next_sample <= cordic_out;
+      end
+    end
+  end
+
+endmodule  // sin_gen
 
 module CORDIC_sin (
     input  wire         clk,
@@ -20,11 +73,11 @@ module CORDIC_sin (
     output logic        busy
 );
   // 32 bit values stored as 2's compliment fixed-point numbers between -2 and 1.999...
-  logic        [23:0] arc_tan_table  [7:0];
+  logic        [23:0] arc_tan_table                       [7:0];
   logic        [23:0] arc_tan_approx;
-  logic signed [23:0] x;
+  logic signed [23:0] x;  // "signed" for arithmetic shift
   logic signed [23:0] y;
-  logic signed [23:0] angle_error;
+  logic        [23:0] angle_error;
   logic        [ 4:0] i;
 
   logic        [23:0] arc_tan;
@@ -55,7 +108,7 @@ module CORDIC_sin (
 
     end else if (busy) begin
       i <= i + 1;
-      // INFO: most likely to cause timing violation
+      // INFO: most likely to cause timing violation (runtime shift + add)
       x <= clk_wise ? x + (y >>> i) : x - (y >>> i);
       y <= clk_wise ? y - (x >>> i) : y + (x >>> i);
       angle_error <= angle_error + (clk_wise ? arc_tan : -arc_tan);
