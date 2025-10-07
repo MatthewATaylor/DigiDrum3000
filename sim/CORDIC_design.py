@@ -1,8 +1,5 @@
 import math as math
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.fftpack
-import scipy.signal
 
 num_iterations = 20
 theta_table = [math.atan2(1, 2**i) for i in range(num_iterations)]
