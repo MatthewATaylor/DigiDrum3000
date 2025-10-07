@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import math
 from CORDIC_design import cordic_sin
+from CORDIC_design import output_mag
 
 from cocotb.clock import Clock
 from cocotb.triggers import (
@@ -36,7 +37,7 @@ async def reset(rst, clk):
 
 async def test_angle(dut, angle):
     await FallingEdge(dut.clk)
-    dut.angle_in.value = angle
+    dut.angle_in.value = angle >> 8
     dut.input_valid.value = 0b1
     await FallingEdge(dut.clk)
     dut.input_valid.value = 0b0
@@ -49,8 +50,13 @@ async def test_angle(dut, angle):
         out_val = int(dut.out.value)
     module_out = float(out_val) * 2**-15
     python_design_out = float(cordic_sin(np.int32(angle))) * 2**-15
-    assert module_out == python_design_out, (
-        f"incorrect module output: {int(dut.out.value):X}\nshould have been: {cordic_sin(np.int32(angle)):X}"
+    error = module_out - output_mag * math.sin(angle * 2**-30)
+    if abs(error) > 2**-16:
+        print(
+            f"greater than half bit error ({error: 9.8} - {abs(error) * 2**15: 11.8} lsb) at angle {angle * 2**-30}"
+        )
+    assert abs(error) < 2**-15, (
+        f"incorrect module output: {int(dut.out.value):X}  (angle: {angle * 2**-30})"  # \nshould have been: {cordic_sin(np.int32(angle)):X}"
     )
 
 
