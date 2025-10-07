@@ -3,3 +3,4 @@ obj
 sim_build
 vivado*
 clockInfo.txt
+__pycache__
