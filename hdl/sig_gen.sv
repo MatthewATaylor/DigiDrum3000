@@ -7,10 +7,13 @@ module sin_gen (
     input wire rst,
     input wire [29:0] delta_angle,  // 0 to 1.9999...
     input wire get_next_sample,
-    output wire [15:0] current_sample
+    output logic [15:0] current_sample
 );
+  logic        is_negative;
+  logic        last_is_negative;
   logic [30:0] current_angle;
   logic [31:0] next_angle;
+  logic        next_angle_overflow;
   logic        next_angle_ready;
   logic [31:0] pi;
   logic [15:0] next_sample;
@@ -26,13 +29,10 @@ module sin_gen (
       .input_valid(get_next_sample && !cordic_busy),
       .out(cordic_out),
       .out_valid(cordic_out_valid),
-      .busy(cordic_busy),
+      .busy(cordic_busy)
   );
 
-  always_comb begin
-    next_angle = {current_angle[30], current_angle} + {2'b0, delta_angle};
-    next_angle = next_angle > {1'b0, pi[31:1]} ? next_angle - pi : next_angle;
-  end
+  assign next_angle_overflow = ((next_angle > {1'b0, pi[31:1]}) && next_angle[31] == 0);
 
   always_ff @(posedge clk) begin
     if (rst) begin
@@ -41,18 +41,22 @@ module sin_gen (
       next_angle_ready <= 1'b0;
       current_sample <= 16'b0;
       next_sample <= 16'b0;
+      is_negative <= 1'b0;
+      last_is_negative <= 1'b0;
       pi <= 32'h6487ED51;
     end else begin
       if (get_next_sample) begin
         next_angle <= {current_angle[30], current_angle} + {2'b0, delta_angle};
         next_angle_ready <= 1'b1;
-        current_sample <= next_sample;
+        current_sample <= last_is_negative ? -next_sample : next_sample;
       end else begin
         next_angle_ready <= 1'b0;
       end
 
       if (next_angle_ready) begin
-        current_angle <= next_angle;
+        current_angle <= next_angle_overflow ? next_angle - pi : next_angle;
+        is_negative <= next_angle_overflow ? !is_negative : is_negative;
+        last_is_negative <= is_negative;
       end
 
       if (cordic_out_valid) begin
@@ -73,9 +77,10 @@ module CORDIC_sin (
     output logic        busy
 );
   // 32 bit values stored as 2's compliment fixed-point numbers between -2 and 1.999...
-  logic        [23:0] arc_tan_table                       [7:0];
+  logic        [23:0] arc_tan_table  [7:0];
   logic        [23:0] arc_tan_approx;
-  logic signed [23:0] x;  // "signed" for arithmetic shift
+  // "signed" for arithmetic shift
+  logic signed [23:0] x;
   logic signed [23:0] y;
   logic        [23:0] angle_error;
   logic        [ 4:0] i;

@@ -24,15 +24,33 @@ module top_level (
   assign spkl = spk_out;
   assign spkr = spk_out;
 
-  logic square_wave;
-  logic impulse_approx;  // same as square at very high frequency
+  logic        sin_wave;
+  logic        square_wave;
+  logic        impulse_approx;  // same as square at very high frequency
 
   logic [31:0] wave_period;
+  logic [31:0] wave_frequency;
   logic [31:0] square_count;
-  logic square_state;
+  logic        square_state;
+
+  logic        divider_busy;
+  logic [31:0] divider_out;
+  logic        divider_out_valid;
+  divider my_divide (
+      .clk(clk_100mhz),
+      .rst(sys_rst),
+      .dividend(32'd50_000_000),
+      .divisor(wave_frequency),
+      .data_in_valid(!divider_busy),
+      .quotient(divider_out),
+      .remainder(),
+      .data_out_valid(divider_out_valid),
+      .busy(divider_busy)
+  );
 
   always_ff @(posedge clk_100mhz) begin
-    wave_period <= {25'b0, 1'b1, sw[15:12], 2'b0} << sw[11:8];
+    wave_frequency <= {27'b0, 1'b1, sw[15:12]} << sw[11:8];
+    wave_period <= divider_out_valid ? divider_out : wave_period;
   end
 
   counter wave_count (
@@ -40,6 +58,36 @@ module top_level (
       .rst(sys_rst),
       .period(wave_period),
       .count(square_count)
+  );
+
+  counter sampled_counter (
+      .clk(clk_100mhz),
+      .rst(sys_rst),
+      .period(100_000_000 / 44100),
+      .count(sample_cycle_count)
+  );
+
+  logic [15:0] sin_sample;
+  logic [15:0] sample_out;
+  logic [31:0] sample_cycle_count;
+
+  always_ff @(posedge clk_100mhz) begin
+    sample_out <= sw[0] ? sw[15:8] << 8 : sin_sample;
+  end
+
+  sin_gen my_sin_gen (
+      .clk(clk_100mhz),
+      .rst(sys_rst),
+      .delta_angle(wave_frequency << 16),  // ideally 2^29 * 2pi * freq / cycles_per_sample
+      .get_next_sample(sample_cycle_count == 0),
+      .current_sample(sin_sample)
+  );
+
+  dlt_sig_dac_1st_order ds_dac (
+      .clk(clk_100mhz),
+      .rst(sys_rst),
+      .current_sample(sample_out),
+      .audio_out(sin_wave)
   );
 
   always_ff @(posedge clk_100mhz) begin
@@ -50,9 +98,10 @@ module top_level (
   end
 
   always_comb begin
-    case (sw[0])
-      1'b0: spk_out = square_wave;
-      default: spk_out = impulse_approx;
+    case (sw[1:0])
+      2'b00:   spk_out = square_wave;
+      2'b01:   spk_out = impulse_approx;
+      default: spk_out = sin_wave;
     endcase
   end
 

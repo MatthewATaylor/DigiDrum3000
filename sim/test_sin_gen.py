@@ -4,6 +4,8 @@ from cocotb.triggers import Timer
 import os
 from pathlib import Path
 import sys
+import math
+import numpy as np
 
 from cocotb.clock import Clock
 from cocotb.triggers import (
@@ -31,53 +33,42 @@ async def reset(rst, clk):
     await ClockCycles(clk, 2)
 
 
-async def test_divide(dut, dividend, divisor):
-    await FallingEdge(dut.clk)
-
-    dut.dividend.value = dividend
-    dut.divisor.value = divisor
-    dut.data_in_valid.value = 0b1
-    await FallingEdge(dut.clk)
-    dut.data_in_valid.value = 0b0
-
-    await RisingEdge(dut.data_out_valid)
-    await FallingEdge(dut.clk)
-    if divisor == 0:
-        assert dut.quotient.value == 2**32 - 1
-        assert dut.remainder.value == dividend
-    else:
-        assert dividend // divisor == dut.quotient.value
-        assert dividend % divisor == dut.remainder.value
-
-
 @cocotb.test()
-async def test_divider(dut):
+async def test_sin_gen(dut):
     """Your simulation test!
     TODO: Flesh this out with value sets and print statements. Maybe even some assertions, as a treat.
     """
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     # set all inputs to 0
-    dut.dividend.value = 0b101010
-    dut.divisor.value = 0b0
-    dut.data_in_valid.value = 0b0
+    dut.delta_angle.value = 0b0
+    dut.get_next_sample.value = 0b0
     # use helper function to assert reset signal
     await reset(dut.rst, dut.clk)
 
-    await test_divide(dut, 100_000_000, 0x1000)
-    for i in range(100):
-        dividend = random.randint(0, 2**32 - 1)
-        divisor = int((random.randrange(0, 2**64 - 1) / 2**60) ** 8)
-        await test_divide(dut, dividend, divisor)
+    for i in range(200):
+        await FallingEdge(dut.clk)
+        dut.delta_angle.value = 0x0FFFFFF
+        dut.get_next_sample.value = 0b1
+        await FallingEdge(dut.clk)
+        dut.get_next_sample.value = 0b0
+        if int(dut.current_sample.value) > 0x7FFF:
+            out_val = -0x8000 + (int(dut.current_sample.value) ^ 0x8000)
+        else:
+            out_val = int(dut.current_sample.value)
+        print(out_val * 2**-15)
+        await ClockCycles(dut.clk, 100)
+
+    print(int(math.pi * 2**29))
 
 
-def test_divider_runner():
-    """Run the divider runner. Boilerplate code"""
+def test_sin_gen_runner():
+    """Run the sin_gen runner. Boilerplate code"""
     hdl_toplevel_lang = os.getenv("HDL_TOPLEVEL_LANG", "verilog")
     sim = os.getenv("SIM", "icarus")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
     sources = [
-        proj_path / "hdl" / "divider.sv",
+        proj_path / "hdl" / "sig_gen.sv",
     ]
     build_test_args = ["-Wall"]
     parameters = {}
@@ -85,7 +76,7 @@ def test_divider_runner():
     runner = get_runner(sim)
     runner.build(
         sources=sources,
-        hdl_toplevel="divider",
+        hdl_toplevel="sin_gen",
         always=True,
         build_args=build_test_args,
         parameters=parameters,
@@ -94,12 +85,12 @@ def test_divider_runner():
     )
     run_test_args = []
     runner.test(
-        hdl_toplevel="divider",
-        test_module="test_divider",
+        hdl_toplevel="sin_gen",
+        test_module="test_sin_gen",
         test_args=run_test_args,
         waves=True,
     )
 
 
 if __name__ == "__main__":
-    test_divider_runner()
+    test_sin_gen_runner()
