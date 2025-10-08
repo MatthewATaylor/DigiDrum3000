@@ -4,8 +4,7 @@ from cocotb.triggers import Timer
 import os
 from pathlib import Path
 import sys
-import math
-import numpy as np
+import test_sin_gen_response
 
 from cocotb.clock import Clock
 from cocotb.triggers import (
@@ -35,9 +34,6 @@ async def reset(rst, clk):
 
 @cocotb.test()
 async def test_sin_gen(dut):
-    """Your simulation test!
-    TODO: Flesh this out with value sets and print statements. Maybe even some assertions, as a treat.
-    """
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     # set all inputs to 0
     dut.delta_angle.value = 0b0
@@ -45,9 +41,9 @@ async def test_sin_gen(dut):
     # use helper function to assert reset signal
     await reset(dut.rst, dut.clk)
 
+    dut.delta_angle.value = 0x0FFFFFF
     for i in range(200):
         await FallingEdge(dut.clk)
-        dut.delta_angle.value = 0x0FFFFFF
         dut.get_next_sample.value = 0b1
         await FallingEdge(dut.clk)
         dut.get_next_sample.value = 0b0
@@ -57,8 +53,6 @@ async def test_sin_gen(dut):
             out_val = int(dut.current_sample.value)
         print(out_val * 2**-15)
         await ClockCycles(dut.clk, 100)
-
-    print(int(math.pi * 2**29))
 
 
 def test_sin_gen_runner():
@@ -84,6 +78,12 @@ def test_sin_gen_runner():
         waves=True,
     )
     run_test_args = []
+    runner.test(
+        hdl_toplevel="sin_gen",
+        test_module="test_sin_gen_response",
+        test_args=run_test_args,
+        waves=True,
+    )
     runner.test(
         hdl_toplevel="sin_gen",
         test_module="test_sin_gen",
