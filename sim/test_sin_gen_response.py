@@ -39,7 +39,7 @@ async def test_sin_gen_response(dut):
     samples = []
     N = 4096 * 4
     sample_rate = 44100
-    freq = 8000
+    freq = 7909
     dut.delta_angle.value = int(2**29 * 2 * math.pi * freq / sample_rate)
 
     for i in range(N):
