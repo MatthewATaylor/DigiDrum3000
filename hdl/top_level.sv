@@ -60,10 +60,12 @@ module top_level (
       .count(square_count)
   );
 
+  localparam upscale_factor = 8;
+
   counter sampled_counter (
       .clk(clk_100mhz),
       .rst(sys_rst),
-      .period(100_000_000 / 44100),
+      .period(100_000_000 / (upscale_factor * 44100)),
       .count(sample_cycle_count)
   );
 
@@ -78,7 +80,8 @@ module top_level (
   sin_gen my_sin_gen (
       .clk(clk_100mhz),
       .rst(sys_rst),
-      .delta_angle(wave_frequency << 16),  // ideally 2^29 * 2pi * freq / cycles_per_sample
+      // ideally 2^29 * 2pi * freq / cycles_per_sample
+      .delta_angle(wave_frequency << (16 - $clog2(upscale_factor))),
       .get_next_sample(sample_cycle_count == 0),
       .current_sample(sin_sample)
   );
