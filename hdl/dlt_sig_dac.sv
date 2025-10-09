@@ -27,5 +27,4 @@ module dlt_sig_dac_1st_order (
     end
   end
 endmodule  //dlt_sig_dac_1o
-
 `default_nettype wire
