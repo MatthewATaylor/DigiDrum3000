@@ -71,7 +71,8 @@ if {[get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]] < 0} {
  phys_opt_design
 }
 #write_checkpoint -force $outputDir/post_place.dcp
-report_utilization -file $outputDir/post_place_util.rpt -hierarchical -hierarchical_depth 4 -hierarchical_min_primitive_count 0
+#report_utilization -file $outputDir/post_place_util.rpt -hierarchical -hierarchical_depth 4 -hierarchical_min_primitive_count 0
+report_utilization -file $outputDir/post_place_util.rpt
 report_timing_summary -file $outputDir/post_place_timing_summary.rpt
 report_timing -file $outputDir/post_place_timing.rpt
 #Route design and generate bitstream
@@ -85,4 +86,5 @@ report_drc -file $outputDir/post_imp_drc.rpt
 #set_property SEVERITY {Warning} [get_drc_checks NSTD-1]
 #write_verilog -force $outputDir/cpu_impl_netlist.v -mode timesim -sdf_anno true
 write_bitstream -force $outputDir/final.bit
+
 
