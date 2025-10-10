@@ -45,7 +45,7 @@ async def test_delta_sigma(dut):
     samples = []
     sample_rate = 44100
     dac_rate_ratio = 64
-    N = 2048 * dac_rate_ratio
+    N = 2**10 * dac_rate_ratio
     freq = 8000
     angle = 0
     delta_angle = 2 * math.pi * freq / sample_rate

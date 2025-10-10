@@ -2,6 +2,7 @@
 
 // delays by 3 (or more at very high angular frequencies) samples
 // to reduce cycle delay
+// (output is sin wave between 0x8001 [almost min] and 0x7FFF [max])
 module sin_gen (
     input wire clk,
     input wire rst,
