@@ -43,13 +43,15 @@ async def test_delta_sigma(dut):
     # use helper function to assert reset signal
     await reset(dut.rst, dut.clk)
     samples = []
-    sample_rate = 44100
-    dac_rate_ratio = 64
-    N = 2**10 * dac_rate_ratio
-    freq = 8000
     angle = 0
-    delta_angle = 2 * math.pi * freq / sample_rate
+    sample_rate = 16 * 44100
+    dac_rate_ratio = 100_000_000 // sample_rate
+    N = 2**12 * dac_rate_ratio
+    frequency = 4000
+    delta_angle = 2 * math.pi * frequency / sample_rate
     sample_rate *= dac_rate_ratio
+
+    print("\n\n\n NOTICE: THIS WILL TAKE A WHILE TO RUN \n\n")
 
     await FallingEdge(dut.clk)
     for i in range(N // dac_rate_ratio):
@@ -57,19 +59,29 @@ async def test_delta_sigma(dut):
         for j in range(dac_rate_ratio):
             await FallingEdge(dut.clk)
             if dut.audio_out.value == 0:
-                samples.append(-1.0)
+                samples.append(-0.5)
             else:
-                samples.append(1.0)
+                samples.append(1.5)
         angle += delta_angle
         if angle > 2 * math.pi:
             angle -= 2 * math.pi
 
-    xf = np.linspace(0.0, 1.0 / (2.0 / sample_rate), N // 2)
-    fft = scipy.fftpack.fft(samples)
-    fig, ax = plt.subplots()
-    ax.semilogy(xf, 2.0 / N * np.abs(fft[: N // 2]))
-    ax.set_ybound(1 / 100000, 1)
-    ax.set_xbound(0, 20000)
+    samples = [10 ** (14.5 / 20) * i for i in samples]  # scale so signal is at -0dB
+    window = scipy.signal.windows.flattop(N, sym=False)
+    filter = scipy.signal.butter(2, 28000, fs=sample_rate, output="sos")
+    fig, (ax1, ax2) = plt.subplots(2)
+    ax1.magnitude_spectrum(samples, Fs=sample_rate, window=window, scale="dB")
+    ax1.set_ybound(-120, 1)
+    ax1.set_xbound(0, 20000)
+    ax1.set_title("Audio Range")
+    ax2.magnitude_spectrum(samples, Fs=sample_rate, window=window, scale="dB")
+    filtered = scipy.signal.sosfilt(filter, samples)
+    ax2.magnitude_spectrum(filtered, Fs=sample_rate, window=window, scale="dB")
+    ax2.legend(["direct dac output", "analog filtered"])
+    ax2.set_xscale("log")
+    ax2.set_ybound(-120, 1)
+    ax2.set_xbound(100, sample_rate // 2)
+    ax2.set_title("Full Range)")
     plt.show()
 
 
