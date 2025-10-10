@@ -86,7 +86,7 @@ module top_level (
       .current_sample(sin_sample)
   );
 
-  dlt_sig_dac_1st_order ds_dac (
+  dlt_sig_dac_2nd_order ds_dac (
       .clk(clk_100mhz),
       .rst(sys_rst),
       .current_sample(sample_out),
