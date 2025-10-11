@@ -1,5 +1,9 @@
 `default_nettype none  // prevents system from inferring an undeclared logic (good practice)
 
+//###############################
+//  USE 2264 cycles per sample
+//###############################
+
 module top_level (
     input  wire         clk_100mhz,  //100 MHz onboard clock
     input  wire  [15:0] sw,          //all 16 input slide switches

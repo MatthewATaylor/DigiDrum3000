@@ -1,5 +1,9 @@
 import math
 
+###############################
+# USE 2264 cycles per sample
+###############################
+
 # MATCHES 2nd ORDER FILTER WITH -3dB CUTOFF AT 28kHz
 
 for exp in range(16):
