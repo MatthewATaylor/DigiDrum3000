@@ -101,7 +101,7 @@ async def test_delta_sigma(dut):
     # scale so signal is at -0dB
     samples = [10 ** (14.5 / 20) * i for i in samples]
     window = scipy.signal.windows.flattop(N, sym=False)
-    filter = scipy.signal.butter(2, 28000, fs=sample_rate, output="sos")
+    filter = scipy.signal.butter(1, 28000, fs=sample_rate, output="sos")
     filtered = scipy.signal.sosfilt(filter, samples)
 
     fft = scipy.fftpack.fft(filtered * window)
@@ -109,6 +109,7 @@ async def test_delta_sigma(dut):
     fft_freq = scipy.fftpack.fftfreq(len(samples))
 
     cutoff = 0
+    cutoff_100k = 0
     # zero out fundemental
     for i in range(len(fft)):
         if (
@@ -126,10 +127,17 @@ async def test_delta_sigma(dut):
 
         if fft_freq[i] >= 20000 / sample_rate and fft_freq[i - 1] < 20000 / sample_rate:
             cutoff = i
+        if (
+            fft_freq[i] >= 100000 / sample_rate
+            and fft_freq[i - 1] < 100000 / sample_rate
+        ):
+            cutoff_100k = i
 
     THDN = math.sqrt(np.sum(np.square(sample_mags)))
     THDN_audio = math.sqrt(np.sum(np.square(sample_mags[:cutoff])))
+    THDN_100k = math.sqrt(np.sum(np.square(sample_mags[:cutoff_100k])))
     print(f"total THDN: {THDN}  ({20 * math.log10(THDN)}dB)")
+    print(f"<100k THDN: {THDN_100k}  ({20 * math.log10(THDN_100k)}dB)")
     print(f"audio THDN: {THDN_audio}  ({20 * math.log10(THDN_audio)}dB)")
 
     fig, (ax1, ax2) = plt.subplots(2)

@@ -4,7 +4,7 @@ import math
 # USE 2264 cycles per sample
 ###############################
 
-# MATCHES 2nd ORDER FILTER WITH -3dB CUTOFF AT 28kHz
+# MATCHES 1st ORDER FILTER WITH -3dB CUTOFF AT 28kHz
 
 for exp in range(16):
     for mant in range(4):
