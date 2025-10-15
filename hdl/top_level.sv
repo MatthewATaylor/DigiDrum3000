@@ -1,7 +1,7 @@
 `default_nettype none  // prevents system from inferring an undeclared logic (good practice)
 
 //###############################
-//  USE 2264 cycles per sample
+//  USE 2272 cycles per sample
 //###############################
 
 module top_level (
@@ -64,7 +64,7 @@ module top_level (
       .count(square_count)
   );
 
-  localparam upscale_factor = 8;
+  localparam upscale_factor = 16;
 
   counter sampled_counter (
       .clk(clk_100mhz),

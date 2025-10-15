@@ -79,7 +79,7 @@ def find_gain(frequency, filt_coeffs):
 # -80dB alias frequencies
 # -0.3dB worst pass band attentuation
 filt_coeffs = scipy.signal.firwin(
-    1024 * 2 - 1, 20800, width=4200, pass_zero="lowpass", fs=sample_rate, scale=True
+    1078 * 2 - 1, 20800, width=4200, pass_zero="lowpass", fs=sample_rate, scale=True
 )
 # filt_coeffs = scipy.signal.firls(
 #    512 * 2 - 1,
@@ -89,14 +89,14 @@ filt_coeffs = scipy.signal.firwin(
 # )
 filt_coeffs = scipy.signal.minimum_phase(filt_coeffs)
 print(f"samples: {len(filt_coeffs)}")
+filt_coeffs = filt_coeffs[:1024]
 
 with open("DAC_filter_coeffs.txt", "w") as f:
-    for i in range(over_rate):
-        for coeff in filt_coeffs[i::over_rate]:
-            if coeff < 0:
-                f.write(f"{int(abs(coeff) * 2**21) ^ 0x3FFFF - 1:05x}\n")
-            else:
-                f.write(f"{int(coeff * 2**21):05x}\n")
+    for coeff in filt_coeffs:
+        if coeff < 0:
+            f.write(f"{((int(abs(coeff) * 2**21) ^ 0x3FFFF) + 1) & 0x3FFFF:05x}\n")
+        else:
+            f.write(f"{int(coeff * 2**21):05x}\n")
 
 for i in range(len(filt_coeffs)):
     if filt_coeffs[i] < 0:
