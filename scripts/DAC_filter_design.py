@@ -9,6 +9,19 @@ over_rate = 16
 sample_rate = over_rate * 44100
 
 
+def find_nearest_index(frequencies, target_freq):
+    index = None
+    for i in range(len(frequencies) - 1):
+        if frequencies[i] >= target_freq and frequencies[i - 1] < target_freq:
+            if abs(frequencies[i] - target_freq) < abs(
+                frequencies[i - 1] - target_freq
+            ):
+                index = i
+            else:
+                index = i - 1
+    return index
+
+
 def find_gain(frequency, filt_coeffs):
     N = 8000
     delta_angle = 2 * math.pi * frequency / sample_rate
@@ -66,7 +79,7 @@ def find_gain(frequency, filt_coeffs):
 # -80dB alias frequencies
 # -0.3dB worst pass band attentuation
 filt_coeffs = scipy.signal.firwin(
-    700 * 2 - 1, 21025, width=6100, pass_zero="lowpass", fs=sample_rate, scale=True
+    1024 * 2 - 1, 20800, width=4200, pass_zero="lowpass", fs=sample_rate, scale=True
 )
 # filt_coeffs = scipy.signal.firls(
 #    512 * 2 - 1,
@@ -75,35 +88,43 @@ filt_coeffs = scipy.signal.firwin(
 #    fs=sample_rate,
 # )
 filt_coeffs = scipy.signal.minimum_phase(filt_coeffs)
-print(len(filt_coeffs))
+print(f"samples: {len(filt_coeffs)}")
 
 with open("DAC_filter_coeffs.txt", "w") as f:
     for i in range(over_rate):
         for coeff in filt_coeffs[i::over_rate]:
             if coeff < 0:
-                f.write(f"{int(abs(coeff) * 2**19) ^ 0xFFFF - 1:04x}\n")
+                f.write(f"{int(abs(coeff) * 2**21) ^ 0x3FFFF - 1:05x}\n")
             else:
-                f.write(f"{int(coeff * 2**19):04x}\n")
+                f.write(f"{int(coeff * 2**21):05x}\n")
 
 for i in range(len(filt_coeffs)):
     if filt_coeffs[i] < 0:
-        filt_coeffs[i] = 2**-19 * float(-int(abs(filt_coeffs[i]) * 2**19))
+        filt_coeffs[i] = 2**-21 * float(-int(abs(filt_coeffs[i]) * 2**21))
     else:
-        filt_coeffs[i] = 2**-19 * float(int(filt_coeffs[i] * 2**19))
+        filt_coeffs[i] = 2**-21 * float(int(filt_coeffs[i] * 2**21))
 w, H = scipy.signal.freqz(filt_coeffs, worN=10000)
 
-max_gain = 0
-for freq in [20, 80, 200, 1000, 8000, 14000, 20000]:
-    max_gain = max(max_gain, find_gain(freq, filt_coeffs))
-
-print(f"alias gain: {max_gain:.4}  ({20 * math.log10(max_gain):.3}dB)")
-
+# max_gain = 0
+# for freq in [20, 80, 200, 1000, 8000, 14000, 20000]:
+#    max_gain = max(max_gain, find_gain(freq, filt_coeffs))
 
 w = w * sample_rate / (2 * np.pi)
+max_gain = max(abs(H[find_nearest_index(w, 24000) :]))
+
+index_60dB = None
+for i in range(len(H)):
+    if np.abs(H[i]) < 1e-3:
+        index_60dB = i
+        break
+print(f"-60dB point: {w[index_60dB]:.8}Hz")
+print(f"20kHz rolloff: {20 * math.log10(abs(H[find_nearest_index(w, 20000)])):.3}dB")
+print(f"max alias gain: {max_gain:.4}  ({20 * math.log10(max_gain):.3}dB)")
+
 
 fig, (ax, ax2) = plt.subplots(2)
 ax.loglog(w, np.abs(H))
-ax.set_ybound(1e-5, 2)
+ax.set_ybound(3e-6, 2)
 ax.set_xbound(10000, sample_rate // 2)
-ax2.plot(filt_coeffs)
+ax2.semilogy(abs(filt_coeffs))
 plt.show()
