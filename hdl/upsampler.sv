@@ -1,9 +1,16 @@
 `default_nettype none
 
+`ifdef SYNTHESIS
+`define FPATH(X) `"X`"
+`else  /* ! SYNTHESIS */
+`define FPATH(X) `"../data/X`"
+`endif  /* ! SYNTHESIS */
+
 //##############################################################
 //  USE 2272 cycles per sample -> 142 cycles per sample
 //##############################################################
 
+// ~70us delay
 module upsampler (
     input wire clk,
     input wire rst,
@@ -34,7 +41,9 @@ module upsampler (
       .RAM_DEPTH(1024),  // Specify RAM depth (number of entries)
       .RAM_PERFORMANCE("HIGH_PERFORMANCE"),  // "HIGH_PERFORMANCE" or "LOW_LATENCY"
       // Specify name/location of RAM initialization file if using one (leave blank if not)
-      .INIT_FILE(FPATH(DAC_filter_coeffs.mem))
+      .INIT_FILE(
+      `FPATH(DAC_filter_coeffs.mem)
+      )
   ) image_BROM (
       .addra(filter_index),  // Address bus, width determined from RAM_DEPTH
       .dina(0),  // RAM input data, width determined from RAM_WIDTH
@@ -46,13 +55,27 @@ module upsampler (
       .douta(filter_data)  // RAM output data, width determined from RAM_WIDTH
   );
 
+  logic [15:0] next_sample_out;
+  always_comb begin
+    if (accum[47] && !(&accum[46:33])) begin
+      next_sample_out = 16'h8000;
+    end else if (!accum[47] && (|accum[46:33])) begin
+      next_sample_out = 16'h7FFF;
+    end else begin
+      next_sample_out = accum[32:17];
+    end
+  end
+
   always_ff @(posedge clk) begin
     if (rst) begin
       sample_out <= 0;
     end else if (upsample_timer == 66) begin
-      sample_out <= accum[33:18];
+      sample_out <= next_sample_out;
     end
   end
+
+  logic [5:0] sample_buffer_index;
+  assign sample_buffer_index = buffer_start + sample_index;
 
   always_ff @(posedge clk) begin
     if (rst || sample_in_valid || next_upsample) begin
@@ -65,7 +88,7 @@ module upsampler (
     end else begin
       accum <= accumulator_next;
       sample_pipelined[1] <= sample_pipelined[0];
-      sample_pipelined[0] <= sample_buffer[buffer_start+sample_index];
+      sample_pipelined[0] <= sample_buffer[sample_buffer_index];
       sample_index <= sample_index + 6'h1;
       upsample_timer <= upsample_timer + 8'h1;
     end

@@ -64,30 +64,37 @@ module top_level (
       .count(square_count)
   );
 
-  localparam upscale_factor = 16;
-
   counter sampled_counter (
       .clk(clk_100mhz),
       .rst(sys_rst),
-      .period(100_000_000 / (upscale_factor * 44100)),
+      .period(2272),
       .count(sample_cycle_count)
   );
 
   logic [15:0] sin_sample;
+  logic [15:0] sin_upsample;
   logic [15:0] sample_out;
   logic [31:0] sample_cycle_count;
 
   always_ff @(posedge clk_100mhz) begin
-    sample_out <= sw[0] ? sw[15:8] << 8 : sin_sample;
+    sample_out <= sw[0] ? sin_sample : sin_upsample;
   end
 
   sin_gen my_sin_gen (
       .clk(clk_100mhz),
       .rst(sys_rst),
       // ideally 2^29 * 2pi * freq / cycles_per_sample
-      .delta_angle(wave_frequency << (16 - $clog2(upscale_factor))),
+      .delta_angle(wave_frequency << 16),
       .get_next_sample(sample_cycle_count == 0),
       .current_sample(sin_sample)
+  );
+
+  upsampler my_upsample (
+      .clk(clk_100mhz),
+      .rst(sys_rst),
+      .sample_in(sin_sample),
+      .sample_in_valid(sample_cycle_count == 2),
+      .sample_out(sin_upsample)
   );
 
   dlt_sig_dac_2nd_order ds_dac (

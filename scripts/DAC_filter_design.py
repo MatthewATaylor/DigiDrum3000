@@ -75,6 +75,27 @@ def find_gain(frequency, filt_coeffs):
     return math.sqrt(np.sum(np.square(sample_mags[cutoff:])))
 
 
+def max_true_peak_gain(filt_coeffs):
+    g_max = 0
+    for i in range(over_rate):
+        sum = 0
+        for coeff in filt_coeffs[i::over_rate]:
+            sum += abs(coeff)
+        g_max = max(g_max, 16 * sum)
+    return g_max
+
+
+def peak_delay_microseconds(filt_coeffs):
+    c_max = 0
+    c_max_i = 0
+    for i in range(len(filt_coeffs)):
+        if filt_coeffs[i] > c_max:
+            c_max = filt_coeffs[i]
+            c_max_i = i
+    delay_seconds = (c_max_i + 1) / sample_rate
+    return 1_000_000 * delay_seconds
+
+
 # 63.8 us latency
 # -80dB alias frequencies
 # -0.3dB worst pass band attentuation
@@ -120,11 +141,17 @@ for i in range(len(H)):
 print(f"-60dB point: {w[index_60dB]:.8}Hz")
 print(f"20kHz rolloff: {20 * math.log10(abs(H[find_nearest_index(w, 20000)])):.3}dB")
 print(f"max alias gain: {max_gain:.4}  ({20 * math.log10(max_gain):.3}dB)")
+print(
+    f"max true peak: x{max_true_peak_gain(filt_coeffs):.4} (+{20 * math.log10(max_true_peak_gain(filt_coeffs)):.3}dB)"
+)
+print(f"delay: {peak_delay_microseconds(filt_coeffs):.4}us")
 
 
-fig, (ax, ax2) = plt.subplots(2)
+fig, (ax, ax2, ax3) = plt.subplots(3)
 ax.loglog(w, np.abs(H))
 ax.set_ybound(3e-6, 2)
 ax.set_xbound(10000, sample_rate // 2)
-ax2.semilogy(abs(filt_coeffs))
+ax2.semilogx(w, np.angle(H))
+ax2.set_xbound(20, 20000)
+ax3.plot(filt_coeffs)
 plt.show()
