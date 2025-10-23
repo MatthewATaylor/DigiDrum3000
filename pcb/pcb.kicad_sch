@@ -482,333 +482,7 @@
 				)
 			)
 		)
-		(symbol "Connector:DIN-5_180degree"
-			(pin_names
-				(offset 1.016)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "J"
-				(at 3.175 5.715 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "DIN-5_180degree"
-				(at 0 -6.35 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" "http://www.mouser.com/ds/2/18/40_c091_abd_e-75918.pdf"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" "5-pin DIN connector (5-pin DIN-5 stereo)"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_keywords" "circular DIN connector stereo audio"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_fp_filters" "DIN*"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "DIN-5_180degree_0_1"
-				(arc
-					(start -5.08 0)
-					(mid -3.8609 -3.3364)
-					(end -0.762 -5.08)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center -3.048 0)
-					(radius 0.508)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center -2.286 2.286)
-					(radius 0.508)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -5.08 0) (xy -3.556 0)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 0 5.08) (xy 0 3.81)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 5.08 0) (xy 3.556 0)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -5.08 2.54) (xy -4.318 2.54) (xy -2.794 2.286)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy 5.08 2.54) (xy 4.318 2.54) (xy 2.794 2.286)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -0.762 -4.953) (xy -0.762 -4.191) (xy 0.762 -4.191) (xy 0.762 -4.953)
-					)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center 0 3.302)
-					(radius 0.508)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 0.762 -5.08)
-					(mid 3.8685 -3.343)
-					(end 5.08 0)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center 2.286 2.286)
-					(radius 0.508)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center 3.048 0)
-					(radius 0.508)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 5.08 0)
-					(mid 0 5.0579)
-					(end -5.08 0)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "DIN-5_180degree_1_1"
-				(pin passive line
-					(at -7.62 0 0)
-					(length 2.54)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 7.62 270)
-					(length 2.54)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 7.62 0 180)
-					(length 2.54)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at -7.62 2.54 0)
-					(length 2.54)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "4"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 7.62 2.54 180)
-					(length 2.54)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "5"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-		)
-		(symbol "Connector_Audio:AudioJack2"
+		(symbol "Connector_Audio:AudioJack2_SwitchT"
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
@@ -820,7 +494,7 @@
 					)
 				)
 			)
-			(property "Value" "AudioJack2"
+			(property "Value" "AudioJack2_SwitchT"
 				(at 0 6.35 0)
 				(effects
 					(font
@@ -846,7 +520,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+			(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 				(at 0 0 0)
 				(effects
 					(font
@@ -855,7 +529,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_keywords" "audio jack receptacle mono phone headphone TS connector"
+			(property "ki_keywords" "audio jack receptacle mono headphones phone TS connector"
 				(at 0 0 0)
 				(effects
 					(font
@@ -873,10 +547,10 @@
 					(hide yes)
 				)
 			)
-			(symbol "AudioJack2_0_1"
+			(symbol "AudioJack2_SwitchT_0_1"
 				(rectangle
-					(start -3.81 0)
-					(end -2.54 -2.54)
+					(start -2.54 0)
+					(end -3.81 -2.54)
 					(stroke
 						(width 0.254)
 						(type default)
@@ -885,15 +559,16 @@
 						(type outline)
 					)
 				)
-				(rectangle
-					(start -2.54 3.81)
-					(end 2.54 -2.54)
+				(polyline
+					(pts
+						(xy 1.778 -0.254) (xy 2.032 -0.762)
+					)
 					(stroke
-						(width 0.254)
+						(width 0)
 						(type default)
 					)
 					(fill
-						(type background)
+						(type none)
 					)
 				)
 				(polyline
@@ -902,6 +577,18 @@
 					)
 					(stroke
 						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 -2.54) (xy 1.778 -2.54) (xy 1.778 -0.254) (xy 1.524 -0.762)
+					)
+					(stroke
+						(width 0)
 						(type default)
 					)
 					(fill
@@ -920,8 +607,19 @@
 						(type none)
 					)
 				)
+				(rectangle
+					(start 2.54 3.81)
+					(end -2.54 -5.08)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
 			)
-			(symbol "AudioJack2_1_1"
+			(symbol "AudioJack2_SwitchT_1_1"
 				(pin passive line
 					(at 5.08 2.54 180)
 					(length 2.54)
@@ -942,6 +640,206 @@
 				)
 				(pin passive line
 					(at 5.08 0 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "T"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 -2.54 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "TN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
+		(symbol "Connector_Audio:AudioJack3"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "J"
+				(at 0 8.89 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "AudioJack3"
+				(at 0 6.35 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Audio Jack, 3 Poles (Stereo / TRS)"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "audio jack receptacle stereo headphones phones TRS connector"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "Jack*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "AudioJack3_0_1"
+				(rectangle
+					(start -5.08 -5.08)
+					(end -6.35 -2.54)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -2.54) (xy 0.635 -3.175) (xy 1.27 -2.54) (xy 2.54 -2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.905 -2.54) (xy -1.27 -3.175) (xy -0.635 -2.54) (xy -0.635 0) (xy 2.54 0)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 2.54) (xy -2.54 2.54) (xy -2.54 -2.54) (xy -3.175 -3.175) (xy -3.81 -2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 2.54 3.81)
+					(end -5.08 -5.08)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+			)
+			(symbol "AudioJack3_1_1"
+				(pin passive line
+					(at 5.08 0 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "R"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 2.54 180)
+					(length 2.54)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "S"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 -2.54 180)
 					(length 2.54)
 					(name "~"
 						(effects
@@ -2006,22 +1904,22 @@
 				)
 			)
 		)
-		(symbol "Device:R_Potentiometer"
+		(symbol "Device:R_Potentiometer_MountingPin"
 			(pin_names
 				(offset 1.016) hide)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
 			(property "Reference" "RV"
-				(at -4.445 0 90)
+				(at -8.255 0 90)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
 				)
 			)
-			(property "Value" "R_Potentiometer"
-				(at -2.54 0 90)
+			(property "Value" "R_Potentiometer_MountingPin"
+				(at -6.35 0 90)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -2046,7 +1944,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Potentiometer"
+			(property "Description" "Potentiometer with a mounting pin"
 				(at 0 0 0)
 				(effects
 					(font
@@ -2073,7 +1971,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "R_Potentiometer_0_1"
+			(symbol "R_Potentiometer_MountingPin_0_1"
 				(polyline
 					(pts
 						(xy 2.54 0) (xy 1.524 0)
@@ -2088,7 +1986,7 @@
 				)
 				(polyline
 					(pts
-						(xy 1.143 0) (xy 2.286 0.508) (xy 2.286 -0.508) (xy 1.143 0)
+						(xy 1.143 0) (xy 2.286 0.508) (xy 2.286 -0.508)
 					)
 					(stroke
 						(width 0)
@@ -2110,7 +2008,27 @@
 					)
 				)
 			)
-			(symbol "R_Potentiometer_1_1"
+			(symbol "R_Potentiometer_MountingPin_1_1"
+				(polyline
+					(pts
+						(xy -2.032 1.016) (xy -2.032 -1.016)
+					)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(text "Mounting"
+					(at -1.651 0 900)
+					(effects
+						(font
+							(size 0.381 0.381)
+						)
+					)
+				)
 				(pin passive line
 					(at 0 3.81 270)
 					(length 1.27)
@@ -2158,6 +2076,24 @@
 						)
 					)
 					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.048)
+					(name "MountPin"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "MP"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2887,6 +2823,12 @@
 		(uuid "2628bf4c-77ff-40cc-b651-ba22770dfc97")
 	)
 	(junction
+		(at 111.76 68.58)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2726850b-3d25-47ca-9edc-d7f38b6a8a69")
+	)
+	(junction
 		(at 73.66 135.89)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2897,6 +2839,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "33578c04-d900-42c2-8a8c-c7da0e80d3c8")
+	)
+	(junction
+		(at 181.61 50.8)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "3ec2478d-632e-4e9a-af38-7da1ce348aaf")
 	)
 	(junction
 		(at 33.02 173.99)
@@ -2995,10 +2943,28 @@
 		(uuid "9bb3fd15-55eb-4c28-b23e-c543d6bfd7c7")
 	)
 	(junction
+		(at 88.9 50.8)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "9ef9ac87-a953-4c84-b82b-fa0c731db332")
+	)
+	(junction
 		(at 140.97 187.96)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "a2fec373-b626-426f-a82a-f90232d5773c")
+	)
+	(junction
+		(at 66.04 68.58)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a3234cba-27c9-462e-b45b-da92f6b9fc7c")
+	)
+	(junction
+		(at 88.9 68.58)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a64cbfd8-9e11-411d-ad69-08161b647dbf")
 	)
 	(junction
 		(at 30.48 125.73)
@@ -3013,16 +2979,40 @@
 		(uuid "afbe4da6-8004-46a6-85e0-156df47f3120")
 	)
 	(junction
+		(at 157.48 68.58)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "bba9e4ca-91d6-4d77-ad35-8bd531244d82")
+	)
+	(junction
 		(at 105.41 90.17)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "bead1991-2612-430c-8a85-2954f0643f42")
 	)
 	(junction
+		(at 111.76 50.8)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "bf154500-6aaa-4090-86f2-9ae3d15d2b38")
+	)
+	(junction
+		(at 134.62 50.8)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c3de0f46-3076-4c80-9b40-631999a79725")
+	)
+	(junction
 		(at 33.02 158.75)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "c741cf6f-545b-4c30-89c6-2e8f98018549")
+	)
+	(junction
+		(at 66.04 50.8)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c964b23f-a140-478c-98b4-ab86052a668e")
 	)
 	(junction
 		(at 43.18 125.73)
@@ -3085,10 +3075,22 @@
 		(uuid "e2b15f80-eaa3-42ee-8ee4-2f765a2082e1")
 	)
 	(junction
+		(at 157.48 50.8)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "e69f3c9e-e0fc-48e2-a20e-dab9e62cc10d")
+	)
+	(junction
 		(at 111.76 48.26)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "e9ea24dc-6fbd-42a4-90b4-b503b5dc9fba")
+	)
+	(junction
+		(at 134.62 68.58)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "eac119ba-44de-40c1-a7e6-6e8b1adfa5e8")
 	)
 	(junction
 		(at 43.18 144.78)
@@ -3121,16 +3123,28 @@
 		(uuid "fc3f31b3-c374-48ee-ac1f-c9e983c1ac4e")
 	)
 	(no_connect
-		(at 58.42 99.06)
-		(uuid "133f5ba4-c6fd-4474-92f6-9c1eedd7aa84")
-	)
-	(no_connect
 		(at 124.46 144.78)
 		(uuid "1ca0b5a4-5d1d-47aa-99c5-e16220aad6e7")
 	)
 	(no_connect
+		(at 38.1 130.81)
+		(uuid "27e82c26-3580-4708-bc0e-b3a2b9ec3982")
+	)
+	(no_connect
 		(at 124.46 180.34)
 		(uuid "2e8237e7-a74e-4847-ab3a-e4709fe84949")
+	)
+	(no_connect
+		(at 68.58 149.86)
+		(uuid "36bccc54-9ba0-4d8c-81a6-03f2cbfdb4f4")
+	)
+	(no_connect
+		(at 68.58 168.91)
+		(uuid "669dc6c2-66b7-4ee6-907e-013f520b6251")
+	)
+	(no_connect
+		(at 83.82 130.81)
+		(uuid "673ea9c2-6dc4-4c9f-8a77-b0180ce8c1d6")
 	)
 	(no_connect
 		(at 124.46 182.88)
@@ -3141,12 +3155,36 @@
 		(uuid "9e241a3c-fbee-4be6-9fac-9e84562f410d")
 	)
 	(no_connect
-		(at 50.8 106.68)
-		(uuid "aa7f9900-1de5-4f26-92df-ed16445d021a")
+		(at 38.1 149.86)
+		(uuid "b606815e-332e-4502-b874-338a2317673e")
 	)
 	(no_connect
-		(at 66.04 106.68)
-		(uuid "e1373c83-5b2b-4526-9282-ec18e472c9c4")
+		(at 68.58 130.81)
+		(uuid "bba84e9e-9020-48b8-999b-f58490cbd9c2")
+	)
+	(no_connect
+		(at 83.82 168.91)
+		(uuid "c96f97c0-7d21-44be-a5af-fbcdfa1181eb")
+	)
+	(no_connect
+		(at 53.34 168.91)
+		(uuid "cf0895e8-6a39-4307-9747-4d1ea61f7d9c")
+	)
+	(no_connect
+		(at 53.34 130.81)
+		(uuid "e94ac487-71c5-457b-aa88-29231d4d1b36")
+	)
+	(no_connect
+		(at 83.82 149.86)
+		(uuid "f36d9a14-7411-45bd-b886-f8d46d55cdb0")
+	)
+	(no_connect
+		(at 38.1 168.91)
+		(uuid "f3a8ad6e-2d20-40a6-8235-3f2a132eda54")
+	)
+	(no_connect
+		(at 53.34 149.86)
+		(uuid "fe8f5ca1-8c67-4e80-af89-806be2bf40df")
 	)
 	(wire
 		(pts
@@ -3170,6 +3208,16 @@
 	)
 	(wire
 		(pts
+			(xy 134.62 68.58) (xy 134.62 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "01fe4fdb-6c9d-4906-baee-5e2f46400f4e")
+	)
+	(wire
+		(pts
 			(xy 161.29 137.16) (xy 198.12 137.16)
 		)
 		(stroke
@@ -3187,16 +3235,6 @@
 			(type default)
 		)
 		(uuid "02e66c02-dae8-485d-b445-935e2ae83111")
-	)
-	(wire
-		(pts
-			(xy 66.04 104.14) (xy 69.85 104.14)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "03428821-df3f-40b7-92a7-69bf1bbd37e5")
 	)
 	(wire
 		(pts
@@ -3230,13 +3268,23 @@
 	)
 	(wire
 		(pts
-			(xy 157.48 66.04) (xy 157.48 74.93)
+			(xy 157.48 66.04) (xy 157.48 68.58)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "073c31d9-c172-4156-8ad8-893e93ceed32")
+	)
+	(wire
+		(pts
+			(xy 133.35 50.8) (xy 134.62 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "079ee3d7-1913-4cc0-94fe-cf0033f59c4c")
 	)
 	(wire
 		(pts
@@ -3320,6 +3368,26 @@
 	)
 	(wire
 		(pts
+			(xy 110.49 50.8) (xy 111.76 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0e5de8d2-7c0c-453d-9807-607df3331023")
+	)
+	(wire
+		(pts
+			(xy 133.35 68.58) (xy 134.62 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "11fcc78c-633b-4d9f-95b3-173201b8d949")
+	)
+	(wire
+		(pts
 			(xy 69.85 101.6) (xy 69.85 104.14)
 		)
 		(stroke
@@ -3390,6 +3458,16 @@
 	)
 	(wire
 		(pts
+			(xy 45.72 104.14) (xy 69.85 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1a4cfe3b-db5d-4770-b4b7-1fbc24f9bb54")
+	)
+	(wire
+		(pts
 			(xy 124.46 172.72) (xy 107.95 172.72)
 		)
 		(stroke
@@ -3420,6 +3498,16 @@
 	)
 	(wire
 		(pts
+			(xy 88.9 68.58) (xy 88.9 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2053f225-c031-47fe-a75c-74baf5df90f0")
+	)
+	(wire
+		(pts
 			(xy 105.41 90.17) (xy 105.41 92.71)
 		)
 		(stroke
@@ -3427,6 +3515,16 @@
 			(type default)
 		)
 		(uuid "20740d71-289f-404e-9c8e-ac3fce7b149c")
+	)
+	(wire
+		(pts
+			(xy 181.61 50.8) (xy 181.61 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "20a311f8-50b5-404c-86b8-c25774827b1a")
 	)
 	(wire
 		(pts
@@ -3547,6 +3645,16 @@
 			(type default)
 		)
 		(uuid "2c247bc5-5db2-4291-84f5-e989fb03e329")
+	)
+	(wire
+		(pts
+			(xy 87.63 50.8) (xy 88.9 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2d4b62fe-e09f-4f97-966f-86086cf2359e")
 	)
 	(wire
 		(pts
@@ -3810,7 +3918,7 @@
 	)
 	(wire
 		(pts
-			(xy 111.76 66.04) (xy 111.76 77.47)
+			(xy 111.76 66.04) (xy 111.76 68.58)
 		)
 		(stroke
 			(width 0)
@@ -3980,7 +4088,7 @@
 	)
 	(wire
 		(pts
-			(xy 88.9 66.04) (xy 88.9 78.74)
+			(xy 88.9 66.04) (xy 88.9 68.58)
 		)
 		(stroke
 			(width 0)
@@ -4080,7 +4188,7 @@
 	)
 	(wire
 		(pts
-			(xy 66.04 66.04) (xy 66.04 80.01)
+			(xy 66.04 66.04) (xy 66.04 68.58)
 		)
 		(stroke
 			(width 0)
@@ -4290,6 +4398,26 @@
 	)
 	(wire
 		(pts
+			(xy 179.07 50.8) (xy 181.61 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7b623f17-d96a-4538-bf65-b204582fd812")
+	)
+	(wire
+		(pts
+			(xy 87.63 68.58) (xy 88.9 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7dce818e-c63a-4d75-9907-8c4dd78428a4")
+	)
+	(wire
+		(pts
 			(xy 161.29 137.16) (xy 161.29 175.26)
 		)
 		(stroke
@@ -4317,6 +4445,16 @@
 			(type default)
 		)
 		(uuid "7e4472c8-8a42-4f7c-abb0-46febc7e6938")
+	)
+	(wire
+		(pts
+			(xy 66.04 68.58) (xy 66.04 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7ed4cb60-bd94-4d58-9fbb-2aa7ca0d7e11")
 	)
 	(wire
 		(pts
@@ -4390,16 +4528,6 @@
 	)
 	(wire
 		(pts
-			(xy 50.8 104.14) (xy 48.26 104.14)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "8b3a5de0-1e89-4c9f-8cd4-965da0974101")
-	)
-	(wire
-		(pts
 			(xy 92.71 154.94) (xy 111.76 154.94)
 		)
 		(stroke
@@ -4457,6 +4585,16 @@
 			(type default)
 		)
 		(uuid "8e081463-bfff-41af-8bb0-43101a069c8c")
+	)
+	(wire
+		(pts
+			(xy 48.26 91.44) (xy 48.26 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8f37ea57-e72c-4d54-915e-26faba1ae20c")
 	)
 	(wire
 		(pts
@@ -4530,6 +4668,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 50.8) (xy 157.48 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "935116dc-a16f-4fac-80db-22c53dda3935")
+	)
+	(wire
+		(pts
 			(xy 157.48 45.72) (xy 157.48 48.26)
 		)
 		(stroke
@@ -4537,6 +4685,16 @@
 			(type default)
 		)
 		(uuid "9444701e-d6c0-4c69-9a9f-dee95a19d991")
+	)
+	(wire
+		(pts
+			(xy 157.48 68.58) (xy 157.48 74.93)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "968f699c-4e22-4d39-8d74-0864e8466cd5")
 	)
 	(wire
 		(pts
@@ -4570,7 +4728,7 @@
 	)
 	(wire
 		(pts
-			(xy 181.61 48.26) (xy 181.61 73.66)
+			(xy 181.61 48.26) (xy 181.61 50.8)
 		)
 		(stroke
 			(width 0)
@@ -4640,6 +4798,26 @@
 	)
 	(wire
 		(pts
+			(xy 48.26 101.6) (xy 45.72 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9e4d11e3-a7f7-4e82-a055-e211032d24e7")
+	)
+	(wire
+		(pts
+			(xy 50.8 99.06) (xy 45.72 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9e73eaa8-ad47-4822-a195-3eacac91cff0")
+	)
+	(wire
+		(pts
 			(xy 87.63 63.5) (xy 88.9 63.5)
 		)
 		(stroke
@@ -4650,7 +4828,7 @@
 	)
 	(wire
 		(pts
-			(xy 134.62 66.04) (xy 134.62 76.2)
+			(xy 134.62 66.04) (xy 134.62 68.58)
 		)
 		(stroke
 			(width 0)
@@ -4777,6 +4955,16 @@
 			(type default)
 		)
 		(uuid "ae3ad682-1b26-4d82-b335-343c48bc66ad")
+	)
+	(wire
+		(pts
+			(xy 110.49 68.58) (xy 111.76 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ae6fd652-8488-4ec0-9985-ca33606c91b6")
 	)
 	(wire
 		(pts
@@ -4907,16 +5095,6 @@
 			(type default)
 		)
 		(uuid "bccef8e8-cc0e-47fc-8d95-a75aba83c41c")
-	)
-	(wire
-		(pts
-			(xy 48.26 104.14) (xy 48.26 91.44)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "be970e6c-0ec2-45f5-b1c4-a802bd07f4b2")
 	)
 	(wire
 		(pts
@@ -5087,6 +5265,26 @@
 			(type default)
 		)
 		(uuid "cd4946dc-4839-4d59-b0fa-4d92daf1d9a7")
+	)
+	(wire
+		(pts
+			(xy 50.8 99.06) (xy 50.8 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ce230932-7ed2-4775-87b3-614370437871")
+	)
+	(wire
+		(pts
+			(xy 64.77 68.58) (xy 66.04 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ce67db09-ae93-4678-b994-7f9dfb299f35")
 	)
 	(wire
 		(pts
@@ -5390,6 +5588,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 68.58) (xy 157.48 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f139d40e-3d53-4a5a-b3b0-180bda4a4e5e")
+	)
+	(wire
+		(pts
 			(xy 58.42 144.78) (xy 58.42 146.05)
 		)
 		(stroke
@@ -5440,6 +5648,16 @@
 	)
 	(wire
 		(pts
+			(xy 64.77 50.8) (xy 66.04 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f62bb98f-a415-454c-906c-2fc3ebec9e86")
+	)
+	(wire
+		(pts
 			(xy 33.02 173.99) (xy 33.02 181.61)
 		)
 		(stroke
@@ -5447,6 +5665,16 @@
 			(type default)
 		)
 		(uuid "f80e90b0-b694-4e73-a87d-f25b3948c9a7")
+	)
+	(wire
+		(pts
+			(xy 111.76 68.58) (xy 111.76 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f95ce708-78a2-487f-9d20-af7b1162be3d")
 	)
 	(wire
 		(pts
@@ -5529,7 +5757,7 @@
 		(uuid "ffccc956-7bc0-494e-b7d4-db214518e125")
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 82.55 48.26 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -5546,7 +5774,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 81.915 41.91 0)
 			(effects
 				(font
@@ -5554,7 +5782,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 82.55 48.26 0)
 			(effects
 				(font
@@ -5572,7 +5800,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 82.55 48.26 0)
 			(effects
 				(font
@@ -5587,87 +5815,13 @@
 		(pin "S"
 			(uuid "44bb31d9-82a7-4e17-b593-a278cee21f70")
 		)
+		(pin "TN"
+			(uuid "6d2a57d5-6ce8-4134-9a2f-d1666d543ea9")
+		)
 		(instances
 			(project "pcb"
 				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
 					(reference "Reverb_In1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:DIN-5_180degree")
-		(at 58.42 106.68 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "042711e6-63a6-45c6-a4ff-06d3e8bd26a8")
-		(property "Reference" "J1"
-			(at 58.4201 114.3 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "DIN-5_180degree"
-			(at 58.4201 116.84 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 58.42 106.68 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "http://www.mouser.com/ds/2/18/40_c091_abd_e-75918.pdf"
-			(at 58.42 106.68 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "5-pin DIN connector (5-pin DIN-5 stereo)"
-			(at 58.42 106.68 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "0c36b867-8d29-40ec-96a1-4f6410a3d408")
-		)
-		(pin "4"
-			(uuid "b06f899c-36e8-4ab9-b12c-5af2c6d45d55")
-		)
-		(pin "2"
-			(uuid "af7052f1-680d-461b-88f1-8941f22b655f")
-		)
-		(pin "3"
-			(uuid "f73296c5-bbb4-4b04-995f-b877643119b8")
-		)
-		(pin "5"
-			(uuid "e7716785-e4e2-4d7c-95ab-213a7baa1089")
-		)
-		(instances
-			(project ""
-				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
-					(reference "J1")
 					(unit 1)
 				)
 			)
@@ -5740,14 +5894,13 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 58.42 168.91 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "0f43655d-9b03-43b9-ae44-2d9a05079e1c")
 		(property "Reference" "RV1_4"
 			(at 55.88 167.6399 0)
@@ -5758,8 +5911,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
-			(at 55.88 170.1799 0)
+		(property "Value" "R_Potentiometer_MountingPin"
+			(at 62.23 161.544 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5767,7 +5920,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 58.42 168.91 0)
 			(effects
 				(font
@@ -5785,7 +5938,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 58.42 168.91 0)
 			(effects
 				(font
@@ -5802,6 +5955,9 @@
 		)
 		(pin "3"
 			(uuid "ba587e36-bee3-4888-a343-63669b85bd3e")
+		)
+		(pin "MP"
+			(uuid "15dc20ef-5e76-4c97-8bb4-055310f1ed55")
 		)
 		(instances
 			(project "pcb"
@@ -5840,7 +5996,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 157.48 54.61 0)
 			(effects
 				(font
@@ -5985,7 +6141,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "C"
+		(property "Value" "1uF"
 			(at 229.87 54.6099 0)
 			(effects
 				(font
@@ -5994,7 +6150,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 227.0252 57.15 0)
 			(effects
 				(font
@@ -6037,14 +6193,83 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
-		(at 73.66 168.91 0)
+		(lib_id "Device:C")
+		(at 50.8 111.76 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
+		(uuid "1c5895a2-396f-4bc8-bead-786c7820c822")
+		(property "Reference" "C3"
+			(at 54.61 110.4899 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "0.1uF"
+			(at 54.61 113.0299 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "digikey-footprints:0805"
+			(at 51.7652 115.57 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 50.8 111.76 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 50.8 111.76 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "49963f0d-ecb5-4b07-a1c3-54ff7c7f09f0")
+		)
+		(pin "2"
+			(uuid "e9a0b1c5-5ccb-4874-bb29-73d213f4c06f")
+		)
+		(instances
+			(project "pcb"
+				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
+					(reference "C3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Potentiometer_MountingPin")
+		(at 73.66 168.91 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(uuid "24446afa-d754-48a3-b285-6d3c4aafcb70")
 		(property "Reference" "RV1_3"
 			(at 71.12 167.6399 0)
@@ -6055,16 +6280,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
-			(at 71.12 170.1799 0)
+		(property "Value" "R_Potentiometer_MountingPin"
+			(at 74.422 176.276 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 73.66 168.91 0)
 			(effects
 				(font
@@ -6082,7 +6308,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 73.66 168.91 0)
 			(effects
 				(font
@@ -6099,6 +6325,9 @@
 		)
 		(pin "3"
 			(uuid "cb814ff6-3e2d-43b9-a810-e2b60699bca3")
+		)
+		(pin "MP"
+			(uuid "252d0f74-a982-4fad-b845-000758918941")
 		)
 		(instances
 			(project "pcb"
@@ -6184,14 +6413,13 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 88.9 168.91 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "2caf83ff-3766-41da-ada1-d17fbd697e65")
 		(property "Reference" "RV1_2"
 			(at 86.36 167.6399 0)
@@ -6202,16 +6430,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
-			(at 86.36 170.1799 0)
+		(property "Value" "R_Potentiometer_MountingPin"
+			(at 94.488 162.052 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 88.9 168.91 0)
 			(effects
 				(font
@@ -6229,7 +6458,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 88.9 168.91 0)
 			(effects
 				(font
@@ -6246,6 +6475,9 @@
 		)
 		(pin "3"
 			(uuid "742839b8-9f4d-4d7a-9f70-f297e5cb067e")
+		)
+		(pin "MP"
+			(uuid "241bc64f-fc6c-41a5-bc06-29acdbf92ba2")
 		)
 		(instances
 			(project "pcb"
@@ -6275,7 +6507,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "C"
+		(property "Value" "1uF"
 			(at 214.63 54.6099 0)
 			(effects
 				(font
@@ -6284,7 +6516,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 211.7852 57.15 0)
 			(effects
 				(font
@@ -6327,14 +6559,13 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 43.18 168.91 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "4726d039-d21e-4c9a-82f7-e19b71e81cd8")
 		(property "Reference" "RV1_5"
 			(at 40.64 167.6399 0)
@@ -6345,16 +6576,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
-			(at 40.64 170.1799 0)
+		(property "Value" "R_Potentiometer_MountingPin"
+			(at 43.18 176.022 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 43.18 168.91 0)
 			(effects
 				(font
@@ -6372,7 +6604,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 43.18 168.91 0)
 			(effects
 				(font
@@ -6390,6 +6622,9 @@
 		(pin "3"
 			(uuid "c58902d7-bc23-40ea-8e14-fcd9b06a990a")
 		)
+		(pin "MP"
+			(uuid "239889ca-20b3-4ff8-944d-3324f42f2d7d")
+		)
 		(instances
 			(project "pcb"
 				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
@@ -6400,7 +6635,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 151.13 66.04 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -6417,7 +6652,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 150.495 59.69 0)
 			(effects
 				(font
@@ -6425,7 +6660,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 151.13 66.04 0)
 			(effects
 				(font
@@ -6443,7 +6678,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 151.13 66.04 0)
 			(effects
 				(font
@@ -6457,6 +6692,9 @@
 		)
 		(pin "T"
 			(uuid "996e58a4-d2dc-402f-96fb-478f0161af9c")
+		)
+		(pin "TN"
+			(uuid "df1caebd-b452-4a35-a6ec-851414a80719")
 		)
 		(instances
 			(project "pcb"
@@ -6495,7 +6733,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 134.62 54.61 0)
 			(effects
 				(font
@@ -6622,7 +6860,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 58.42 130.81 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -6640,16 +6878,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
+		(property "Value" "R_Potentiometer_MountingPin"
 			(at 55.88 132.0799 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 58.42 130.81 0)
 			(effects
 				(font
@@ -6667,7 +6906,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 58.42 130.81 0)
 			(effects
 				(font
@@ -6684,6 +6923,9 @@
 		)
 		(pin "3"
 			(uuid "47cb4b7c-9219-4d6b-b7d6-16c103fb207b")
+		)
+		(pin "MP"
+			(uuid "f55e3842-3e9b-487c-887c-9dc54edc40dd")
 		)
 		(instances
 			(project "pcb"
@@ -6722,7 +6964,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 66.04 54.61 0)
 			(effects
 				(font
@@ -6849,7 +7091,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 59.69 48.26 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -6866,7 +7108,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 59.055 41.91 0)
 			(effects
 				(font
@@ -6874,7 +7116,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 59.69 48.26 0)
 			(effects
 				(font
@@ -6892,7 +7134,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 59.69 48.26 0)
 			(effects
 				(font
@@ -6906,6 +7148,9 @@
 		)
 		(pin "T"
 			(uuid "a00c3dd3-e21f-483e-8cbc-af5c29fe90a9")
+		)
+		(pin "TN"
+			(uuid "2b6b8821-fec4-4b4d-8fc0-40fd39c025d0")
 		)
 		(instances
 			(project "pcb"
@@ -7076,7 +7321,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 111.76 54.61 0)
 			(effects
 				(font
@@ -7161,7 +7406,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 103.632 96.52 90)
 			(effects
 				(font
@@ -7228,7 +7473,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 60.96 93.218 90)
 			(effects
 				(font
@@ -7336,7 +7581,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 58.42 149.86 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -7354,16 +7599,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
+		(property "Value" "R_Potentiometer_MountingPin"
 			(at 55.88 151.1299 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 58.42 149.86 0)
 			(effects
 				(font
@@ -7381,7 +7627,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 58.42 149.86 0)
 			(effects
 				(font
@@ -7399,6 +7645,9 @@
 		(pin "3"
 			(uuid "758c13dc-f090-4e1c-b576-abd997f139a8")
 		)
+		(pin "MP"
+			(uuid "b73155e2-c340-4b4e-a92e-e5a34f28c433")
+		)
 		(instances
 			(project "pcb"
 				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
@@ -7409,7 +7658,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 128.27 66.04 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -7426,7 +7675,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 127.635 59.69 0)
 			(effects
 				(font
@@ -7434,7 +7683,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 128.27 66.04 0)
 			(effects
 				(font
@@ -7452,7 +7701,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 128.27 66.04 0)
 			(effects
 				(font
@@ -7467,6 +7716,9 @@
 		(pin "S"
 			(uuid "3213f150-f7d9-41d4-b721-78e009d095f7")
 		)
+		(pin "TN"
+			(uuid "eefef69c-7653-4eac-950a-5f4ea59ef665")
+		)
 		(instances
 			(project "pcb"
 				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
@@ -7477,7 +7729,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 88.9 149.86 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -7495,16 +7747,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
+		(property "Value" "R_Potentiometer_MountingPin"
 			(at 86.36 151.1299 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 88.9 149.86 0)
 			(effects
 				(font
@@ -7522,7 +7775,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 88.9 149.86 0)
 			(effects
 				(font
@@ -7540,6 +7793,9 @@
 		(pin "3"
 			(uuid "48b0f98e-1ca6-4a46-91b3-a0566c62a8cd")
 		)
+		(pin "MP"
+			(uuid "f9efe5f9-3d2a-4c7d-8956-65d9a8b5daf5")
+		)
 		(instances
 			(project "pcb"
 				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
@@ -7550,7 +7806,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 73.66 130.81 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -7568,16 +7824,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
+		(property "Value" "R_Potentiometer_MountingPin"
 			(at 71.12 132.0799 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 73.66 130.81 0)
 			(effects
 				(font
@@ -7595,7 +7852,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 73.66 130.81 0)
 			(effects
 				(font
@@ -7612,6 +7869,9 @@
 		)
 		(pin "3"
 			(uuid "1469e369-9c4f-411d-9022-52f010f56814")
+		)
+		(pin "MP"
+			(uuid "a42918b3-42d0-40ba-8d66-f15f862a2096")
 		)
 		(instances
 			(project "pcb"
@@ -7787,7 +8047,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 73.66 149.86 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -7805,16 +8065,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
+		(property "Value" "R_Potentiometer_MountingPin"
 			(at 71.12 151.1299 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 73.66 149.86 0)
 			(effects
 				(font
@@ -7832,7 +8093,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 73.66 149.86 0)
 			(effects
 				(font
@@ -7849,6 +8110,9 @@
 		)
 		(pin "3"
 			(uuid "aeb719ae-aec1-4f86-b3a9-5d19d18a24e5")
+		)
+		(pin "MP"
+			(uuid "c5a7515b-ed18-4303-944f-2cd672304a7c")
 		)
 		(instances
 			(project "pcb"
@@ -7887,7 +8151,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 88.9 54.61 0)
 			(effects
 				(font
@@ -7948,7 +8212,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 59.69 66.04 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -7965,7 +8229,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 59.055 59.69 0)
 			(effects
 				(font
@@ -7973,7 +8237,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 59.69 66.04 0)
 			(effects
 				(font
@@ -7991,7 +8255,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 59.69 66.04 0)
 			(effects
 				(font
@@ -8006,6 +8270,9 @@
 		(pin "S"
 			(uuid "3e14937b-d29b-433b-b2f9-b513a85baa8e")
 		)
+		(pin "TN"
+			(uuid "1e4b5312-695d-42ed-8e9d-9ee4ecfb33f0")
+		)
 		(instances
 			(project ""
 				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
@@ -8016,7 +8283,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 105.41 48.26 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -8033,7 +8300,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 104.775 41.91 0)
 			(effects
 				(font
@@ -8041,7 +8308,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 105.41 48.26 0)
 			(effects
 				(font
@@ -8059,7 +8326,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 105.41 48.26 0)
 			(effects
 				(font
@@ -8074,6 +8341,9 @@
 		(pin "S"
 			(uuid "362e3079-5bcb-4400-a9d5-951faf0744f8")
 		)
+		(pin "TN"
+			(uuid "f2c449b7-41ae-481b-bc62-f86f850c1843")
+		)
 		(instances
 			(project "pcb"
 				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
@@ -8084,7 +8354,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
+		(lib_id "Device:R_Potentiometer_MountingPin")
 		(at 88.9 130.81 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -8102,16 +8372,17 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
+		(property "Value" "R_Potentiometer_MountingPin"
 			(at 86.36 132.0799 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 88.9 130.81 0)
 			(effects
 				(font
@@ -8129,7 +8400,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 88.9 130.81 0)
 			(effects
 				(font
@@ -8146,6 +8417,9 @@
 		)
 		(pin "3"
 			(uuid "5c7d39b7-8230-44c3-93c8-e3392655ae53")
+		)
+		(pin "MP"
+			(uuid "4cf6e30c-48df-4ea0-aec4-a1db257d073b")
 		)
 		(instances
 			(project ""
@@ -8665,7 +8939,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 173.99 48.26 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -8682,7 +8956,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 173.355 41.91 0)
 			(effects
 				(font
@@ -8690,7 +8964,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 173.99 48.26 0)
 			(effects
 				(font
@@ -8708,7 +8982,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 173.99 48.26 0)
 			(effects
 				(font
@@ -8722,6 +8996,9 @@
 		)
 		(pin "S"
 			(uuid "a5b0e296-cbe6-4c25-93a3-06fbf5cd2b3d")
+		)
+		(pin "TN"
+			(uuid "edbc2033-e1be-47e6-9e62-40f8b0c57da5")
 		)
 		(instances
 			(project "pcb"
@@ -8799,14 +9076,84 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
-		(at 43.18 149.86 0)
+		(lib_id "Connector_Audio:AudioJack3")
+		(at 40.64 101.6 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
+		(uuid "e15f130b-cd5e-45ee-bedb-806efee516b3")
+		(property "Reference" "MIDI_In1"
+			(at 38.735 92.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "AudioJack3"
+			(at 38.735 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "My_Library:Jack_3.5mm_QingPu_WQP-PJ366ST_Vertical_CircularHoles"
+			(at 40.64 101.6 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 40.64 101.6 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Audio Jack, 3 Poles (Stereo / TRS)"
+			(at 40.64 101.6 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "S"
+			(uuid "f0930210-0c55-46c9-b59f-0861693ee4dd")
+		)
+		(pin "T"
+			(uuid "3f369d74-66ae-4537-8486-127adbee64ea")
+		)
+		(pin "R"
+			(uuid "1349f889-ecd2-41b6-8825-46743579d79d")
+		)
+		(instances
+			(project ""
+				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
+					(reference "MIDI_In1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Potentiometer_MountingPin")
+		(at 43.18 149.86 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(uuid "e210971c-5687-468b-8b07-3a41085b18e1")
 		(property "Reference" "RV1_1"
 			(at 40.64 148.5899 0)
@@ -8817,8 +9164,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
-			(at 40.64 151.1299 0)
+		(property "Value" "R_Potentiometer_MountingPin"
+			(at 62.738 142.494 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8826,7 +9173,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 43.18 149.86 0)
 			(effects
 				(font
@@ -8844,7 +9191,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 43.18 149.86 0)
 			(effects
 				(font
@@ -8862,6 +9209,9 @@
 		(pin "3"
 			(uuid "8b3af357-e196-4f43-9bd8-734d1cfb4b44")
 		)
+		(pin "MP"
+			(uuid "43917112-b096-4735-a398-2e4ed3d18be6")
+		)
 		(instances
 			(project "pcb"
 				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
@@ -8872,7 +9222,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 151.13 48.26 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -8889,7 +9239,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 150.495 41.91 0)
 			(effects
 				(font
@@ -8897,7 +9247,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 151.13 48.26 0)
 			(effects
 				(font
@@ -8915,7 +9265,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 151.13 48.26 0)
 			(effects
 				(font
@@ -8929,6 +9279,9 @@
 		)
 		(pin "T"
 			(uuid "9934dbea-56a8-4004-be92-6bf6b88eb4a4")
+		)
+		(pin "TN"
+			(uuid "4a2a6ad8-119a-4078-a6b4-55f50493f89b")
 		)
 		(instances
 			(project "pcb"
@@ -9006,14 +9359,79 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R_Potentiometer")
-		(at 43.18 130.81 0)
+		(lib_id "power:GND")
+		(at 50.8 115.57 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
+		(uuid "e7fa6d8a-e2be-4375-b0c5-4fc474f0d70f")
+		(property "Reference" "#PWR17"
+			(at 50.8 121.92 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 50.8 120.65 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 50.8 115.57 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 50.8 115.57 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 50.8 115.57 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "46c85c90-0bd5-4ad3-b02e-27210b87912d")
+		)
+		(instances
+			(project "pcb"
+				(path "/4f8d7866-5e19-4535-a67a-db544135cbba"
+					(reference "#PWR17")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Potentiometer_MountingPin")
+		(at 43.18 130.81 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(uuid "f5674576-2777-41a4-89dd-9ef24f2a6ef2")
 		(property "Reference" "RV0_3"
 			(at 40.64 129.5399 0)
@@ -9024,8 +9442,8 @@
 				(justify right)
 			)
 		)
-		(property "Value" "R_Pot"
-			(at 40.64 132.0799 0)
+		(property "Value" "R_Potentiometer_MountingPin"
+			(at 61.722 124.206 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9033,7 +9451,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "My_Library:Potentiometer_Alpha_RD901F-40-00D_Single_Vertical_MP"
 			(at 43.18 130.81 0)
 			(effects
 				(font
@@ -9051,7 +9469,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Potentiometer"
+		(property "Description" "Potentiometer with a mounting pin"
 			(at 43.18 130.81 0)
 			(effects
 				(font
@@ -9068,6 +9486,9 @@
 		)
 		(pin "3"
 			(uuid "1e4170eb-a2a8-408d-8b15-340b1aa80ee7")
+		)
+		(pin "MP"
+			(uuid "7e80c952-51f2-421a-a006-8558a1cc8998")
 		)
 		(instances
 			(project "pcb"
@@ -9191,7 +9612,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 128.27 48.26 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -9208,7 +9629,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 127.635 41.91 0)
 			(effects
 				(font
@@ -9216,7 +9637,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 128.27 48.26 0)
 			(effects
 				(font
@@ -9234,7 +9655,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 128.27 48.26 0)
 			(effects
 				(font
@@ -9248,6 +9669,9 @@
 		)
 		(pin "T"
 			(uuid "c0c12967-8c67-4f26-8371-04a7eadeef9a")
+		)
+		(pin "TN"
+			(uuid "2be63f68-259f-486f-b41f-abe40cb62a54")
 		)
 		(instances
 			(project "pcb"
@@ -9431,7 +9855,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 82.55 66.04 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -9448,7 +9872,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 81.915 59.69 0)
 			(effects
 				(font
@@ -9456,7 +9880,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 82.55 66.04 0)
 			(effects
 				(font
@@ -9474,7 +9898,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 82.55 66.04 0)
 			(effects
 				(font
@@ -9488,6 +9912,9 @@
 		)
 		(pin "S"
 			(uuid "ee5e68b4-4603-4945-9c4e-6cab92d7b7c2")
+		)
+		(pin "TN"
+			(uuid "6aeedd7d-6730-41a1-ab12-ec3388658ed6")
 		)
 		(instances
 			(project "pcb"
@@ -9525,7 +9952,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "digikey-footprints:0805"
 			(at 69.85 97.79 0)
 			(effects
 				(font
@@ -9586,7 +10013,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Audio:AudioJack2")
+		(lib_id "Connector_Audio:AudioJack2_SwitchT")
 		(at 105.41 66.04 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -9603,7 +10030,7 @@
 				)
 			)
 		)
-		(property "Value" "Barrel_Jack"
+		(property "Value" "AudioJack2_SwitchT"
 			(at 104.775 59.69 0)
 			(effects
 				(font
@@ -9611,7 +10038,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles"
 			(at 105.41 66.04 0)
 			(effects
 				(font
@@ -9629,7 +10056,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Audio Jack, 2 Poles (Mono / TS)"
+		(property "Description" "Audio Jack, 2 Poles (Mono / TS), Switched T Pole (Normalling)"
 			(at 105.41 66.04 0)
 			(effects
 				(font
@@ -9643,6 +10070,9 @@
 		)
 		(pin "T"
 			(uuid "8c062d4e-21bf-4613-9590-7cc16800230d")
+		)
+		(pin "TN"
+			(uuid "a9547f0a-64bd-4bea-adc8-f8b943ffb76c")
 		)
 		(instances
 			(project "pcb"
