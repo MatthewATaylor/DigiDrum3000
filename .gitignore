@@ -4,3 +4,5 @@ sim_build
 vivado*
 clockInfo.txt
 __pycache__
+pcb-backups
+auto_saved_files
