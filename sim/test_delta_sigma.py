@@ -52,6 +52,12 @@ async def test_delta_sigma(dut):
         print(">", end="")
         level = input()
 
+    vol = "-1"
+    while int(vol) < 1 or int(vol) > 5:
+        print("\n---------- enter volume (1-5) ----------")
+        print(">", end="")
+        vol = input()
+
     samples = []
     angle = 0
     offset = 0.5 - 1 / 8
@@ -61,6 +67,7 @@ async def test_delta_sigma(dut):
     frequency = 4000
     delta_angle = 2 * math.pi * frequency / sample_rate
     sample_rate *= dac_rate_ratio
+    gain = 16 ** (int(vol) - 5)
 
     if int(level) > 4:
         print("\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -71,7 +78,7 @@ async def test_delta_sigma(dut):
 
     await FallingEdge(dut.clk)
     for i in range(N // dac_rate_ratio):
-        dut.current_sample.value = int(2**15 * math.sin(angle))
+        dut.current_sample.value = int(gain * 2**15 * math.sin(angle))
         for j in range(dac_rate_ratio):
             await FallingEdge(dut.clk)
             if dut.audio_out.value == 0:
@@ -86,7 +93,7 @@ async def test_delta_sigma(dut):
     while abs(angle) > delta_angle / 2:
         print(f"[completing cycle] current angle: {angle}")
         N += dac_rate_ratio
-        dut.current_sample.value = int(2**15 * math.sin(angle))
+        dut.current_sample.value = int(gain * 2**15 * math.sin(angle))
         for j in range(dac_rate_ratio):
             await FallingEdge(dut.clk)
             if dut.audio_out.value == 0:
