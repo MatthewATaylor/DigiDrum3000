@@ -32,6 +32,7 @@ module top_level (
   logic        square_wave;
   logic        impulse_approx;  // same as square at very high frequency
 
+  logic [ 3:0] wave_shift;
   logic [31:0] wave_period;
   logic [31:0] wave_frequency;
   logic [31:0] square_count;
@@ -54,6 +55,7 @@ module top_level (
 
   always_ff @(posedge clk_100mhz) begin
     wave_frequency <= {27'b0, 1'b1, sw[15:12]} << sw[11:8];
+    wave_shift <= 4'hF - sw[7:4];
     wave_period <= divider_out_valid ? divider_out : wave_period;
   end
 
@@ -77,7 +79,7 @@ module top_level (
   logic [31:0] sample_cycle_count;
 
   always_ff @(posedge clk_100mhz) begin
-    sample_out <= sw[0] ? sin_sample : sin_upsample;
+    sample_out <= sw[2] ? $signed(sw[0] ? sin_sample : sin_upsample) >>> wave_shift : 0;
   end
 
   sin_gen my_sin_gen (
@@ -113,8 +115,8 @@ module top_level (
 
   always_comb begin
     case (sw[1:0])
-      2'b00:   spk_out = square_wave;
-      2'b01:   spk_out = impulse_approx;
+      2'b00:   spk_out = sw[2] ? square_wave : 0;
+      2'b01:   spk_out = sw[2] ? impulse_approx : 0;
       default: spk_out = sin_wave;
     endcase
   end

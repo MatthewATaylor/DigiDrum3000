@@ -60,7 +60,6 @@ async def test_delta_sigma(dut):
 
     samples = []
     angle = 0
-    offset = 0.5 - 1 / 8
     sample_rate = 16 * 44100
     dac_rate_ratio = 100_000_000 // sample_rate
     N = 2 ** (6 + 2 * int(level)) * dac_rate_ratio
@@ -82,9 +81,12 @@ async def test_delta_sigma(dut):
         for j in range(dac_rate_ratio):
             await FallingEdge(dut.clk)
             if dut.audio_out.value == 0:
-                samples.append(-1.0 + offset)
+                if len(samples) > 0 and samples[-1] > 0:
+                    samples.append(-0.9)
+                else:
+                    samples.append(-1.0)
             else:
-                samples.append(1.0 + offset)
+                samples.append(1.0)
         angle += delta_angle
         if angle > 2 * math.pi:
             angle -= 2 * math.pi
@@ -97,9 +99,12 @@ async def test_delta_sigma(dut):
         for j in range(dac_rate_ratio):
             await FallingEdge(dut.clk)
             if dut.audio_out.value == 0:
-                samples.append(-1.0 + offset)
+                if samples[-1] > 0:
+                    samples.append(-0.9)
+                else:
+                    samples.append(-1.0)
             else:
-                samples.append(1.0 + offset)
+                samples.append(1.0)
         angle += delta_angle
         if angle > 2 * math.pi:
             angle -= 2 * math.pi
@@ -107,6 +112,8 @@ async def test_delta_sigma(dut):
 
     # scale so signal is at -0dB
     samples = [10 ** (14.5 / 20) * i for i in samples]
+    dc = np.mean(samples)
+    samples = [sample - dc for sample in samples]
     window = scipy.signal.windows.flattop(N, sym=False)
     filter = scipy.signal.butter(1, 28000, fs=sample_rate, output="sos")
     filtered = scipy.signal.sosfilt(filter, samples)
@@ -175,22 +182,46 @@ def test_delta_sigma_runner():
     parameters = {}
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
-    runner.build(
-        sources=sources,
-        hdl_toplevel="dlt_sig_dac_2nd_order",
-        always=True,
-        build_args=build_test_args,
-        parameters=parameters,
-        timescale=("1ns", "1ps"),
-        waves=True,
-    )
-    run_test_args = []
-    runner.test(
-        hdl_toplevel="dlt_sig_dac_2nd_order",
-        test_module="test_delta_sigma",
-        test_args=run_test_args,
-        waves=True,
-    )
+    order = "-1"
+    while int(order) < 1 or int(order) > 2:
+        print("\n---------- enter DAC order (1-2) ----------")
+        print(">", end="")
+        order = input()
+
+    if int(order) == 2:
+        runner.build(
+            sources=sources,
+            hdl_toplevel="dlt_sig_dac_2nd_order",
+            always=True,
+            build_args=build_test_args,
+            parameters=parameters,
+            timescale=("1ns", "1ps"),
+            waves=True,
+        )
+        run_test_args = []
+        runner.test(
+            hdl_toplevel="dlt_sig_dac_2nd_order",
+            test_module="test_delta_sigma",
+            test_args=run_test_args,
+            waves=True,
+        )
+    else:
+        runner.build(
+            sources=sources,
+            hdl_toplevel="dlt_sig_dac_1st_order",
+            always=True,
+            build_args=build_test_args,
+            parameters=parameters,
+            timescale=("1ns", "1ps"),
+            waves=True,
+        )
+        run_test_args = []
+        runner.test(
+            hdl_toplevel="dlt_sig_dac_1st_order",
+            test_module="test_delta_sigma",
+            test_args=run_test_args,
+            waves=True,
+        )
 
 
 if __name__ == "__main__":
