@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2025.1 (64-bit)
+# SW Build 6140274 on Wed May 21 22:58:25 MDT 2025
+# IP Build 6138677 on Thu May 22 03:10:11 MDT 2025
+# SharedData Build 6139179 on Tue May 20 17:58:58 MDT 2025
+# Start of session at: Fri Oct 24 14:38:16 2025
+# Process ID         : 387252
+# Current directory  : /home/fpga/worker_place/temp/temp/3a27d66554f0429d82abf89ebfb77f5e
+# Command line       : vivado -mode batch -source build.tcl
+# Log file           : /home/fpga/worker_place/temp/temp/3a27d66554f0429d82abf89ebfb77f5e/vivado.log
+# Journal file       : /home/fpga/worker_place/temp/temp/3a27d66554f0429d82abf89ebfb77f5e/vivado.jou
+# Running On         : eecs-digital-14
+# Platform           : Ubuntu
+# Operating System   : Ubuntu 24.04.3 LTS
+# Processor Detail   : AMD Ryzen 7 5700U with Radeon Graphics
+# CPU Frequency      : 1863.977 MHz
+# CPU Physical cores : 8
+# CPU Logical cores  : 16
+# Host memory        : 13492 MB
+# Swap memory        : 4294 MB
+# Total Virtual      : 17787 MB
+# Available Virtual  : 16486 MB
+#-----------------------------------------------------------
+source build.tcl

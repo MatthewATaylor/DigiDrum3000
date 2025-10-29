@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1761367409" />
+    <testcase name="test_a" classname="test_midi_processor" file="/home/mat/Documents/classes/62050/project/fpga/sim/test_midi_processor.py" lineno="38" time="6.411273241043091" sim_time_ns="1904050.001" ratio_time="296984.6907804257" />
+  </testsuite>
+</testsuites>

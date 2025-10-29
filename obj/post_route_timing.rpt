@@ -1,0 +1,107 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (lin64) Build 6140274 Wed May 21 22:58:25 MDT 2025
+| Date         : Fri Oct 24 14:40:34 2025
+| Host         : eecs-digital-14 running 64-bit Ubuntu 24.04.3 LTS
+| Command      : report_timing -file obj/post_route_timing.rpt
+| Design       : top_level
+| Device       : 7s50-csga324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.621ns  (required time - arrival time)
+  Source:                 ddr3_top/ddr3_controller_inst/stage2_bank_reg[2]/C
+                            (rising edge-triggered cell FDRE clocked by clk_controller_clk_wiz_0  {rise@0.000ns fall@6.000ns period=12.000ns})
+  Destination:            ddr3_top/ddr3_controller_inst/o_wb_stall_reg_rep/D
+                            (rising edge-triggered cell FDRE clocked by clk_controller_clk_wiz_0  {rise@0.000ns fall@6.000ns period=12.000ns})
+  Path Group:             clk_controller_clk_wiz_0
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            12.000ns  (clk_controller_clk_wiz_0 rise@12.000ns - clk_controller_clk_wiz_0 rise@0.000ns)
+  Data Path Delay:        11.349ns  (logic 4.059ns (35.764%)  route 7.290ns (64.236%))
+  Logic Levels:           14  (CARRY4=2 LUT2=1 LUT3=1 LUT4=1 LUT5=2 LUT6=5 MUXF7=2)
+  Clock Path Skew:        -0.033ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    -1.574ns = ( 10.426 - 12.000 ) 
+    Source Clock Delay      (SCD):    -0.965ns
+    Clock Pessimism Removal (CPR):    0.576ns
+  Clock Uncertainty:      0.076ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.134ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_controller_clk_wiz_0 rise edge)
+                                                      0.000     0.000 r  
+    N15                                               0.000     0.000 r  clk_100mhz (IN)
+                         net (fo=0)                   0.000     0.000    clk_wiz_i/clk_100mhz
+    N15                  IBUF (Prop_ibuf_I_O)         1.440     1.440 r  clk_wiz_i/clkin1_ibufg/O
+                         net (fo=1, routed)           1.233     2.673    clk_wiz_i/clk_in1_clk_wiz_0
+    MMCME2_ADV_X0Y0      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                     -6.965    -4.291 r  clk_wiz_i/mmcm_adv_inst/CLKOUT0
+                         net (fo=1, routed)           1.666    -2.625    clk_wiz_i/clk_controller_clk_wiz_0
+    BUFGCTRL_X0Y0        BUFG (Prop_bufg_I_O)         0.096    -2.529 r  clk_wiz_i/clkout1_buf/O
+                         net (fo=2669, routed)        1.564    -0.965    ddr3_top/ddr3_controller_inst/i_controller_clk
+    SLICE_X52Y15         FDRE                                         r  ddr3_top/ddr3_controller_inst/stage2_bank_reg[2]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X52Y15         FDRE (Prop_fdre_C_Q)         0.518    -0.447 r  ddr3_top/ddr3_controller_inst/stage2_bank_reg[2]/Q
+                         net (fo=87, routed)          1.078     0.632    ddr3_top/ddr3_controller_inst/stage2_bank[2]
+    SLICE_X52Y17         MUXF7 (Prop_muxf7_S_O)       0.292     0.924 r  ddr3_top/ddr3_controller_inst/o_phy_cmd[64]_INST_0_i_1/O
+                         net (fo=48, routed)          0.851     1.775    ddr3_top/ddr3_controller_inst/o_phy_cmd[64]_INST_0_i_1_n_0
+    SLICE_X52Y16         LUT2 (Prop_lut2_I0_O)        0.289     2.064 r  ddr3_top/ddr3_controller_inst/o_phy_cmd[70]_INST_0_i_1/O
+                         net (fo=21, routed)          0.514     2.578    ddr3_top/ddr3_controller_inst/o_phy_cmd[70]_INST_0_i_1_n_0
+    SLICE_X52Y16         LUT3 (Prop_lut3_I0_O)        0.328     2.906 f  ddr3_top/ddr3_controller_inst/o_phy_cmd[70]_INST_0_i_2/O
+                         net (fo=32, routed)          0.788     3.694    ddr3_top/ddr3_controller_inst/o_phy_cmd[70]_INST_0_i_2_n_0
+    SLICE_X55Y14         LUT4 (Prop_lut4_I3_O)        0.118     3.812 r  ddr3_top/ddr3_controller_inst/delay_before_precharge_counter_q[5][2]_i_2/O
+                         net (fo=18, routed)          0.676     4.488    ddr3_top/ddr3_controller_inst/delay_before_precharge_counter_q[5][2]_i_2_n_0
+    SLICE_X55Y11         LUT5 (Prop_lut5_I1_O)        0.326     4.814 r  ddr3_top/ddr3_controller_inst/bank_active_row_q[5][2]_i_1/O
+                         net (fo=3, routed)           0.463     5.277    ddr3_top/ddr3_controller_inst/bank_active_row_q[5][2]_i_1_n_0
+    SLICE_X55Y11         LUT6 (Prop_lut6_I3_O)        0.124     5.401 r  ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_194/O
+                         net (fo=1, routed)           0.000     5.401    ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_194_n_0
+    SLICE_X55Y11         MUXF7 (Prop_muxf7_I1_O)      0.217     5.618 r  ddr3_top/ddr3_controller_inst/o_wb_stall_q_reg_i_133/O
+                         net (fo=1, routed)           0.724     6.341    ddr3_top/ddr3_controller_inst/o_wb_stall_q_reg_i_133_n_0
+    SLICE_X57Y13         LUT6 (Prop_lut6_I4_O)        0.299     6.640 f  ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_83/O
+                         net (fo=1, routed)           0.593     7.233    ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_83_n_0
+    SLICE_X53Y14         LUT5 (Prop_lut5_I4_O)        0.124     7.357 r  ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_35/O
+                         net (fo=1, routed)           0.000     7.357    ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_35_n_0
+    SLICE_X53Y14         CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.532     7.889 r  ddr3_top/ddr3_controller_inst/o_wb_stall_q_reg_i_15/CO[3]
+                         net (fo=1, routed)           0.000     7.889    ddr3_top/ddr3_controller_inst/o_wb_stall_q_reg_i_15_n_0
+    SLICE_X53Y15         CARRY4 (Prop_carry4_CI_CO[0])
+                                                      0.271     8.160 f  ddr3_top/ddr3_controller_inst/o_wb_stall_q_reg_i_6/CO[0]
+                         net (fo=1, routed)           0.466     8.626    ddr3_top/ddr3_controller_inst/stage2_stall2
+    SLICE_X50Y17         LUT6 (Prop_lut6_I0_O)        0.373     8.999 r  ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_2/O
+                         net (fo=1, routed)           0.447     9.446    ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_2_n_0
+    SLICE_X50Y19         LUT6 (Prop_lut6_I0_O)        0.124     9.570 r  ddr3_top/ddr3_controller_inst/o_wb_stall_q_i_1/O
+                         net (fo=5, routed)           0.690    10.261    ddr3_top/ddr3_controller_inst/o_wb_stall_d22_out
+    SLICE_X50Y23         LUT6 (Prop_lut6_I2_O)        0.124    10.385 r  ddr3_top/ddr3_controller_inst/o_wb_stall_rep_i_1/O
+                         net (fo=1, routed)           0.000    10.385    ddr3_top/ddr3_controller_inst/o_wb_stall_rep_i_1_n_0
+    SLICE_X50Y23         FDRE                                         r  ddr3_top/ddr3_controller_inst/o_wb_stall_reg_rep/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_controller_clk_wiz_0 rise edge)
+                                                     12.000    12.000 r  
+    N15                                               0.000    12.000 r  clk_100mhz (IN)
+                         net (fo=0)                   0.000    12.000    clk_wiz_i/clk_100mhz
+    N15                  IBUF (Prop_ibuf_I_O)         1.370    13.370 r  clk_wiz_i/clkin1_ibufg/O
+                         net (fo=1, routed)           1.162    14.532    clk_wiz_i/clk_in1_clk_wiz_0
+    MMCME2_ADV_X0Y0      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                     -7.221     7.311 r  clk_wiz_i/mmcm_adv_inst/CLKOUT0
+                         net (fo=1, routed)           1.587     8.898    clk_wiz_i/clk_controller_clk_wiz_0
+    BUFGCTRL_X0Y0        BUFG (Prop_bufg_I_O)         0.091     8.989 r  clk_wiz_i/clkout1_buf/O
+                         net (fo=2669, routed)        1.437    10.426    ddr3_top/ddr3_controller_inst/i_controller_clk
+    SLICE_X50Y23         FDRE                                         r  ddr3_top/ddr3_controller_inst/o_wb_stall_reg_rep/C
+                         clock pessimism              0.576    11.002    
+                         clock uncertainty           -0.076    10.927    
+    SLICE_X50Y23         FDRE (Setup_fdre_C_D)        0.079    11.006    ddr3_top/ddr3_controller_inst/o_wb_stall_reg_rep
+  -------------------------------------------------------------------
+                         required time                         11.006    
+                         arrival time                         -10.385    
+  -------------------------------------------------------------------
+                         slack                                  0.621    
+
+
+
+

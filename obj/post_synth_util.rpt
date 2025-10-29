@@ -1,0 +1,79 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.1 (lin64) Build 6140274 Wed May 21 22:58:25 MDT 2025
+| Date         : Fri Oct 24 14:39:46 2025
+| Host         : eecs-digital-14 running 64-bit Ubuntu 24.04.3 LTS
+| Command      : report_utilization -file obj/post_synth_util.rpt -hierarchical -hierarchical_depth 4 -hierarchical_min_primitive_count 0
+| Design       : top_level
+| Device       : xc7s50csga324-1
+| Speed File   : -1
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++----------------------------------------------+-----------------------------------+------------+------------+---------+------+------+--------+--------+------------+
+|                   Instance                   |               Module              | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs | RAMB36 | RAMB18 | DSP Blocks |
++----------------------------------------------+-----------------------------------+------------+------------+---------+------+------+--------+--------+------------+
+| top_level                                    |                             (top) |       4468 |       4418 |      50 |    0 | 4360 |      4 |      3 |          1 |
+|   (top_level)                                |                             (top) |          4 |          4 |       0 |    0 |   51 |      0 |      0 |          0 |
+|   clk_wiz_i                                  |                           clk_wiz |          5 |          5 |       0 |    0 |    0 |      0 |      0 |          0 |
+|   ddr3_top                                   |                          ddr3_top |       2899 |       2899 |       0 |    0 | 2208 |      0 |      0 |          0 |
+|     (ddr3_top)                               |                          ddr3_top |          1 |          1 |       0 |    0 |    0 |      0 |      0 |          0 |
+|     ddr3_controller_inst                     |                   ddr3_controller |       2884 |       2884 |       0 |    0 | 2185 |      0 |      0 |          0 |
+|     ddr3_phy_inst                            |                          ddr3_phy |         14 |         14 |       0 |    0 |   23 |      0 |      0 |          0 |
+|   dlt_sig                                    |             dlt_sig_dac_2nd_order |         78 |         78 |       0 |    0 |   64 |      0 |      0 |          0 |
+|   drd                                        |                       dram_reader |        494 |        494 |       0 |    0 |  665 |      2 |      1 |          0 |
+|     dram_read_fifo                           |  clockdomain_fifo__parameterized1 |        209 |        209 |       0 |    0 |  234 |      2 |      1 |          0 |
+|       (dram_read_fifo)                       |  clockdomain_fifo__parameterized1 |         65 |         65 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       xpm_fifo_axis_inst                     |     xpm_fifo_axis__parameterized1 |        144 |        144 |       0 |    0 |  234 |      2 |      1 |          0 |
+|         (xpm_fifo_axis_inst)                 |     xpm_fifo_axis__parameterized1 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         gaxis_rst_sync.xpm_cdc_sync_rst_inst |               xpm_cdc_sync_rst__3 |          0 |          0 |       0 |    0 |    3 |      0 |      0 |          0 |
+|         xpm_fifo_base_inst                   |     xpm_fifo_base__parameterized1 |        142 |        142 |       0 |    0 |  231 |      2 |      1 |          0 |
+|     genblk1[0].dram_read_unstacker           |                         unstacker |         72 |         72 |       0 |    0 |  132 |      0 |      0 |          0 |
+|     genblk1[1].dram_read_unstacker           |                      unstacker_15 |         74 |         74 |       0 |    0 |  132 |      0 |      0 |          0 |
+|     genblk1[2].dram_read_unstacker           |                      unstacker_16 |         73 |         73 |       0 |    0 |  132 |      0 |      0 |          0 |
+|     mixer                                    |                      sample_mixer |         66 |         66 |       0 |    0 |   35 |      0 |      0 |          0 |
+|   drd_req                                    |               dram_read_requester |        375 |        375 |       0 |    0 |  500 |      0 |      1 |          0 |
+|     (drd_req)                                |               dram_read_requester |          1 |          1 |       0 |    0 |   27 |      0 |      0 |          0 |
+|     dram_read_addr_fifo                      |  clockdomain_fifo__parameterized0 |        144 |        144 |       0 |    0 |  234 |      0 |      1 |          0 |
+|       (dram_read_addr_fifo)                  |  clockdomain_fifo__parameterized0 |          0 |          0 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       xpm_fifo_axis_inst                     |     xpm_fifo_axis__parameterized0 |        144 |        144 |       0 |    0 |  234 |      0 |      1 |          0 |
+|         (xpm_fifo_axis_inst)                 |     xpm_fifo_axis__parameterized0 |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         gaxis_rst_sync.xpm_cdc_sync_rst_inst |               xpm_cdc_sync_rst__4 |          0 |          0 |       0 |    0 |    3 |      0 |      0 |          0 |
+|         xpm_fifo_base_inst                   |     xpm_fifo_base__parameterized0 |        142 |        142 |       0 |    0 |  231 |      0 |      1 |          0 |
+|     genblk1[0].instr                         |                        instrument |         86 |         86 |       0 |    0 |   65 |      0 |      0 |          0 |
+|     genblk1[1].instr                         |        instrument__parameterized0 |         72 |         72 |       0 |    0 |   87 |      0 |      0 |          0 |
+|     genblk1[2].instr                         |        instrument__parameterized1 |         72 |         72 |       0 |    0 |   87 |      0 |      0 |          0 |
+|   dwr                                        |                       dram_writer |        305 |        305 |       0 |    0 |  683 |      2 |      0 |          0 |
+|     dram_write_fifo                          |                  clockdomain_fifo |        145 |        145 |       0 |    0 |  234 |      2 |      0 |          0 |
+|       (dram_write_fifo)                      |                  clockdomain_fifo |          1 |          1 |       0 |    0 |    0 |      0 |      0 |          0 |
+|       xpm_fifo_axis_inst                     |                     xpm_fifo_axis |        144 |        144 |       0 |    0 |  234 |      2 |      0 |          0 |
+|         (xpm_fifo_axis_inst)                 |                     xpm_fifo_axis |          2 |          2 |       0 |    0 |    0 |      0 |      0 |          0 |
+|         gaxis_rst_sync.xpm_cdc_sync_rst_inst |                  xpm_cdc_sync_rst |          0 |          0 |       0 |    0 |    3 |      0 |      0 |          0 |
+|         xpm_fifo_base_inst                   |                     xpm_fifo_base |        142 |        142 |       0 |    0 |  231 |      2 |      0 |          0 |
+|     dram_write_stacker                       |                           stacker |          8 |          8 |       0 |    0 |  253 |      0 |      0 |          0 |
+|     sample_loader_i                          |                     sample_loader |        152 |        152 |       0 |    0 |  196 |      0 |      0 |          0 |
+|       (sample_loader_i)                      |                     sample_loader |        105 |        105 |       0 |    0 |  161 |      0 |      0 |          0 |
+|       sample_load_uart                       |                      uart_receive |         47 |         47 |       0 |    0 |   35 |      0 |      0 |          0 |
+|   genblk1[0].db_instr_trig                   |                    debouncer_trig |         29 |         29 |       0 |    0 |   22 |      0 |      0 |          0 |
+|   genblk1[1].db_instr_trig                   |                  debouncer_trig_0 |         29 |         29 |       0 |    0 |   22 |      0 |      0 |          0 |
+|   genblk1[2].db_instr_trig                   |                  debouncer_trig_1 |         29 |         29 |       0 |    0 |   22 |      0 |      0 |          0 |
+|   ssc                                        |          seven_segment_controller |         27 |         27 |       0 |    0 |   25 |      0 |      0 |          0 |
+|   tg                                         |                 traffic_generator |        154 |        120 |      34 |    0 |   64 |      0 |      0 |          0 |
+|     (tg)                                     |                 traffic_generator |         69 |         69 |       0 |    0 |   52 |      0 |      0 |          0 |
+|     mcf                                      |                      command_fifo |         85 |         51 |      34 |    0 |   12 |      0 |      0 |          0 |
+|   upsampler_i                                |                         upsampler |         73 |         57 |      16 |    0 |   34 |      0 |      1 |          1 |
+|     (upsampler_i)                            |                         upsampler |         44 |         44 |       0 |    0 |   34 |      0 |      0 |          1 |
+|     image_BROM                               | xilinx_single_port_ram_read_first |          0 |          0 |       0 |    0 |    0 |      0 |      1 |          0 |
+|     sample_buffer_lutram                     |                          dist_ram |         29 |         13 |      16 |    0 |    0 |      0 |      0 |          0 |
++----------------------------------------------+-----------------------------------+------------+------------+---------+------+------+--------+--------+------------+
+
+
