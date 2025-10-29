@@ -46,6 +46,17 @@ async def test_delta_sigma(dut):
     # use helper function to assert reset signal
     await reset(dut.rst, dut.clk)
 
+    limit_cycle = "-1"
+    while limit_cycle.lower() != "y" and limit_cycle.lower() != "n":
+        print("\n---------- DC limit cycle test? (y/n) ----------")
+        print(">", end="")
+        limit_cycle = input()
+
+    if limit_cycle == "y":
+        sample_gen = lambda angle: 0x0005
+    else:
+        sample_gen = lambda angle: int(gain * 2**15 * math.sin(angle))
+
     level = "-1"
     while int(level) < 1 or int(level) > 5:
         print("\n---------- enter detail level (1-5) ----------")
@@ -77,7 +88,7 @@ async def test_delta_sigma(dut):
 
     await FallingEdge(dut.clk)
     for i in range(N // dac_rate_ratio):
-        dut.current_sample.value = int(gain * 2**15 * math.sin(angle))
+        dut.current_sample.value = sample_gen(angle)
         for j in range(dac_rate_ratio):
             await FallingEdge(dut.clk)
             if dut.audio_out.value == 0:
@@ -95,7 +106,7 @@ async def test_delta_sigma(dut):
     while abs(angle) > delta_angle / 2:
         print(f"[completing cycle] current angle: {angle}")
         N += dac_rate_ratio
-        dut.current_sample.value = int(gain * 2**15 * math.sin(angle))
+        dut.current_sample.value = sample_gen(angle)
         for j in range(dac_rate_ratio):
             await FallingEdge(dut.clk)
             if dut.audio_out.value == 0:
