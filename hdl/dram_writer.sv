@@ -8,10 +8,13 @@ module dram_writer
     (
         input wire clk,
         input wire clk_dram_ctrl,
+        input wire clk_pixel,
         input wire rst,
+        input wire rst_pixel,
         input wire uart_din,
 
-        output logic [23:0] addr_starts [INSTRUMENT_COUNT:0],
+        output logic [23:0] addr_offsets [INSTRUMENT_COUNT:0],
+        output logic        addr_offsets_valid,
 
         output logic         fifo_receiver_axis_tvalid,
         input  wire          fifo_receiver_axis_tready,
@@ -31,8 +34,8 @@ module dram_writer
     clockdomain_fifo #(
         .DEPTH(128), .WIDTH(128), .PROGFULL_DEPTH(12)
     ) dram_write_fifo (
-        .sender_rst(rst),
-        .sender_clk(clk),
+        .sender_rst(rst_pixel),
+        .sender_clk(clk_pixel),
         .sender_axis_tvalid(stacker_chunk_axis_tvalid),
         .sender_axis_tready(stacker_chunk_axis_tready),
         .sender_axis_tdata(stacker_chunk_axis_tdata),
@@ -48,8 +51,8 @@ module dram_writer
     );
 
     stacker dram_write_stacker (
-        .clk(clk),
-        .rst(rst),
+        .clk(clk_pixel),
+        .rst(rst_pixel),
         
         .pixel_tvalid(sample_axis_tvalid),
         .pixel_tready(),
@@ -62,18 +65,37 @@ module dram_writer
         .chunk_tlast(stacker_chunk_axis_tlast)
     );
 
+    logic [23:0] addr_offset;
+    logic        addr_offset_valid;
+
     sample_loader #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
     ) sample_loader_i (
-        .clk(clk),
-        .rst(rst),
+        .clk_pixel(clk_pixel),
+        .rst_pixel(rst_pixel),
         .uart_din(uart_din),
 
-        .addr_starts(addr_starts),
+        .addr_offset(addr_offset),
+        .addr_offset_valid(addr_offset_valid),
         
         .sample_axis_tvalid(sample_axis_tvalid),
         .sample_axis_tdata(sample_axis_tdata),
         .sample_axis_tlast(sample_axis_tlast)
+    );
+
+    addr_offsets_cdc #(
+        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
+    ) addr_offsets_cdc_i (
+        .clk(clk),
+        .clk_pixel(clk_pixel),
+        .rst(rst),
+        .rst_pixel(rst_pixel),
+
+        .addr_offset_in(addr_offset),
+        .addr_offset_in_valid(addr_offset_valid),
+
+        .addr_offsets(addr_offsets),
+        .addr_offsets_valid(addr_offsets_valid)
     );
 
 endmodule

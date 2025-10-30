@@ -12,8 +12,9 @@ module dram_read_requester
         input wire rst,
         input wire midi_din,
 
-        input wire           sample_load_complete_trigger,
-        input wire   [23:0]  addr_starts [INSTRUMENT_COUNT:0],
+        input wire           sample_load_complete,
+        input wire   [23:0]  addr_offsets [INSTRUMENT_COUNT:0],
+        input wire           addr_offsets_valid,
 
         output logic         fifo_receiver_axis_tvalid,
         input  wire          fifo_receiver_axis_tready,
@@ -96,9 +97,9 @@ module dram_read_requester
                 .trigger(instr_trig_debug[i]),
                 .midi_key(MIDI_KEYS[i]),
                 
-                .setup_complete_trigger(sample_load_complete_trigger),
-                .addr_start(addr_starts[i]),
-                .addr_stop(addr_starts[i+1]),
+                .setup_complete(sample_load_complete & addr_offsets_valid),
+                .addr_start(addr_offsets[i]),
+                .addr_stop(addr_offsets[i+1]),
 
                 .addr(instr_addrs[i]),
                 .addr_valid(instr_addr_valids[i]),

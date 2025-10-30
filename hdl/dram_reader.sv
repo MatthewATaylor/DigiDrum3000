@@ -11,7 +11,8 @@ module dram_reader
         input wire rst,
         input wire rst_dram_ctrl,
 
-        input  wire  [23:0]  addr_starts [INSTRUMENT_COUNT:0],
+        input  wire  [23:0]  addr_offsets [INSTRUMENT_COUNT:0],
+        input  wire          addr_offsets_valid,
         output logic [15:0]  sample,
         output logic         sample_valid,
 
@@ -35,8 +36,9 @@ module dram_reader
     always_comb begin
         for (int i=0; i<INSTRUMENT_COUNT; i++) begin
             instr_one_hot[i] =
-                (data_addr >= addr_starts[i]) &&
-                (data_addr < addr_starts[i+1]);
+                addr_offsets_valid &&
+                (data_addr >= addr_offsets[i]) &&
+                (data_addr < addr_offsets[i+1]);
         end
     end
 

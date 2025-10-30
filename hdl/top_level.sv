@@ -62,12 +62,14 @@ module top_level
     logic clk;
     assign clk = clk_100mhz;
 
+    // cw_dram
     logic clk_dram_ctrl;
     logic clk_ddr3;
     logic clk_ddr3_90;
     logic clk_ddr3_ref;
     logic cw_dram_locked;
 
+    // cw_hdmi
     logic clk_pixel;
     logic clk_tmds;
     logic cw_hdmi_locked;
@@ -83,6 +85,10 @@ module top_level
     logic rst_dram_ctrl;
     assign rst_dram_ctrl = rst_dram_ctrl_buf[0] | ~clk_locked;
 
+    logic rst_pixel_buf [1:0];
+    logic rst_pixel;
+    assign rst_pixel = rst_pixel_buf[0] | ~clk_locked;
+
     logic uart_rxd_buf [1:0];
     logic uart_din;
     assign uart_din = uart_rxd_buf[0];
@@ -91,20 +97,18 @@ module top_level
     logic midi_din;
     assign midi_din = midi_din_buf[0];
 
-    logic sample_load_complete;
+    logic sample_load_complete_dram_ctrl;
     logic sample_load_complete_buf [1:0];
-    logic sample_load_complete_sync;
-    assign sample_load_complete_sync = sample_load_complete_buf[0];
-    logic sample_load_triggered;
-    logic sample_load_complete_trigger;
+    logic sample_load_complete;
+    assign sample_load_complete = sample_load_complete_buf[0];
 
     logic [2:0] instr_debug_btn_buf [1:0];
     logic [2:0] instr_debug_btn;
     assign instr_debug_btn = instr_debug_btn_buf[0];
     logic [2:0] instr_trig_debug;
 
-    assign led[3] = sample_load_complete_sync;
-    assign led[15:4] = 0;
+    assign led[1] = sample_load_complete;
+    assign led[15:3] = 0;
     assign rgb0 = 0;
     assign rgb1 = 0;
     assign uart_txd = 0;
@@ -120,28 +124,21 @@ module top_level
                 sample_load_complete_buf[i] <= 0;
                 instr_debug_btn_buf[i] <= 0;
             end
-            sample_load_complete_trigger <= 0;
-            sample_load_triggered <= 0;
         end else begin
             uart_rxd_buf <= {uart_rxd, uart_rxd_buf[1]};
             midi_din_buf <= {midi_pmod, midi_din_buf[1]};
 
             // sample_load_complete CDC
-            sample_load_complete_buf <= {sample_load_complete, sample_load_complete_buf[1]};
+            sample_load_complete_buf <= {sample_load_complete_dram_ctrl, sample_load_complete_buf[1]};
 
             instr_debug_btn_buf <= {btn[3:1], instr_debug_btn_buf[1]};
-
-            if (sample_load_complete_sync && !sample_load_triggered) begin
-                sample_load_complete_trigger <= 1;
-                sample_load_triggered <= 1;
-            end
-            if (sample_load_complete_trigger) begin
-                sample_load_complete_trigger <= 0;
-            end
         end
     end
     always_ff @ (posedge clk_dram_ctrl) begin
         rst_dram_ctrl_buf <= {btn[0], rst_dram_ctrl_buf[1]};
+    end
+    always_ff @ (posedge clk_pixel) begin
+        rst_pixel_buf <= {btn[0], rst_pixel_buf[1]};
     end
 
     genvar i;
@@ -173,22 +170,28 @@ module top_level
         .sysclk(clk)
     );
 
-    logic [23:0]  addr_starts [INSTRUMENT_COUNT:0];
+    logic [23:0]  addr_offsets [INSTRUMENT_COUNT:0];
+    logic         addr_offsets_valid;
 
     logic [127:0] write_axis_data;
     logic         write_axis_tlast;
     logic         write_axis_valid;
     logic         write_axis_ready;
 
+    assign led[2] = addr_offsets_valid;
+
     dram_writer #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
     ) dwr (
         .clk(clk),
         .clk_dram_ctrl(clk_dram_ctrl),
+        .clk_pixel(clk_pixel),
         .rst(rst),
+        .rst_pixel(rst_pixel),
         .uart_din(uart_din),
 
-        .addr_starts(addr_starts),
+        .addr_offsets(addr_offsets),
+        .addr_offsets_valid(addr_offsets_valid),
         
         .fifo_receiver_axis_tvalid(write_axis_valid),
         .fifo_receiver_axis_tready(write_axis_ready),
@@ -210,8 +213,9 @@ module top_level
         .rst(rst),
         .midi_din(midi_din),
 
-        .sample_load_complete_trigger(sample_load_complete_trigger),
-        .addr_starts(addr_starts),
+        .sample_load_complete(sample_load_complete),
+        .addr_offsets(addr_offsets),
+        .addr_offsets_valid(addr_offsets_valid),
         
         .fifo_receiver_axis_tvalid(read_addr_axis_valid),
         .fifo_receiver_axis_tready(read_addr_axis_ready),
@@ -236,7 +240,8 @@ module top_level
         .rst(rst),
         .rst_dram_ctrl(rst_dram_ctrl),
 
-        .addr_starts(addr_starts),
+        .addr_offsets(addr_offsets),
+        .addr_offsets_valid(addr_offsets_valid),
         .sample(sample_raw),
         .sample_valid(sample_raw_valid),
 
@@ -261,7 +266,7 @@ module top_level
         .clk_dram_ctrl(clk_dram_ctrl),
         .rst_dram_ctrl(rst_dram_ctrl),
 
-        .sample_load_complete(sample_load_complete),
+        .sample_load_complete(sample_load_complete_dram_ctrl),
         .response_addr(response_addr),
 
         .memrequest_addr(memrequest_addr),
@@ -402,13 +407,6 @@ module top_level
         .cat(ss_c),
         .an({ss0_an, ss1_an})
     );
-    // seven_segment_controller ssc (
-    //     .clk(clk),
-    //     .rst(rst),
-    //     .val({16'b0, sample_raw}),
-    //     .cat(ss_c),
-    //     .an({ss0_an, ss1_an})
-    // );
 
     always_ff @ (posedge clk_dram_ctrl) begin
         if (rst_dram_ctrl) begin
@@ -416,20 +414,6 @@ module top_level
         end else begin
             if (write_axis_tlast) begin
                 led[0] <= 1;
-            end
-        end
-    end
-
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            led[1] <= 0;
-            led[2] <= 0;
-        end else begin
-            if (dwr.stacker_chunk_axis_tlast) begin
-                led[1] <= 1;
-            end
-            if (dwr.sample_axis_tlast) begin
-                led[2] <= 1;
             end
         end
     end

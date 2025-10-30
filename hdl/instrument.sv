@@ -12,7 +12,7 @@ module instrument
         input wire          trigger,
         input wire   [6:0]  midi_key,
 
-        input wire          setup_complete_trigger,
+        input wire          setup_complete,
         input wire   [23:0] addr_start,
         input wire   [23:0] addr_stop,  // Exclusive
 
@@ -51,7 +51,7 @@ module instrument
         end else begin
             case (state)
                 SETUP: begin
-                    if (setup_complete_trigger) begin
+                    if (setup_complete) begin
                         addr_start_hold <= addr_start;
                         addr_stop_hold <= addr_stop;
                         state <= NOTE_OFF;
