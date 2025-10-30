@@ -35,7 +35,10 @@ def bits_to_int(bits):
 def midi_list_to_msg(midi):
     msg = []
     for byte in midi:
-        msg += START+byte+STOP
+        if byte is None:
+            msg += [1]*10
+        else:
+            msg += START+byte+STOP
     return msg
 
 
@@ -51,16 +54,10 @@ async def test_a(dut):
     messages = [
         [NOTE_ON_CH10,       DATA32, DATA12],
         [NOTE_ON_CH10,       DATA12, DATA32],
-        [[1,1,1,1,1,1,1,1,], DATA32, DATA12],
-        [NOTE_ON_CH09,       DATA32, DATA12],
+        [None,               DATA32, DATA12],  # Test "running status"
+        [NOTE_ON_CH09,       DATA32, DATA12],  # Test incorrect channel
     ]
-
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
-    dut.rst.value = 1
-    await ClockCycles(dut.clk, 2)
-    dut.rst.value = 0
-
-    cocotb.start_soon(write_uart(dut))
+    uart_messages = [midi_list_to_msg(midi_list) for midi_list in messages]
 
     expected_outs = [
         {'key': 32, 'velocity': 12},
@@ -69,20 +66,27 @@ async def test_a(dut):
         None
     ]
 
-    for midi_list in messages:
-        msg = midi_list_to_msg(midi_list)
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    dut.rst.value = 1
+    await ClockCycles(dut.clk, 2)
+    dut.rst.value = 0
 
+    cocotb.start_soon(write_uart(dut, uart_messages))
 
-    for i in range(2):
+    for out in expected_outs:
         dout_valid_received = False
+        cycles_passed = 0
         while True:
             await ClockCycles(dut.clk, 1)
-            if (dut.dout_valid.value == 1):
+            cycles_passed += 1
+            if dut.dout_valid.value == 1:
                 dout_valid_received = True
-                assert dut.key.value == bits_to_int(NOTE)
-                assert dut.velocity.value == bits_to_int(VELOCITY)
+                assert dut.key.value == out['key']
+                assert dut.velocity.value == out['velocity']
                 break
-        assert dout_valid_received
+            if cycles_passed > UART_PERIOD*30:
+                break
+        assert dout_valid_received == (out is not None)
 
 
 def is_runner():
