@@ -67,7 +67,7 @@
 
 `timescale 1ps/1ps
 
-module clk_wiz
+module cw_dram
 
  (// Clock in ports
   // Clock out ports
@@ -75,7 +75,6 @@ module clk_wiz
   output        clk_ddr3,
   output        clk_ddr3_90,
   output        clk_ddr3_ref,
-  output        clk_passthrough,
   // Status and control signals
   input         reset,
   output        locked,
@@ -85,9 +84,11 @@ module clk_wiz
   //------------------------------------
 wire clk_in1_clk_wiz_0;
 wire clk_in2_clk_wiz_0;
-  IBUF clkin1_ibufg
-   (.O (clk_in1_clk_wiz_0),
-    .I (clk_in1));
+assign clk_in1_clk_wiz_0 = clk_in1;
+  // TODO: Determine if it's ok to leave out the IBUF
+  // IBUF clkin1_ibufg
+  //  (.O (clk_in1_clk_wiz_0),
+  //   .I (clk_in1));
 
 
   // Clocking PRIMITIVE
@@ -101,7 +102,7 @@ wire clk_in2_clk_wiz_0;
   wire        clk_ddr3_clk_wiz_0;
   wire        clk_ddr3_90_clk_wiz_0;
   wire        clk_ddr3_ref_clk_wiz_0;
-  wire        clk_passthrough_clk_wiz_0;
+  //wire        clk_passthrough_clk_wiz_0;
 
   wire [15:0] do_unused;
   wire        drdy_unused;
@@ -115,6 +116,7 @@ wire clk_in2_clk_wiz_0;
   wire        clkout2b_unused;
   wire        clkout3b_unused;
   wire        clkout4_unused;
+  wire        clkout5_unused;
   wire        clkout6_unused;
   wire        clkfbstopped_unused;
   wire        clkinstopped_unused;
@@ -145,10 +147,10 @@ wire clk_in2_clk_wiz_0;
     .CLKOUT3_PHASE        (0.000),
     .CLKOUT3_DUTY_CYCLE   (0.500),
     .CLKOUT3_USE_FINE_PS  ("FALSE"),
-    .CLKOUT5_DIVIDE       (10),
-    .CLKOUT5_PHASE        (0.000),
-    .CLKOUT5_DUTY_CYCLE   (0.500),
-    .CLKOUT5_USE_FINE_PS  ("FALSE"),
+    //.CLKOUT5_DIVIDE       (10),
+    //.CLKOUT5_PHASE        (0.000),
+    //.CLKOUT5_DUTY_CYCLE   (0.500),
+    //.CLKOUT5_USE_FINE_PS  ("FALSE"),
     .CLKIN1_PERIOD        (10.000))
   mmcm_adv_inst
     // Output clocks
@@ -164,7 +166,7 @@ wire clk_in2_clk_wiz_0;
     .CLKOUT3             (clk_ddr3_ref_clk_wiz_0),
     .CLKOUT3B            (clkout3b_unused),
     .CLKOUT4             (clkout4_unused),
-    .CLKOUT5             (clk_passthrough_clk_wiz_0),
+    .CLKOUT5             (clkout5_unused),//(clk_passthrough_clk_wiz_0),
     .CLKOUT6             (clkout6_unused),
      // Input clock control
     .CLKFBIN             (clkfbout_buf_clk_wiz_0),
@@ -219,9 +221,9 @@ wire clk_in2_clk_wiz_0;
    (.O   (clk_ddr3_ref),
     .I   (clk_ddr3_ref_clk_wiz_0));
 
-  BUFG clkout6_buf
-   (.O   (clk_passthrough),
-    .I   (clk_passthrough_clk_wiz_0));
+  //BUFG clkout6_buf
+  // (.O   (clk_passthrough),
+  //  .I   (clk_passthrough_clk_wiz_0));
 
 endmodule
 

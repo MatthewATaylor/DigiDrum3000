@@ -41,10 +41,17 @@ set_property CONFIG_VOLTAGE 3.3 [current_design]
 # # jab[5]
 # set_property -dict {PACKAGE_PIN G16 IOSTANDARD LVCMOS33 PULLTYPE PULLUP} [get_ports "i2c_scl" ]
 
-set_max_delay -datapath_only 6 -from  [get_clocks clk_controller_clk_wiz_0] -to [get_clocks clk_passthrough_clk_wiz_0]
-set_max_delay -datapath_only 6 -from  [get_clocks clk_passthrough_clk_wiz_0] -to [get_clocks clk_controller_clk_wiz_0]
-set_max_delay -datapath_only 6 -from  [get_clocks clk_controller_clk_wiz_0] -to [get_clocks clk_ddr3_ref_clk_wiz_0]
-set_max_delay -datapath_only 6 -from  [get_clocks clk_ddr3_ref_clk_wiz_0] -to [get_clocks clk_controller_clk_wiz_0]
+set_max_delay -datapath_only 6 -from  [get_clocks clk_controller_clk_wiz_0] -to [get_clocks gclk]
+set_max_delay -datapath_only 6 -from  [get_clocks gclk] -to [get_clocks clk_controller_clk_wiz_0]
+
+set_max_delay -datapath_only 6 -from  [get_clocks clk_controller_clk_wiz_0] -to [get_clocks clk_pixel_cw_hdmi]
+set_max_delay -datapath_only 6 -from  [get_clocks clk_pixel_cw_hdmi] -to [get_clocks clk_controller_clk_wiz_0]
+
+set_max_delay -datapath_only 6 -from  [get_clocks gclk] -to [get_clocks clk_pixel_cw_hdmi]
+set_max_delay -datapath_only 6 -from  [get_clocks clk_pixel_cw_hdmi] -to [get_clocks gclk]
+
+# set_max_delay -datapath_only 6 -from  [get_clocks clk_controller_clk_wiz_0] -to [get_clocks clk_ddr3_ref_clk_wiz_0]
+# set_max_delay -datapath_only 6 -from  [get_clocks clk_ddr3_ref_clk_wiz_0] -to [get_clocks clk_controller_clk_wiz_0]
 
 # USER GREEN LEDS
 

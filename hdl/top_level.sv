@@ -3,13 +3,13 @@
 
 module top_level
     (
-        input wire          clk_100mhz,
+        input  wire         clk_100mhz,
         output logic [15:0] led,
-        input wire   [15:0] sw,
-        input wire   [3:0]  btn,
+        input  wire  [15:0] sw,
+        input  wire  [3:0]  btn,
         output logic [2:0]  rgb0,
         output logic [2:0]  rgb1,
-        input wire          midi_pmod,
+        input  wire         midi_pmod,
         output logic        spkl,
         output logic        spkr,
        
@@ -59,12 +59,21 @@ module top_level
         //7'd51   // rc
     };
 
+    logic clk;
+    assign clk = clk_100mhz;
+
     logic clk_dram_ctrl;
     logic clk_ddr3;
     logic clk_ddr3_90;
     logic clk_ddr3_ref;
-    logic clk;
+    logic cw_dram_locked;
+
+    logic clk_pixel;
+    logic clk_tmds;
+    logic cw_hdmi_locked;
+
     logic clk_locked;
+    assign clk_locked = cw_dram_locked & cw_hdmi_locked;
 
     logic rst_buf [1:0];
     logic rst;
@@ -147,15 +156,21 @@ module top_level
         end
     endgenerate
 
-    clk_wiz clk_wiz_i (
+    cw_dram cw_dram_i (
         .clk_controller(clk_dram_ctrl),
         .clk_ddr3(clk_ddr3),
         .clk_ddr3_90(clk_ddr3_90),
         .clk_ddr3_ref(clk_ddr3_ref),
-        .clk_passthrough(clk),
         .reset(btn[0]),
-        .locked(clk_locked),
-        .clk_in1(clk_100mhz)
+        .locked(cw_dram_locked),
+        .clk_in1(clk)
+    );
+    cw_hdmi cw_hdmi_i (
+        .clk_pixel(clk_pixel),
+        .clk_tmds(clk_tmds),
+        .reset(btn[0]),
+        .locked(cw_hdmi_locked),
+        .sysclk(clk)
     );
 
     logic [23:0]  addr_starts [INSTRUMENT_COUNT:0];
