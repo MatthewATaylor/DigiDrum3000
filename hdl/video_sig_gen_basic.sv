@@ -16,7 +16,8 @@ module video_sig_gen_basic #(
     input  wire                             rst,
     output logic [$clog2(TOTAL_PIXELS)-1:0] h_count,
     output logic [ $clog2(TOTAL_LINES)-1:0] v_count,
-    output logic                            new_frame   //single cycle enable signal
+    output logic                            active_draw,
+    output logic                            new_frame     //single cycle enable signal
 );
 
   localparam TOTAL_PIXELS = ACTIVE_H_PIXELS + H_FRONT_PORCH + H_SYNC_WIDTH + H_BACK_PORCH;

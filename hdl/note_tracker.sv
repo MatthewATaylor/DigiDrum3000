@@ -9,7 +9,7 @@ module note_tracker #(
       7'd46  // hh_opened
     }
 ) (
-    input wire clk,
+    input wire clk_100MHz,
     input wire clk_pixel,
     input wire rst,
 
@@ -44,19 +44,18 @@ module note_tracker #(
     midi_valid_clk_cross_pipe[3] != last_midi_valid && !new_frame;
 
   always_ff @(posedge clk_pixel) begin
+    integer i;
     if (rst) begin
       last_midi_valid <= 0;
-      integer i;
       for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
         inst_velocity[i] <= 0;
       end
     end else if (new_frame) begin
-      integer i;
       for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-        inst_velocity[i] <= (inst_velocity[i] > velocity_decay[i]) ? inst_velocity[i]-velocity_decay[i] : 0;
+        inst_velocity[i] <= (inst_velocity[i] > velocity_decay[i])
+          ? inst_velocity[i]-velocity_decay[i] : 0;
       end
     end else if (midi_sig_valid_pixel) begin
-      integer i;
       for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
         inst_velocity[i] <= midi_note_clk_cross_pipe[3] == MIDI_KEYS[i]
           ? midi_velocity_clk_cross_pipe[3]
@@ -65,14 +64,14 @@ module note_tracker #(
     end
   end
 
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk_100MHz) begin
     if (rst) begin
       midi_valid_clk_cross_pipe[0] <= 0;
       midi_note_clk_cross_pipe[0] <= 0;
       midi_velocity_clk_cross_pipe[0] <= 0;
     end else begin
       midi_valid_clk_cross_pipe[0] <= midi_valid_clk_cross_pipe[0] ^ midi_valid;
-      midi_note_clk_cross_pipe[0] <= midi_valid ? midi_node : midi_note_clk_cross_pipe[0];
+      midi_note_clk_cross_pipe[0] <= midi_valid ? midi_note : midi_note_clk_cross_pipe[0];
       midi_velocity_clk_cross_pipe[0] <= midi_valid ? midi_velocity : midi_velocity_clk_cross_pipe[0];
     end
   end
