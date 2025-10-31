@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module dram_reader
+module dram_reader_audio
     #(
         parameter INSTRUMENT_COUNT
     )

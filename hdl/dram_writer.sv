@@ -13,8 +13,13 @@ module dram_writer
         input wire rst_pixel,
         input wire uart_din,
 
+        input  wire         sample_load_complete,
         output logic [23:0] addr_offsets [INSTRUMENT_COUNT:0],
         output logic        addr_offsets_valid,
+
+        input  wire         pixel_valid,
+        input  wire  [15:0] pixel_data,
+        input  wire         pixel_last,
 
         output logic         fifo_receiver_axis_tvalid,
         input  wire          fifo_receiver_axis_tready,
@@ -50,14 +55,30 @@ module dram_writer
         .receiver_axis_prog_empty()
     );
 
+    logic        stacker_in_valid;
+    logic [15:0] stacker_in_data;
+    logic        stacker_in_last;
+
+    always_comb begin
+        if (addr_offsets_valid & sample_load_complete) begin
+            stacker_in_valid = pixel_valid;
+            stacker_in_data = pixel_data;
+            stacker_in_last = pixel_last;
+        end else begin
+            stacker_in_valid = sample_axis_tvalid;
+            stacker_in_data = sample_axis_tdata;
+            stacker_in_last = sample_axis_tlast;
+        end
+    end
+
     stacker dram_write_stacker (
         .clk(clk_pixel),
         .rst(rst_pixel),
         
-        .pixel_tvalid(sample_axis_tvalid),
+        .pixel_tvalid(stacker_in_valid),
         .pixel_tready(),
-        .pixel_tdata(sample_axis_tdata),
-        .pixel_tlast(sample_axis_tlast),
+        .pixel_tdata(stacker_in_data),
+        .pixel_tlast(stacker_in_last),
         
         .chunk_tvalid(stacker_chunk_axis_tvalid),
         .chunk_tready(stacker_chunk_axis_tready),
@@ -86,10 +107,10 @@ module dram_writer
     addr_offsets_cdc #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
     ) addr_offsets_cdc_i (
-        .clk(clk),
-        .clk_pixel(clk_pixel),
-        .rst(rst),
-        .rst_pixel(rst_pixel),
+        .clk_sender(clk_pixel),
+        .clk_receiver(clk),
+        .rst_sender(rst_pixel),
+        .rst_receiver(rst),
 
         .addr_offset_in(addr_offset),
         .addr_offset_in_valid(addr_offset_valid),

@@ -7,7 +7,6 @@ module traffic_generator
         input wire           rst_dram_ctrl,
 
         output logic         sample_load_complete,
-        output logic [23:0]  response_addr,
 
         // UberDDR3 control signals
         output logic [23:0]  memrequest_addr,
@@ -30,32 +29,94 @@ module traffic_generator
         input wire           read_addr_axis_valid,
         output logic         read_addr_axis_ready,
 
-        // Read data AXIS FIFO output
+        // Audio read data AXIS FIFO output
         // tlast always low
-        // data = {response_addr, memrequest_resp_data}
-        output logic         read_data_axis_valid,
-        input wire           read_data_axis_ready
+        output logic         read_data_audio_axis_valid,
+        input wire           read_data_audio_axis_ready,
+        output logic [151:0] read_data_audio_axis_data,
+
+        // Video read data AXIS FIFO output
+        output logic         read_data_video_axis_valid,
+        input wire           read_data_video_axis_ready,
+        output logic [127:0] read_data_video_axis_data,
+        output logic         read_data_video_axis_tlast,
+        input wire           read_data_video_axis_af
     );
 
-    enum {RST, WR_AUDIO, RD_AUDIO} state;
+    localparam FRAME_BUFFER_DEPTH = 115200;
 
-    assign write_axis_ready = !memrequest_busy && (state == WR_AUDIO);
+    // RST: Do not interface with DRAM
+    // WR_AUDIO: Write audio data from write FIFO to DRAM
+    //  (but hold this state until all audio samples are written)
+    // WR_VIDEO: Write video data from write FIFO to DRAM
+    // RD_AUDIO: Give DRAM read request using address in read_addr FIFO
+    // RD_VIDEO: Give DRAM read request using an address counter
+    enum {RST, WR_AUDIO, WR_VIDEO, RD_AUDIO, RD_VIDEO} state;
+
+    assign write_axis_ready =
+        !memrequest_busy && 
+        ((state == WR_AUDIO) || (state == WR_VIDEO));
+    
+    // read_addr FIFO is only for audio
     assign read_addr_axis_ready = !memrequest_busy && (state == RD_AUDIO);
 
-    logic [23:0] write_address;
+    // Audio read requests come through AXI FIFO
+    // Create valid and ready signals for video read requests
+    logic video_read_request_valid;
+    assign video_read_request_valid = !read_data_video_axis_af && (state == RD_VIDEO);
+    logic video_read_request_ready;
+    assign video_read_request_ready = !memrequest_busy && (state == RD_VIDEO);
 
+    // write_addr_last+1 is video addr offset
+    logic [23:0] write_addr_last;
+    logic        write_addr_last_valid;   
+
+    // On startup, count up as audio samples are written to memory
+    // After startup, use as counter for pixel addressing
+    logic [23:0] write_address;
     always_ff @ (posedge clk_dram_ctrl) begin
-        if (rst_dram_ctrl | (write_axis_valid & write_axis_ready & write_axis_tlast)) begin
+        if (rst_dram_ctrl) begin
             write_address <= 0;
         end else begin
             if (write_axis_valid & write_axis_ready) begin
-                write_address <= write_address + 1;
+                if (write_axis_tlast) begin
+                    if (!write_addr_last_valid) begin
+                        // This is the last write of audio samples.
+                        // Move write_address to start of frame buffer.
+                        write_address <= write_address + 1;
+                    end else begin
+                        write_address <= write_addr_last + 1;
+                    end
+                end else begin
+                    if (write_address == write_addr_last + FRAME_BUFFER_DEPTH) begin
+                        // We're writing to larger addresses now.
+                        // write_addr_last should be valid.
+                        write_address <= write_addr_last + 1;
+                    end else begin
+                        write_address <= write_address + 1;
+                    end
+                end
             end
         end
     end
 
-    logic response_wr_enable;
+    logic [23:0] video_read_request_address;
+    always_ff @ (posedge clk_dram_ctrl) begin
+        if (rst_dram_ctrl) begin
+            video_read_request_address <= 0;
+        end else begin
+            if (video_read_request_valid & video_read_request_ready) begin
+                if (video_read_request_address == write_addr_last + FRAME_BUFFER_DEPTH) begin
+                    video_read_request_address <= write_addr_last + 1;
+                end else begin
+                    video_read_request_address <= video_read_request_address + 1;
+                end
+            end
+        end
+    end
 
+    logic [23:0] response_addr;
+    logic        response_wr_enable;
     command_fifo #(
         .DEPTH(64),
         .WIDTH(25)
@@ -71,10 +132,22 @@ module traffic_generator
         .empty()
     );
 
-    assign read_data_axis_valid = ~response_wr_enable & memrequest_complete;
+    logic response_is_video;
+    assign response_is_video =
+        (response_addr >= write_addr_last + 1) &&
+        (response_addr <= write_addr_last + FRAME_BUFFER_DEPTH);
 
-    logic [23:0] write_addr_last;
-    logic        write_addr_last_valid;
+    // Set data/valid signals for read data FIFOs
+    assign read_data_audio_axis_data = {response_addr, memrequest_resp_data};
+    assign read_data_video_axis_data = memrequest_resp_data;
+    assign read_data_audio_axis_valid =
+        !response_wr_enable && memrequest_complete && !response_is_video;
+    assign read_data_video_axis_valid =
+        !response_wr_enable && memrequest_complete && response_is_video;
+
+    assign read_data_video_axis_tlast =
+        read_data_video_axis_valid &&
+        (response_addr == write_addr_last + FRAME_BUFFER_DEPTH);
 
     // Determine when memory is filled with audio samples
     always_ff @ (posedge clk_dram_ctrl) begin
@@ -103,7 +176,29 @@ module traffic_generator
             state <= RST;
         end else begin
             if (sample_load_complete) begin
-                state <= RD_AUDIO;
+                // Just cycle between states.
+                // 
+                // dram_writer can send 1 chunk every 8 74.25 MHz cycles.
+                // traffic_generator accesses write FIFO every 3 83.333 MHz
+                //  cycles.
+                // Therefore, the write FIFO should not overflow.
+                // 
+                // dram_read_requester sends 1 address even less frequently
+                //  (audio sample rate)
+                case (state)
+                    RD_AUDIO: begin
+                        state <= WR_VIDEO;
+                    end
+                    WR_VIDEO: begin
+                        state <= RD_VIDEO;
+                    end
+                    RD_VIDEO: begin
+                        state <= RD_AUDIO;
+                    end
+                    default: begin
+                        state <= RD_AUDIO;
+                    end
+                endcase
             end else begin
                 state <= WR_AUDIO;
             end
@@ -111,14 +206,14 @@ module traffic_generator
     end
 
     always_comb begin
-        case(state)
+        case (state)
             RST: begin
                 memrequest_addr = 0;
                 memrequest_en = 0;
                 memrequest_write_data = 0;
                 memrequest_write_enable = 0;
             end
-            WR_AUDIO: begin
+            WR_AUDIO, WR_VIDEO: begin
                 memrequest_addr = write_address;
                 memrequest_en = write_axis_valid && !memrequest_busy;
                 memrequest_write_enable = write_axis_valid && !memrequest_busy;
@@ -127,6 +222,12 @@ module traffic_generator
             RD_AUDIO: begin
                 memrequest_addr = read_addr_axis_data;
                 memrequest_en = read_addr_axis_valid && !memrequest_busy;
+                memrequest_write_enable = 0;
+                memrequest_write_data = 0;
+            end
+            RD_VIDEO: begin
+                memrequest_addr = video_read_request_address;
+                memrequest_en = video_read_request_valid && !memrequest_busy;
                 memrequest_write_enable = 0;
                 memrequest_write_data = 0;
             end

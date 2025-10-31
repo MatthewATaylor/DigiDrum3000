@@ -24,9 +24,9 @@ module top_level
         output logic [6:0]  ss1_c,   //cathode controls for the segments of lower four digits
         
         // // HDMI port
-        // output logic [2:0]  hdmi_tx_p,  //hdmi output signals (positives) (blue, green, red)
-        // output logic [2:0]  hdmi_tx_n,  //hdmi output signals (negatives) (blue, green, red)
-        // output logic        hdmi_clk_p, hdmi_clk_n,  //differential hdmi clock
+        output logic [2:0]  hdmi_tx_p,  //hdmi output signals (positives) (blue, green, red)
+        output logic [2:0]  hdmi_tx_n,  //hdmi output signals (negatives) (blue, green, red)
+        output logic        hdmi_clk_p, hdmi_clk_n,  //differential hdmi clock
 
         // SDRAM (DDR3) ports
         inout wire   [15:0] ddr3_dq,       //data input/output
@@ -102,6 +102,10 @@ module top_level
     logic sample_load_complete;
     assign sample_load_complete = sample_load_complete_buf[0];
 
+    logic sample_load_complete_pixel_buf[1:0];
+    logic sample_load_complete_pixel;
+    assign sample_load_complete_pixel = sample_load_complete_buf[0];
+
     logic [2:0] instr_debug_btn_buf [1:0];
     logic [2:0] instr_debug_btn;
     assign instr_debug_btn = instr_debug_btn_buf[0];
@@ -118,7 +122,7 @@ module top_level
         rst_buf <= {btn[0], rst_buf[1]};
 
         if (rst) begin
-            for (int i = 0; i < 2; i++) begin
+            for (int i=0; i<2; i++) begin
                 uart_rxd_buf[i] <= 0;
                 midi_din_buf[i] <= 0;
                 sample_load_complete_buf[i] <= 0;
@@ -129,6 +133,7 @@ module top_level
             midi_din_buf <= {midi_pmod, midi_din_buf[1]};
 
             // sample_load_complete CDC
+            // From 83.333 MHz to 100 MHz
             sample_load_complete_buf <= {sample_load_complete_dram_ctrl, sample_load_complete_buf[1]};
 
             instr_debug_btn_buf <= {btn[3:1], instr_debug_btn_buf[1]};
@@ -139,6 +144,16 @@ module top_level
     end
     always_ff @ (posedge clk_pixel) begin
         rst_pixel_buf <= {btn[0], rst_pixel_buf[1]};
+
+        if (rst_pixel) begin
+            for (int i=0; i<2; i++) begin
+                sample_load_complete_pixel_buf[i] <= 0;
+            end
+        end else begin
+             // sample_load_complete CDC
+             // From 83.333 MHz to 74.25 MHz
+            sample_load_complete_pixel_buf <= {sample_load_complete_dram_ctrl, sample_load_complete_pixel_buf[1]};
+        end
     end
 
     genvar i;
@@ -170,6 +185,50 @@ module top_level
         .sysclk(clk)
     );
 
+    logic [10:0] h_count_hdmi;
+    logic [9:0]  v_count_hdmi;
+    logic        v_sync_hdmi;
+    logic        h_sync_hdmi;
+    logic        active_draw_hdmi;
+    logic        new_frame_hdmi;
+    logic [5:0]  frame_count_hdmi;
+
+    logic pixel_last;
+    assign pixel_last = (h_count_hdmi == 1279) && (v_count_hdmi == 719);
+
+    video_sig_gen video_sig_gen_i (
+        .pixel_clk(clk_pixel),
+        .rst(rst_pixel),
+
+        .h_count(h_count_hdmi),
+        .v_count(v_count_hdmi),
+        .v_sync(v_sync_hdmi),
+        .h_sync(h_sync_hdmi),
+        .active_draw(active_draw_hdmi),
+        .new_frame(new_frame_hdmi),
+        .frame_count(frame_count_hdmi)
+    );
+
+    logic [7:0]  pixel_to_write_r;
+    logic [7:0]  pixel_to_write_g;
+    logic [7:0]  pixel_to_write_b;
+
+    logic [15:0] pixel_to_write;
+    assign pixel_to_write = {
+        pixel_to_write_r[7:3],
+        pixel_to_write_g[7:2],
+        pixel_to_write_b[7:3]
+    };
+
+    test_pattern_generator video_test (
+        .pattern_select(sw[1:0]),
+        .h_count(h_count_hdmi),
+        .v_count(v_count_hdmi),
+        .pixel_red(pixel_to_write_r),
+        .pixel_green(pixel_to_write_g),
+        .pixel_blue(pixel_to_write_b)
+    );
+
     logic [23:0]  addr_offsets [INSTRUMENT_COUNT:0];
     logic         addr_offsets_valid;
 
@@ -189,10 +248,15 @@ module top_level
         .rst(rst),
         .rst_pixel(rst_pixel),
         .uart_din(uart_din),
-
+        
+        .sample_load_complete(sample_load_complete_pixel),
         .addr_offsets(addr_offsets),
         .addr_offsets_valid(addr_offsets_valid),
-        
+    
+        .pixel_valid(active_draw_hdmi),
+        .pixel_data(pixel_to_write),
+        .pixel_last(pixel_last),
+
         .fifo_receiver_axis_tvalid(write_axis_valid),
         .fifo_receiver_axis_tready(write_axis_ready),
         .fifo_receiver_axis_tdata(write_axis_data),
@@ -228,13 +292,13 @@ module top_level
     logic [15:0]  sample_raw;
     logic         sample_raw_valid;
 
-    logic         read_data_axis_valid;
-    logic         read_data_axis_ready;
-    logic [151:0] read_data_axis_data;
+    logic         read_data_audio_axis_valid;
+    logic         read_data_audio_axis_ready;
+    logic [151:0] read_data_audio_axis_data;
 
-    dram_reader #(
+    dram_reader_audio #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
-    ) drd (
+    ) drd_audio (
         .clk(clk),
         .clk_dram_ctrl(clk_dram_ctrl),
         .rst(rst),
@@ -245,12 +309,37 @@ module top_level
         .sample(sample_raw),
         .sample_valid(sample_raw_valid),
 
-        .fifo_sender_axis_tvalid(read_data_axis_valid),
-        .fifo_sender_axis_tready(read_data_axis_ready),
-        .fifo_sender_axis_tdata(read_data_axis_data)
+        .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
+        .fifo_sender_axis_tready(read_data_audio_axis_ready),
+        .fifo_sender_axis_tdata(read_data_audio_axis_data)
     );
 
-    logic [23:0]  response_addr;
+    logic         read_data_video_axis_valid;
+    logic         read_data_video_axis_ready;
+    logic [127:0] read_data_video_axis_data;
+    logic         read_data_video_axis_tlast;
+    logic         read_data_video_axis_af;
+
+    logic [15:0]  pixel_to_display;
+
+    dram_reader_video drd_video (
+        .clk_pixel(clk_pixel),
+        .clk_dram_ctrl(clk_dram_ctrl),
+        .rst_pixel(rst_pixel),
+        .rst_dram_ctrl(rst_dram_ctrl),
+
+        .h_count_hdmi(h_count_hdmi),
+        .v_count_hdmi(v_count_hdmi),
+        .active_draw_hdmi(active_draw_hdmi),
+
+        .pixel(pixel_to_display),
+
+        .fifo_sender_axis_tvalid(read_data_video_axis_valid),
+        .fifo_sender_axis_tready(read_data_video_axis_ready),
+        .fifo_sender_axis_tdata(read_data_video_axis_data),
+        .fifo_sender_axis_tlast(read_data_video_axis_tlast),
+        .fifo_sender_axis_af(read_data_video_axis_af)
+    );
 
     logic [23:0]  memrequest_addr;
     logic         memrequest_en;
@@ -260,14 +349,11 @@ module top_level
     logic         memrequest_complete;
     logic         memrequest_busy;
 
-    assign read_data_axis_data = {response_addr, memrequest_resp_data};
-
     traffic_generator tg (
         .clk_dram_ctrl(clk_dram_ctrl),
         .rst_dram_ctrl(rst_dram_ctrl),
 
         .sample_load_complete(sample_load_complete_dram_ctrl),
-        .response_addr(response_addr),
 
         .memrequest_addr(memrequest_addr),
         .memrequest_en(memrequest_en),
@@ -287,8 +373,15 @@ module top_level
         .read_addr_axis_valid(read_addr_axis_valid),
         .read_addr_axis_ready(read_addr_axis_ready),
 
-        .read_data_axis_valid(read_data_axis_valid),
-        .read_data_axis_ready(read_data_axis_ready)
+        .read_data_audio_axis_valid(read_data_audio_axis_valid),
+        .read_data_audio_axis_ready(read_data_audio_axis_ready),
+        .read_data_audio_axis_data(read_data_audio_axis_data),
+
+        .read_data_video_axis_valid(read_data_video_axis_valid),
+        .read_data_video_axis_ready(read_data_video_axis_ready),
+        .read_data_video_axis_data(read_data_video_axis_data),
+        .read_data_video_axis_tlast(read_data_video_axis_tlast),
+        .read_data_video_axis_af(read_data_video_axis_af)
     );
 
     ddr3_top #(
@@ -370,6 +463,61 @@ module top_level
         .audio_out(dac_out)
     );
 
+    logic [9:0] tmds_10b    [0:2];
+    logic       tmds_signal [2:0];
+ 
+    tmds_encoder tmds_red (
+        .clk(clk_pixel),
+        .rst(rst_pixel),
+        .video_data({pixel_to_display[15:11], 3'b0}),
+        .control(2'b0),
+        .video_enable(active_draw_hdmi),
+        .tmds(tmds_10b[2])
+    );
+    tmds_encoder tmds_green (
+        .clk(clk_pixel),
+        .rst(rst_pixel),
+        .video_data({pixel_to_display[10:5], 2'b0}),
+        .control(2'b0),
+        .video_enable(active_draw_hdmi),
+        .tmds(tmds_10b[1])
+    );
+    tmds_encoder tmds_blue (
+        .clk(clk_pixel),
+        .rst(rst_pixel),
+        .video_data({pixel_to_display[4:0], 3'b0}),
+        .control({v_sync_hdmi, h_sync_hdmi}),
+        .video_enable(active_draw_hdmi),
+        .tmds(tmds_10b[0])
+    );
+    
+    tmds_serializer red_ser (
+        .clk_pixel(clk_pixel),
+        .clk_5x(clk_tmds),
+        .rst(rst_pixel),
+        .tmds_in(tmds_10b[2]),
+        .tmds_out(tmds_signal[2])
+    );
+    tmds_serializer green_ser (
+        .clk_pixel(clk_pixel),
+        .clk_5x(clk_tmds),
+        .rst(rst_pixel),
+        .tmds_in(tmds_10b[1]),
+        .tmds_out(tmds_signal[1])
+    );
+    tmds_serializer blue_ser (
+        .clk_pixel(clk_pixel),
+        .clk_5x(clk_tmds),
+        .rst(rst_pixel),
+        .tmds_in(tmds_10b[0]),
+        .tmds_out(tmds_signal[0])
+    );
+
+    OBUFDS OBUFDS_blue (.I(tmds_signal[0]), .O(hdmi_tx_p[0]), .OB(hdmi_tx_n[0]));
+    OBUFDS OBUFDS_green(.I(tmds_signal[1]), .O(hdmi_tx_p[1]), .OB(hdmi_tx_n[1]));
+    OBUFDS OBUFDS_red  (.I(tmds_signal[2]), .O(hdmi_tx_p[2]), .OB(hdmi_tx_n[2]));
+    OBUFDS OBUFDS_clock(.I(clk_pixel), .O(hdmi_clk_p), .OB(hdmi_clk_n));
+
     logic [23:0]  memrequest_complete_counter;
     logic [15:0]  read_data_valid_counter;
     always_ff @ (posedge clk_dram_ctrl) begin
@@ -380,7 +528,7 @@ module top_level
             if (memrequest_complete) begin
                 memrequest_complete_counter <= memrequest_complete_counter + 1;
             end
-            if (read_data_axis_valid) begin
+            if (read_data_audio_axis_valid) begin
                 read_data_valid_counter <= read_data_valid_counter + 1;
             end
         end

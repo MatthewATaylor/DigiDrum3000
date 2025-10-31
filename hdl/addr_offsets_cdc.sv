@@ -6,10 +6,10 @@ module addr_offsets_cdc
         INSTRUMENT_COUNT
     )
     (
-        input wire clk,
-        input wire clk_pixel,
-        input wire rst,
-        input wire rst_pixel,
+        input wire clk_sender,
+        input wire clk_receiver,
+        input wire rst_sender,
+        input wire rst_receiver,
 
         input wire [23:0] addr_offset_in,
         input wire        addr_offset_in_valid,
@@ -23,8 +23,8 @@ module addr_offsets_cdc
     logic        fifo_out_valid;
     logic [23:0] fifo_out;
 
-    always @ (posedge clk) begin
-        if (rst) begin
+    always @ (posedge clk_receiver) begin
+        if (rst_receiver) begin
             instrument_counter <= 0;
             for (int i=0; i<=INSTRUMENT_COUNT; i++) begin
                 addr_offsets[i] <= 24'b0;
@@ -44,15 +44,15 @@ module addr_offsets_cdc
     clockdomain_fifo #(
         .DEPTH(16), .WIDTH(24), .PROGFULL_DEPTH(6)
     ) dram_write_fifo (
-        .sender_rst(rst_pixel),
-        .sender_clk(clk_pixel),
+        .sender_rst(rst_sender),
+        .sender_clk(clk_sender),
         .sender_axis_tvalid(addr_offset_in_valid),
         .sender_axis_tready(),
         .sender_axis_tdata(addr_offset_in),
         .sender_axis_tlast(),
         .sender_axis_prog_full(),
 
-        .receiver_clk(clk),
+        .receiver_clk(clk_receiver),
         .receiver_axis_tvalid(fifo_out_valid),
         .receiver_axis_tready(1),
         .receiver_axis_tdata(fifo_out),
