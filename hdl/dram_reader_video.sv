@@ -70,7 +70,11 @@ module dram_reader_video
 
     always_comb begin
         if (pixel_tlast) begin
-            pixel_tready = (h_count_hdmi == H_COUNT_MAX) && (v_count_hdmi == V_COUNT_MAX);
+            // Right now, because of how video_sig_gen initializes,
+            // all pixels are shifted back one (the first pixel doesn't
+            // make it onto the dram_writer stacker). This means (0,0)
+            // is actually the last pixel in the frame.
+            pixel_tready = (h_count_hdmi == 0) && (v_count_hdmi == 0);
         end else begin
             pixel_tready = active_draw_hdmi;
         end

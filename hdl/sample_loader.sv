@@ -78,8 +78,6 @@ module sample_loader
                             instrument_counter <= instrument_counter + 1;
                             addr_offset <= (total_sample_counter + 1) >> 3;
                             addr_offset_valid <= 1;
-                        end else if (sample_counter == sample_size - 2) begin
-                            // Assert tlast before the final sample
                             if (instrument_counter == INSTRUMENT_COUNT - 1) begin
                                 sample_axis_tlast <= 1;
                             end

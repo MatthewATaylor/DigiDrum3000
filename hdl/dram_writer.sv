@@ -16,6 +16,7 @@ module dram_writer
         input  wire         sample_load_complete,
         output logic [23:0] addr_offsets [INSTRUMENT_COUNT:0],
         output logic        addr_offsets_valid,
+        output logic        addr_offsets_valid_pixel,
 
         input  wire         pixel_valid,
         input  wire  [15:0] pixel_data,
@@ -26,6 +27,21 @@ module dram_writer
         output logic [127:0] fifo_receiver_axis_tdata,
         output logic         fifo_receiver_axis_tlast
     );
+
+    // Synchronize addr_offsets_valid to clk_pixel.
+    // From 100 MHz to 74.25 MHz
+    // TODO: Clean up addr_offsets_valid and sample_load_complete signals.
+    logic addr_offsets_valid_buf [1:0];
+    assign addr_offsets_valid_pixel = addr_offsets_valid_buf[0];
+    always_ff @ (posedge clk_pixel) begin
+        if (rst_pixel) begin
+            for (int i=0; i<2; i++) begin
+                addr_offsets_valid_buf[i] <= 0;
+            end
+        end else begin
+            addr_offsets_valid_buf <= {addr_offsets_valid, addr_offsets_valid_buf[1]};
+        end
+    end
 
     logic         stacker_chunk_axis_tvalid;
     logic         stacker_chunk_axis_tready;
@@ -55,12 +71,25 @@ module dram_writer
         .receiver_axis_prog_empty()
     );
 
+    logic video_en;
+    assign video_en = addr_offsets_valid_pixel & sample_load_complete;
+    
+    logic video_en_reg;
+    always_ff @ (posedge clk_pixel) begin
+        if (rst_pixel) begin
+            video_en_reg <= 0;
+        end else begin
+            if (video_en) begin
+                video_en_reg <= 1;
+            end
+        end
+    end
+
     logic        stacker_in_valid;
     logic [15:0] stacker_in_data;
     logic        stacker_in_last;
-
     always_comb begin
-        if (addr_offsets_valid & sample_load_complete) begin
+        if (video_en) begin
             stacker_in_valid = pixel_valid;
             stacker_in_data = pixel_data;
             stacker_in_last = pixel_last;
@@ -73,7 +102,10 @@ module dram_writer
 
     stacker dram_write_stacker (
         .clk(clk_pixel),
-        .rst(rst_pixel),
+
+        // One cycle reset on video enable.
+        // Clears the stacker to synchronize with the (reset) video_sig_gen.
+        .rst(rst_pixel | (video_en & ~video_en_reg)),
         
         .pixel_tvalid(stacker_in_valid),
         .pixel_tready(),

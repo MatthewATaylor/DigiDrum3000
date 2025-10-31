@@ -112,10 +112,14 @@ module top_level
     logic [2:0] instr_trig_debug;
 
     assign led[1] = sample_load_complete;
-    assign led[15:3] = 0;
+    assign led[15:4] = 0;
     assign rgb0 = 0;
     assign rgb1 = 0;
     assign uart_txd = 0;
+
+    logic [23:0]  addr_offsets [INSTRUMENT_COUNT:0];
+    logic         addr_offsets_valid;
+    logic         addr_offsets_valid_pixel;
 
     // Synchronization
     always_ff @ (posedge clk) begin
@@ -196,9 +200,24 @@ module top_level
     logic pixel_last;
     assign pixel_last = (h_count_hdmi == 1279) && (v_count_hdmi == 719);
 
+    // rst_video causes video_sig_gen to be disabled during sample loading.
+    // Do this in order to start up video in a well defined state.
+    // Put rst_video through a register to delay one cycle.
+    //  (aligns with reset signal for dram_writer stacker)
+    logic rst_video;
+    assign rst_video = ~sample_load_complete_pixel | ~addr_offsets_valid_pixel;
+    logic rst_video_buf;
+    always_ff @ (posedge clk_pixel) begin
+        if (rst_pixel) begin
+            rst_video_buf <= 1;
+        end else begin
+            rst_video_buf <= rst_video;
+        end
+    end
+
     video_sig_gen video_sig_gen_i (
         .pixel_clk(clk_pixel),
-        .rst(rst_pixel),
+        .rst(rst_pixel | rst_video_buf),
 
         .h_count(h_count_hdmi),
         .v_count(v_count_hdmi),
@@ -229,9 +248,6 @@ module top_level
         .pixel_blue(pixel_to_write_b)
     );
 
-    logic [23:0]  addr_offsets [INSTRUMENT_COUNT:0];
-    logic         addr_offsets_valid;
-
     logic [127:0] write_axis_data;
     logic         write_axis_tlast;
     logic         write_axis_valid;
@@ -252,6 +268,7 @@ module top_level
         .sample_load_complete(sample_load_complete_pixel),
         .addr_offsets(addr_offsets),
         .addr_offsets_valid(addr_offsets_valid),
+        .addr_offsets_valid_pixel(addr_offsets_valid_pixel),
     
         .pixel_valid(active_draw_hdmi),
         .pixel_data(pixel_to_write),
@@ -534,17 +551,6 @@ module top_level
         end
     end
 
-    // logic [6:0] ss_c;
-    // assign ss0_c = ss_c;
-    // assign ss1_c = ss_c;
-    // seven_segment_controller ssc (
-    //     .clk(clk),
-    //     .rst(rst),
-    //     .val({8'b0, dwr.sample_loader_i.total_sample_counter}),
-    //     .cat(ss_c),
-    //     .an({ss0_an, ss1_an})
-    // );
-
     logic [6:0] ss_c;
     assign ss0_c = ss_c;
     assign ss1_c = ss_c;
@@ -565,6 +571,7 @@ module top_level
             end
         end
     end
+    assign led[3] = tg.write_addr_last_valid;
 endmodule
 // old testing code:
 

@@ -105,7 +105,10 @@ module traffic_generator
         if (rst_dram_ctrl) begin
             video_read_request_address <= 0;
         end else begin
-            if (video_read_request_valid & video_read_request_ready) begin
+            if (write_addr_last_valid && video_read_request_address < write_addr_last + 1) begin
+                // We can now set up at video addr offset
+                video_read_request_address <= write_addr_last + 1;
+            end else if (video_read_request_valid && video_read_request_ready) begin
                 if (video_read_request_address == write_addr_last + FRAME_BUFFER_DEPTH) begin
                     video_read_request_address <= write_addr_last + 1;
                 end else begin
@@ -146,7 +149,6 @@ module traffic_generator
         !response_wr_enable && memrequest_complete && response_is_video;
 
     assign read_data_video_axis_tlast =
-        read_data_video_axis_valid &&
         (response_addr == write_addr_last + FRAME_BUFFER_DEPTH);
 
     // Determine when memory is filled with audio samples
