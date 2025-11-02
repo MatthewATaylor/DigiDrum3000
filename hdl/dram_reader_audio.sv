@@ -11,6 +11,7 @@ module dram_reader_audio
         input wire rst,
         input wire rst_dram_ctrl,
 
+        input  wire  [13:0]  sample_period,
         input  wire  [23:0]  addr_offsets [INSTRUMENT_COUNT:0],
         input  wire          addr_offsets_valid,
         output logic [15:0]  sample,
@@ -86,6 +87,7 @@ module dram_reader_audio
     ) mixer (
         .clk(clk),
         .rst(rst),
+        .sample_period(sample_period),
         .din(sample_axis_tdata),
         .din_valid(sample_axis_tvalid),
         .din_ready(sample_axis_tready),

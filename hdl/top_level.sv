@@ -121,6 +121,14 @@ module top_level
     logic         addr_offsets_valid;
     logic         addr_offsets_valid_pixel;
 
+    logic [9:0] pitch;
+    assign pitch = sw[15:6];
+    logic [13:0] sample_period;
+    pitch_to_sample_period p2sp (
+        .pitch(pitch),
+        .sample_period(sample_period)
+    );
+
     // Synchronization
     always_ff @ (posedge clk) begin
         rst_buf <= {btn[0], rst_buf[1]};
@@ -294,6 +302,7 @@ module top_level
         .rst(rst),
         .midi_din(midi_din),
 
+        .sample_period(sample_period),
         .sample_load_complete(sample_load_complete),
         .addr_offsets(addr_offsets),
         .addr_offsets_valid(addr_offsets_valid),
@@ -321,6 +330,7 @@ module top_level
         .rst(rst),
         .rst_dram_ctrl(rst_dram_ctrl),
 
+        .sample_period(sample_period),
         .addr_offsets(addr_offsets),
         .addr_offsets_valid(addr_offsets_valid),
         .sample(sample_raw),
@@ -557,7 +567,7 @@ module top_level
     seven_segment_controller ssc (
         .clk(clk_dram_ctrl),
         .rst(rst_dram_ctrl),
-        .val({read_data_valid_counter, memrequest_complete_counter[15:0]}),
+        .val({2'b00, sample_period, memrequest_complete_counter[15:0]}),
         .cat(ss_c),
         .an({ss0_an, ss1_an})
     );
