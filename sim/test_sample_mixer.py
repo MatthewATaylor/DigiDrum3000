@@ -33,6 +33,7 @@ async def run_unstacker(dut, samples, instr_index):
 
 @cocotb.test()
 async def test_a(dut):
+    dut.sample_period.value = SAMPLE_PERIOD
     dut.din.value = [0] * INSTRUMENT_COUNT
     dut.din_valid.value = [0] * INSTRUMENT_COUNT
 
@@ -88,7 +89,6 @@ def is_runner():
     sources = [proj_path / "hdl" / "sample_mixer.sv"]
     build_test_args = ["-Wall"]
     parameters = {
-        'SAMPLE_PERIOD': SAMPLE_PERIOD,
         'INSTRUMENT_COUNT': INSTRUMENT_COUNT
     }
     hdl_toplevel = "sample_mixer"

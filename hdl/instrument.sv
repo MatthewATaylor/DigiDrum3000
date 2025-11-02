@@ -9,6 +9,7 @@ module instrument
         input wire clk,
         input wire rst,
 
+        input wire   [13:0] sample_period,
         input wire          trigger,
         input wire   [6:0]  midi_key,
 
@@ -19,13 +20,11 @@ module instrument
         output logic [23:0] addr,
         output logic        addr_valid,
         
-        // Assume addr_ready is asserted at least once every SAMPLE_PERIOD
+        // Assume addr_ready is asserted at least once every sample_period_x8
         // (i.e. addr not guaranteed to be held at constant value while
         //  addr_valid is asserted)
         input wire          addr_ready  
     );
-
-    localparam SAMPLE_PERIOD = 2272*8;
 
     enum {SETUP, NOTE_OFF, NOTE_ON} state;
 
@@ -36,7 +35,9 @@ module instrument
     logic valid_trigger;
     assign valid_trigger = trigger && (midi_key == MIDI_KEY);
 
-    logic [$clog2(SAMPLE_PERIOD)-1:0] sample_counter;
+    logic [16:0] sample_counter;
+    logic [16:0] sample_period_x8;
+    assign sample_period_x8 = {3'b0, sample_period} << 3;
 
     always_ff @ (posedge clk) begin
         if (rst) begin
@@ -76,7 +77,7 @@ module instrument
                         trigger_hold <= 1;
                     end
                     
-                    if (sample_counter == SAMPLE_PERIOD - 1) begin
+                    if (sample_counter == sample_period_x8 - 1) begin
                         if (valid_trigger | trigger_hold) begin
                             addr <= addr_start_hold;
                             addr_valid <= 1;

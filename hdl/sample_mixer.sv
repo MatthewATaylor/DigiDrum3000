@@ -3,12 +3,12 @@
 
 module sample_mixer
     #(
-        parameter INSTRUMENT_COUNT,
-        parameter SAMPLE_PERIOD = 2272
+        parameter INSTRUMENT_COUNT
     )
     (
         input wire          clk,
         input wire          rst,
+        input wire   [13:0] sample_period,
         input wire   [15:0] din       [INSTRUMENT_COUNT-1:0],
         input wire          din_valid [INSTRUMENT_COUNT-1:0],
         output logic        din_ready [INSTRUMENT_COUNT-1:0],
@@ -17,7 +17,7 @@ module sample_mixer
     );
 
     logic prev_rst;  // Assert din_ready when ~rst & prev_rst
-    logic [$clog2(SAMPLE_PERIOD)-1:0] sample_counter;
+    logic [13:0] sample_counter;
 
     logic [$clog2(INSTRUMENT_COUNT)-1:0] instr_counter;
     always_ff @ (posedge clk) begin
@@ -61,7 +61,7 @@ module sample_mixer
 
             sample_counter <= 0;
         end else begin
-            if (sample_counter == SAMPLE_PERIOD-1) begin
+            if (sample_counter == sample_period-1) begin
                 sample_counter <= 0;
                 dout_valid <= 1;
             end else begin
@@ -92,7 +92,7 @@ module sample_mixer
                 dout_valid <= 0;
             end
 
-            if (sample_counter == SAMPLE_PERIOD-1 || prev_rst) begin
+            if ((sample_counter == sample_period-1) || prev_rst) begin
                 for (int i=0; i<INSTRUMENT_COUNT; i++) begin
                     active_din_ready[i] <= 1;
                 end

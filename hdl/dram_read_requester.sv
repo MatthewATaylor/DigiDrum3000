@@ -12,6 +12,7 @@ module dram_read_requester
         input wire rst,
         input wire midi_din,
 
+        input wire   [13:0]  sample_period,
         input wire           sample_load_complete,
         input wire   [23:0]  addr_offsets [INSTRUMENT_COUNT:0],
         input wire           addr_offsets_valid,
@@ -91,7 +92,8 @@ module dram_read_requester
             ) instr (
                 .clk(clk),
                 .rst(rst),
-                
+               
+                .sample_period(sample_period),
                 //.trigger(midi_dout_valid),
                 //.midi_key(midi_key),
                 .trigger(instr_trig_debug[i]),
