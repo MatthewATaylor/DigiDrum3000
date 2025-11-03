@@ -12,7 +12,7 @@ module video_sig_gen_basic #(
     parameter V_BACK_PORCH    = 20,
     parameter FPS             = 60
 ) (
-    input  wire                             pixel_clk,
+    input  wire                             clk,
     input  wire                             rst,
     output logic [$clog2(TOTAL_PIXELS)-1:0] h_count,
     output logic [ $clog2(TOTAL_LINES)-1:0] v_count,
@@ -44,7 +44,7 @@ module video_sig_gen_basic #(
     end
   end
 
-  always_ff @(posedge pixel_clk) begin
+  always_ff @(posedge clk) begin
     h_count <= next_h_count;
     v_count <= next_v_count;
   end

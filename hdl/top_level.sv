@@ -490,31 +490,77 @@ module top_level
         .audio_out(dac_out)
     );
 
+
+    logic [6:0] midi_key;
+    logic [6:0] midi_velocity;
+    logic       midi_valid;
+    logic [2:0] last_instr_trig_debug;
+
+    always_comb begin
+        if (|instr_trig_debug) begin
+            midi_valid = 1'b1;
+            midi_velocity = 8'hFF;
+            if (instr_trig_debug[2]) begin
+                midi_key = MIDI_KEYS[2];
+            end else if (instr_trig_debug[1]) begin
+                midi_key = MIDI_KEYS[1];
+            end else begin
+                midi_key = MIDI_KEYS[0];
+            end
+        end else begin
+            midi_valid = 0;
+            midi_velocity = 0;
+            midi_key = 0;
+        end
+    end
+
+    logic [23:0] pixel_to_display_24;
+    logic active_draw_to_hdmi;
+    logic v_sync_to_hdmi;
+    logic h_sync_to_hdmi;
+
+    video_processor #(
+        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
+    ) vid_pcr (
+        .clk_100MHz(clk),
+        .clk_pixel(clk_pixel),
+        .rst(rst),
+        
+        .midi_valid(midi_valid),
+        .midi_velocity(midi_velocity),
+        .midi_key(midi_key),
+
+        .pixel_to_hdmi(pixel_to_display_24),
+        .active_draw_to_hdmi(active_draw_to_hdmi),
+        .v_sync_to_hdmi(v_sync_to_hdmi),
+        .h_sync_to_hdmi(h_sync_to_hdmi)
+      );
+
     logic [9:0] tmds_10b    [0:2];
     logic       tmds_signal [2:0];
  
     tmds_encoder tmds_red (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data({pixel_to_display[15:11], 3'b0}),
+        .video_data(pixel_to_display_24[23:16]),
         .control(2'b0),
-        .video_enable(active_draw_hdmi),
+        .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[2])
     );
     tmds_encoder tmds_green (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data({pixel_to_display[10:5], 2'b0}),
+        .video_data(pixel_to_display_24[15:8]),
         .control(2'b0),
-        .video_enable(active_draw_hdmi),
+        .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[1])
     );
     tmds_encoder tmds_blue (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data({pixel_to_display[4:0], 3'b0}),
-        .control({v_sync_hdmi, h_sync_hdmi}),
-        .video_enable(active_draw_hdmi),
+        .video_data(pixel_to_display_24[7:0]),
+        .control({v_sync_to_hdmi, h_sync_to_hdmi}),
+        .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[0])
     );
     
