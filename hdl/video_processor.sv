@@ -9,9 +9,7 @@ module video_processor #(
     input wire rst,
 
     // clk_100MHz
-    input wire [6:0] midi_key,
-    input wire [6:0] midi_velocity,
-    input wire       midi_valid,
+    input wire [15:0] instrument_samples[INSTRUMENT_COUNT-1:0],
     //input wire [2:0] effect_sources [5:0],
     //input wire [9:0] effect_parameters [10:0],
     //input wire [15:0] upsampled_audio_ouput,
@@ -47,7 +45,7 @@ module video_processor #(
       .new_frame(sig_gen_new_frame)
   );
 
-  logic [6:0] inst_velocity[INSTRUMENT_COUNT-1:0];
+  logic [7:0] inst_sample_intensity[INSTRUMENT_COUNT-1:0];
   note_tracker #(
       .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
   ) my_note_tracker (
@@ -55,12 +53,10 @@ module video_processor #(
       .clk_pixel(clk_pixel),
       .rst(rst),
 
-      .midi_valid(midi_valid),
-      .midi_key(midi_key),
-      .midi_velocity(midi_velocity),
+      .instrument_samples(instrument_samples),
 
       .new_frame(sig_gen_new_frame),
-      .inst_velocity(inst_velocity)
+      .max_sample_intensity(inst_sample_intensity)
   );
 
   logic [7:0] dry_intensity;
@@ -71,7 +67,7 @@ module video_processor #(
       .active_draw(sig_gen_active_draw),
       .h_count(sig_gen_h_count),
       .v_count(sig_gen_v_count),
-      .inst_velocity(inst_velocity),
+      .inst_intensity(inst_sample_intensity),
 
       .intensity(dry_intensity)
   );

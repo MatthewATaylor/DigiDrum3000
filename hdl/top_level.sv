@@ -322,6 +322,8 @@ module top_level
     logic         read_data_audio_axis_ready;
     logic [151:0] read_data_audio_axis_data;
 
+    logic [15:0]  current_instrument_samples [INSTRUMENT_COUNT-1:0];
+
     dram_reader_audio #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
     ) drd_audio (
@@ -335,6 +337,7 @@ module top_level
         .addr_offsets_valid(addr_offsets_valid),
         .sample(sample_raw),
         .sample_valid(sample_raw_valid),
+        .instrument_samples(current_instrument_samples),
 
         .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
         .fifo_sender_axis_tready(read_data_audio_axis_ready),
@@ -490,30 +493,6 @@ module top_level
         .audio_out(dac_out)
     );
 
-
-    logic [6:0] midi_key;
-    logic [6:0] midi_velocity;
-    logic       midi_valid;
-    logic [2:0] last_instr_trig_debug;
-
-    always_comb begin
-        if (|instr_trig_debug) begin
-            midi_valid = 1'b1;
-            midi_velocity = 8'hFF;
-            if (instr_trig_debug[2]) begin
-                midi_key = MIDI_KEYS[2];
-            end else if (instr_trig_debug[1]) begin
-                midi_key = MIDI_KEYS[1];
-            end else begin
-                midi_key = MIDI_KEYS[0];
-            end
-        end else begin
-            midi_valid = 0;
-            midi_velocity = 0;
-            midi_key = 0;
-        end
-    end
-
     logic [23:0] pixel_to_display_24;
     logic active_draw_to_hdmi;
     logic v_sync_to_hdmi;
@@ -525,10 +504,8 @@ module top_level
         .clk_100MHz(clk),
         .clk_pixel(clk_pixel),
         .rst(rst),
-        
-        .midi_valid(midi_valid),
-        .midi_velocity(midi_velocity),
-        .midi_key(midi_key),
+
+        .instrument_samples(current_instrument_samples),
 
         .pixel_to_hdmi(pixel_to_display_24),
         .active_draw_to_hdmi(active_draw_to_hdmi),

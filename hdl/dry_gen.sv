@@ -12,21 +12,21 @@ module dry_gen #(
     input wire [10:0] h_count,
     input wire [9:0] v_count,
 
-    input wire [6:0] inst_velocity[INSTRUMENT_COUNT-1:0],
+    input wire [7:0] inst_intensity[INSTRUMENT_COUNT-1:0],
 
     output logic [7:0] intensity
 );
   logic [7:0] shape_intensities[INSTRUMENT_COUNT-1:0];
 
-  logic [14+$clog2(INSTRUMENT_COUNT):0] intensity_sum;
+  logic [15+$clog2(INSTRUMENT_COUNT):0] intensity_sum;
 
   always_comb begin
     intensity_sum = 0;
     for (integer i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-      intensity_sum += inst_velocity[i] * shape_intensities[i];
+      intensity_sum += inst_intensity[i] * shape_intensities[i];
     end
-    if (intensity_sum > 15'h7FFF) begin
-      intensity_sum = 15'h7FFF;
+    if (intensity_sum > 16'hFFFF) begin
+      intensity_sum = 16'hFFFF;
     end
   end
 
@@ -34,7 +34,7 @@ module dry_gen #(
     if (rst) begin
       intensity <= 0;
     end else begin
-      intensity <= intensity_sum[14:7];
+      intensity <= intensity_sum[15:8];
     end
   end
 
@@ -48,7 +48,7 @@ module dry_gen #(
       .rst(rst),
       .h_count(h_count),
       .v_count(v_count),
-      .intensity(shape_intensities[2])
+      .intensity(shape_intensities[0])
   );
 
   // snare drum
@@ -74,7 +74,7 @@ module dry_gen #(
       .rst(rst),
       .h_count(h_count),
       .v_count(v_count),
-      .intensity(shape_intensities[0])
+      .intensity(shape_intensities[2])
   );
 
   generate
