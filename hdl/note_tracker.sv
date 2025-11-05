@@ -53,10 +53,10 @@ module note_tracker #(
       if (rst) begin
         inst_intensity_cross_clk[i] <= 0;
       end else if (new_frame_clk_100MHz) begin
-        if (|running_max_inst_sample_intensity[i][14:13]) begin
+        if (|running_max_inst_sample_intensity[i][14:12]) begin
           inst_intensity_cross_clk[i] <= 8'hFF;
         end else begin
-          inst_intensity_cross_clk[i] <= running_max_inst_sample_intensity[i][12:5];
+          inst_intensity_cross_clk[i] <= running_max_inst_sample_intensity[i][11:4];
         end
       end
     end
