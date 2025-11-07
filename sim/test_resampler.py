@@ -15,7 +15,7 @@ test_file = os.path.basename(__file__).replace(".py","")
 
 SAMPLE_PERIOD_OUT = 2272
 SAMPLE_MAX = 2**15-1
-DELAY_SCALE = 2
+DELAY_SCALE = 4
 M = 2**DELAY_SCALE
 
 
@@ -42,10 +42,10 @@ async def test_static_d(dut):
     dut.rst.value = 0
 
     fig, ax = plt.subplots()
-    x_buf = [0,0,0,0]
+    x_buf = [0,0,0,0,0]
     d_buf = [0,0]
 
-    d_range = range(0, M, int(M/4))
+    d_range = range(0, 4*M, int(4*M/4))
     for d in d_range:
         print(
             f'\n' + \
@@ -90,9 +90,9 @@ async def test_static_d(dut):
             await ClockCycles(dut.clk, 1)
 
             farrow_valid = dut.farrow_out_valid.value
-            if farrow_valid == 8:
+            if farrow_valid == 1:
                 farrow_dut = dut.farrow_out.value.signed_integer
-                farrow_expected = get_farrow(x_buf, d_buf[-1])
+                farrow_expected = get_farrow(x_buf[1:], d_buf[-1])
                 print(f'farrow_out: received={farrow_dut}, expected={farrow_expected}')
                 assert farrow_dut == farrow_expected
         if d == d_range[0]:
@@ -125,8 +125,8 @@ async def test_sample_period_sweep(dut):
     y = []
 
     sample_period_start = 2272*4
-    sample_period_stop = 2272/8
-    clock_cycles = 100000
+    sample_period_stop = 2272/4
+    clock_cycles = 79123
     setup_cycles = int(clock_cycles/2)
     sample_period_step = (sample_period_stop-sample_period_start) / clock_cycles
     sample_period_float = sample_period_start
@@ -247,13 +247,16 @@ async def test_variable_d(dut):
 @cocotb.test()
 async def test_variable_f(dut):
     return
+    SAMPLE_PERIOD_IN = int(2272/4)
+    SECONDS_PER_SAMPLE = SAMPLE_PERIOD_IN * 10e-9
+
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.delay_debug_valid.value = 0
+    dut.sample_period.value = SAMPLE_PERIOD_IN
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
 
-    SAMPLE_PERIOD_IN = 2272/4
     f_powers = range(8)
     f_list = [800 * 2**f_power for f_power in f_powers]
     for f in f_list:
@@ -266,10 +269,7 @@ async def test_variable_f(dut):
             f'############################################\n'
         )
 
-        SAMPLE_PERIOD_IN = int(SAMPLE_PERIOD_IN)
-        SECONDS_PER_SAMPLE = SAMPLE_PERIOD_IN * 10e-9
-        SAMPLES_PER_CYCLE = 1/f / SECONDS_PER_SAMPLE
-        dut.sample_period.value = SAMPLE_PERIOD_IN
+        samples_per_cycle = 1/f / SECONDS_PER_SAMPLE
 
         n_in = []
         x = []
