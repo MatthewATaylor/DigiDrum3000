@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps  //
 `default_nettype none
 
-// 2 cycle delay
+// 4 cycle delay
 module dry_gen #(
     parameter INSTRUMENT_COUNT = 3
 ) (
@@ -43,10 +43,10 @@ module dry_gen #(
   always_comb begin
     intensity_sum = 0;
     for (integer i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-      intensity_sum += inst_intensity[i] * shape_intensities[i];
+      intensity_sum += shape_intensities[i];
     end
-    if (intensity_sum > 16'hFFFF) begin
-      intensity_sum = 16'hFFFF;
+    if (intensity_sum > 8'hFF) begin
+      intensity_sum = 8'hFF;
     end
   end
 
@@ -54,7 +54,7 @@ module dry_gen #(
     if (rst) begin
       intensity <= 0;
     end else begin
-      intensity <= intensity_sum[15:8];
+      intensity <= intensity_sum;
     end
   end
 
@@ -68,11 +68,12 @@ module dry_gen #(
       .rst(rst),
       .h_count(h_count),
       .v_count(v_count),
+      .inst_intensity(inst_intensity[0]),
       .intensity(shape_intensities[0])
   );
 
   // snare drum
-  square_hollow_noise #(
+  square_noise #(
       .WIDTH   (192),
       .CENTER_X(450),
       .CENTER_Y(250)
@@ -82,6 +83,7 @@ module dry_gen #(
       .h_count(h_count),
       .v_count(v_count),
       .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[1]),
       .intensity(shape_intensities[1])
   );
 
@@ -97,6 +99,7 @@ module dry_gen #(
       .h_count(h_count),
       .v_count(v_count),
       .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[2]),
       .intensity(shape_intensities[2])
   );
 
@@ -119,8 +122,8 @@ module dry_gen #(
 
 endmodule
 
-// 1 cycle of delay
-module square_hollow_noise #(
+// 3 cycles of delay
+module square_noise #(
     parameter WIDTH = 128,
     parameter CENTER_X = 400,
     parameter CENTER_Y = 400
@@ -130,6 +133,7 @@ module square_hollow_noise #(
     input  wire  [10:0] h_count,
     input  wire  [ 9:0] v_count,
     input  wire  [ 7:0] noise_source,
+    input  wire  [ 7:0] inst_intensity,
     output logic [ 7:0] intensity
 );
   localparam SHFT = 9 - $clog2(WIDTH);
@@ -137,6 +141,8 @@ module square_hollow_noise #(
   logic [10:0] x_dist;
   logic [ 9:0] y_dist;
   logic [ 7:0] pre_noise_intensity;
+  logic [ 7:0] unscaled_intensity;
+  logic [ 7:0] scaled_intensity;
   assign x_dist = h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
   assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
 
@@ -148,10 +154,20 @@ module square_hollow_noise #(
   always_ff @(posedge clk) begin
     if (rst) begin
       intensity <= 0;
-    end else if (x_dist < (WIDTH >> 1) && y_dist < (WIDTH >> 1)) begin
-      intensity <= pre_noise_intensity > noise_source ? pre_noise_intensity : (noise_source);
+      scaled_intensity <= 0;
     end else begin
-      intensity <= 0;
+      intensity <= scaled_intensity;
+      scaled_intensity <= (inst_intensity * {8'b0, unscaled_intensity}) >> 8;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      unscaled_intensity <= 0;
+    end else if (x_dist < (WIDTH >> 1) && y_dist < (WIDTH >> 1)) begin
+      unscaled_intensity <= pre_noise_intensity > noise_source ? pre_noise_intensity : (noise_source);
+    end else begin
+      unscaled_intensity <= 0;
     end
   end
 
@@ -171,6 +187,7 @@ module star_noise #(
     input  wire  [10:0] h_count,
     input  wire  [ 9:0] v_count,
     input  wire  [ 7:0] noise_source,
+    input  wire  [ 7:0] inst_intensity,
     output logic [ 7:0] intensity
 );
   localparam MIN_POW = (WIDTH_POW < HEIGHT_POW ? WIDTH_POW : HEIGHT_POW);
@@ -190,7 +207,7 @@ module star_noise #(
   logic [31:0] sum;
 
   always_comb begin
-    sum = noise_source + 9'd256 - (last_last_x_dist << X_SHFT) - (y_dist << Y_SHFT) - (xxyy >> XXYY_SHFT);
+    sum = noise_source + (inst_intensity << 1) - 9'h100 - (last_last_x_dist << X_SHFT) - (y_dist << Y_SHFT) - (xxyy >> XXYY_SHFT);
 
     if (sum[31] || last_last_x_dist >= (1 << (WIDTH_POW)) || y_dist >= (1 << (HEIGHT_POW))) begin
       next_intensity = 0;
@@ -221,7 +238,7 @@ module star_noise #(
   end
 endmodule
 
-// 1 cycle of delay
+// 3 cycles of delay
 module circle_hollow #(
     parameter RADIUS   = 128,  //assumed >= 16, best if power of 2
     parameter CENTER_X = 400,
@@ -231,6 +248,8 @@ module circle_hollow #(
     input  wire         rst,
     input  wire  [10:0] h_count,
     input  wire  [ 9:0] v_count,
+    input  wire  [ 7:0] inst_intensity,
+    input  wire  [ 7:0] noise_source,
     output logic [ 7:0] intensity
 );
   localparam RAD_SQ = RADIUS * RADIUS;
@@ -241,12 +260,13 @@ module circle_hollow #(
   logic [10:0] last_x_dist;
   logic [ 9:0] last_y_dist;
   logic [16:0] cur_rad_squared;
+  logic [ 7:0] unscaled_intensity;
 
-  always_comb begin
-    if (last_x_dist >= RADIUS || last_y_dist >= RADIUS || cur_rad_squared >= RAD_SQ) begin
-      intensity = 0;
+  always_ff @(posedge clk) begin
+    if (rst || (last_x_dist >= RADIUS || last_y_dist >= RADIUS || cur_rad_squared >= RAD_SQ)) begin
+      unscaled_intensity <= 0;
     end else begin
-      intensity = (cur_rad_squared >> SHFT) + (8'hFF - ((RAD_SQ - 1) >> SHFT));
+      unscaled_intensity <= (cur_rad_squared >> SHFT) + (8'hFF - ((RAD_SQ - 1) >> SHFT));
     end
   end
 
@@ -256,10 +276,12 @@ module circle_hollow #(
   always_ff @(posedge clk) begin
     if (rst) begin
       cur_rad_squared <= 0;
+      intensity <= 0;
       last_x_dist <= 0;
       last_y_dist <= 0;
     end else begin
       cur_rad_squared <= x_dist[7:0] * x_dist[7:0] + y_dist[7:0] * y_dist[7:0];  // might be pushing it
+      intensity <= (unscaled_intensity * {8'b0, inst_intensity}) >> 8;
       last_x_dist <= x_dist;
       last_y_dist <= y_dist;
     end
