@@ -65,9 +65,11 @@ module resampler
 
 
     // sample_in manager
-    logic [SAMPLE_WIDTH-1:0] x_buf [3:0];  // Delayed input samples
-    logic [1:0] sample_in_valid_buf;       // Use for timing Farrow division start
-    logic       sample_in_valid_reg;       // Use for timing Farrow pipeline
+    logic [SAMPLE_WIDTH-1:0] x_buf [3:0];   // Delayed input samples
+    logic [1:0]  sample_in_valid_buf;       // Use for timing Farrow division start
+    logic        sample_in_valid_reg;       // Use for timing Farrow pipeline
+    logic [13:0] sample_period_prev;
+    logic [13:0] sample_period_error;       // Account for dynamic sample_period
     always_ff @ (posedge clk) begin
         if (rst) begin
             for (int i=0; i<4; i++) begin
@@ -75,6 +77,8 @@ module resampler
             end
             sample_in_valid_buf <= 0;
             sample_in_valid_reg <= 0;
+            // sample_period_prev <= 0;
+            // sample_period_error <= 0;
         end else begin
             if (sample_in_valid) begin
                 x_buf[3] <= x_buf[2];
@@ -87,8 +91,14 @@ module resampler
                 end else begin
                     sample_in_valid_buf[0] <= 1;
                 end
+
+                // sample_period_prev <= sample_period;
+                // sample_period_error <= sample_period - sample_period_prev;
             end else if (sample_out_valid) begin
                 sample_in_valid_buf <= {sample_in_valid_buf[0], 1'b0};
+                
+                // Only apply error correction once per div_delay operation
+                // sample_period_error <= 0;
             end
             sample_in_valid_reg <= sample_in_valid;
         end
@@ -232,6 +242,7 @@ module resampler
             end else begin
                 if (farrow_out_valid[3]) begin
                     div_farrow_in_valid <= 1;
+                    div_farrow_ready <= 0;
                 end
             end
 
@@ -249,6 +260,7 @@ module resampler
             sample_out <= 0;
             sample_out_valid <= 0;
             div_farrow_quotient_signed <= 0;
+            sample_period_prev <= 0;
         end else begin
             if (div_farrow_out_valid) begin
                 if (div_farrow_sign) begin
@@ -273,8 +285,16 @@ module resampler
 
             if (sample_out_valid) begin
                 sample_out_valid <= 0;
+                sample_period_prev <= sample_period;
             end
         end
+    end
+
+
+    logic [13:0] div_delay_divisor;
+    always_comb begin
+        sample_period_error = sample_period - sample_period_prev;
+        div_delay_divisor = sample_period + sample_period_error;
     end
 
 
@@ -285,7 +305,7 @@ module resampler
         .clk(clk),
         .rst(rst),
         .dividend(SAMPLE_PERIOD_OUT<<(DELAY_SCALE+DELAY_DIV_SCALE)),
-        .divisor(sample_period),
+        .divisor(div_delay_divisor),
         .data_in_valid(sample_out_valid),
         .quotient(div_delay_quotient),
         .remainder(),

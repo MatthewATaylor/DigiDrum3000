@@ -127,10 +127,11 @@ async def test_sample_period_sweep(dut):
     sample_period_start = 2272*4
     sample_period_stop = 2272/8
     clock_cycles = 100000
+    setup_cycles = int(clock_cycles/2)
     sample_period_step = (sample_period_stop-sample_period_start) / clock_cycles
     sample_period_float = sample_period_start
     last_sample_cycle = 0
-    for i in range(100000):
+    for i in range(2*clock_cycles+setup_cycles):
         sample_period_in = int(sample_period_float)
         dut.sample_period.value = sample_period_in
         seconds_per_sample = sample_period_in * 10.0e-9
@@ -158,7 +159,12 @@ async def test_sample_period_sweep(dut):
             print(f'Received sample: {sample}, cycle={i}')
 
         await ClockCycles(dut.clk, 1)
-        sample_period_float += sample_period_step
+
+        if i >= setup_cycles:
+            if i >= setup_cycles+clock_cycles:
+                sample_period_float -= sample_period_step
+            else:
+                sample_period_float += sample_period_step
 
     ax.scatter(n_in, x, color='black', label='Input')
     ax.plot(n_out, y, marker='.', label='Output')
