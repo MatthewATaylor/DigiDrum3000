@@ -21,20 +21,18 @@ module note_tracker #(
   // delay update until inst_intensity_pipe has stabilized
   logic new_frame_delayed[7:0];
   logic new_frame_clk_100MHz;
-  logic [14:0] inst_sample_intensity[INSTRUMENT_COUNT-1:0];
-  logic [14:0] running_max_inst_sample_intensity[INSTRUMENT_COUNT-1:0];
+  logic [15:0] sample_unsigned[INSTRUMENT_COUNT-1:0];
+  logic [15:0] running_max_inst_sample[INSTRUMENT_COUNT-1:0];
+  logic [15:0] running_min_inst_sample[INSTRUMENT_COUNT-1:0];
+  logic [15:0] running_max_intensity[INSTRUMENT_COUNT-1:0];
   logic [7:0] inst_intensity_cross_clk[INSTRUMENT_COUNT-1:0];
 
   assign new_frame_clk_100MHz = new_frame_pipe[2] != new_frame_pipe[1];
 
-  // *almost* absolute value [absolute value in 1's compliment]
   always_comb begin
     for (integer i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-      if (instrument_samples[i][15]) begin
-        inst_sample_intensity[i] = ~instrument_samples[i][14:0];
-      end else begin
-        inst_sample_intensity[i] = instrument_samples[i][14:0];
-      end
+      sample_unsigned[i] = {~instrument_samples[i][15], instrument_samples[i][14:0]};
+      running_max_intensity[i] = running_max_inst_sample[i] - running_min_inst_sample[i];
     end
   end
 
@@ -53,10 +51,10 @@ module note_tracker #(
       if (rst) begin
         inst_intensity_cross_clk[i] <= 0;
       end else if (new_frame_clk_100MHz) begin
-        if (|running_max_inst_sample_intensity[i][14:12]) begin
+        if (|running_max_intensity[i][15:13]) begin
           inst_intensity_cross_clk[i] <= 8'hFF;
         end else begin
-          inst_intensity_cross_clk[i] <= running_max_inst_sample_intensity[i][11:4];
+          inst_intensity_cross_clk[i] <= running_max_intensity[i][12:5];
         end
       end
     end
@@ -67,12 +65,16 @@ module note_tracker #(
     integer i;
     if (rst || new_frame_clk_100MHz) begin
       for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-        running_max_inst_sample_intensity[i] <= 0;
+        running_max_inst_sample[i] <= 0;
+        running_min_inst_sample[i] <= 16'hFFFF;
       end
     end else begin
       for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-        if (inst_sample_intensity[i] > running_max_inst_sample_intensity[i]) begin
-          running_max_inst_sample_intensity[i] <= inst_sample_intensity[i];
+        if (sample_unsigned[i] > running_max_inst_sample[i]) begin
+          running_max_inst_sample[i] <= sample_unsigned[i];
+        end
+        if (sample_unsigned[i] < running_min_inst_sample[i]) begin
+          running_min_inst_sample[i] <= sample_unsigned[i];
         end
       end
     end
