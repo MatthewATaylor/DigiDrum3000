@@ -469,20 +469,36 @@ module top_level
         .o_debug1()
     );
 
-    logic [15:0] sample_upsampled;
+    logic [15:0] resample;
+    logic        resample_valid;
+    resampler resampler_i (
+        .clk(clk),
+        .rst(rst),
 
+        .sample_period(sample_period),
+        
+        .sample_in(sample_raw),
+        .sample_in_valid(sample_raw_valid),
+
+        .sample_out(resample),
+        .sample_out_valid(resample_valid),
+
+        .delay_debug(),
+        .delay_debug_valid(0)
+    );
+
+    logic [15:0] sample_upsampled;
     upsampler upsampler_i (
         .clk(clk),
         .rst(rst),
-        .sample_in(sample_raw),
-        .sample_in_valid(sample_raw_valid),
+        .sample_in(resample),
+        .sample_in_valid(resample_valid),
         .sample_out(sample_upsampled)
     );
 
     logic dac_out;
     assign spkl = dac_out;
     assign spkr = dac_out;
-
     dlt_sig_dac_2nd_order dlt_sig (
         .clk(clk),
         .rst(rst),
