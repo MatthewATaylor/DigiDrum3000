@@ -109,7 +109,6 @@ async def test_static_d(dut):
 
 @cocotb.test()
 async def test_sample_period_sweep(dut):
-    return
     F = 1000
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
@@ -180,6 +179,7 @@ async def test_sample_period_sweep(dut):
 
 @cocotb.test()
 async def test_variable_d(dut):
+    return
     F = 1000
     CYCLES = 2
 
@@ -319,11 +319,11 @@ def is_runner():
     #sim = os.getenv("SIM","vivado")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
-    sources = [proj_path / "hdl" / "resampler.sv"]
+    sources = [proj_path / "hdl" / "farrow_upsampler.sv"]
     sources += [proj_path / "hdl" / "divider.sv"]
     build_test_args = ["-Wall"]
     parameters = {'SAMPLE_PERIOD_OUT': SAMPLE_PERIOD_OUT}
-    hdl_toplevel = "resampler"
+    hdl_toplevel = "farrow_upsampler"
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(

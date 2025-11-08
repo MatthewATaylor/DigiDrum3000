@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module resampler
+module farrow_upsampler
     #(
         parameter SAMPLE_PERIOD_OUT = 2272/4
     )
@@ -100,7 +100,7 @@ module resampler
 
 
     // 3rd order Farrow structure
-    // See Vesa Valimaki dissertation chapter 3, 1995
+    // See Vesa Valimaki dissertation chapter 3.3, 1995
     // "Discrete-Time Modeling of Acoustic Tubes Using Fractional Delay Filters"
     // Note: The block diagram on p102 has the wrong sign on one of the adders
     

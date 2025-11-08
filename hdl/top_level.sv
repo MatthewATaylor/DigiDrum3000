@@ -469,9 +469,9 @@ module top_level
         .o_debug1()
     );
 
-    logic [15:0] resample;
-    logic        resample_valid;
-    resampler resampler_i (
+    logic [15:0] farrow_upsample;
+    logic        farrow_upsample_valid;
+    farrow_upsampler farrow (
         .clk(clk),
         .rst(rst),
 
@@ -480,8 +480,8 @@ module top_level
         .sample_in(sample_raw),
         .sample_in_valid(sample_raw_valid),
 
-        .sample_out(resample),
-        .sample_out_valid(resample_valid),
+        .sample_out(farrow_upsample),
+        .sample_out_valid(farrow_upsample_valid),
 
         .delay_debug(),
         .delay_debug_valid(0)
