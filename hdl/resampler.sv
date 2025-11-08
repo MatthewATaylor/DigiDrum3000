@@ -3,7 +3,7 @@
 
 module resampler
     #(
-        parameter SAMPLE_PERIOD_OUT = 2272
+        parameter SAMPLE_PERIOD_OUT = 2272/4
     )
     (
         input wire clk,
@@ -21,9 +21,9 @@ module resampler
         input  wire         delay_debug_valid
     );
 
-    localparam DELAY_SCALE = 2;
-    localparam DELAY_WIDTH = DELAY_SCALE + 1;
-    localparam SAMPLE_WIDTH = 25;
+    localparam DELAY_SCALE = 4;
+    localparam DELAY_WIDTH = DELAY_SCALE + 3;
+    localparam SAMPLE_WIDTH = 16 + 3 + 3*DELAY_SCALE;
     localparam SAMPLE_PERIOD_WIDTH = 16;
     localparam FARROW_DIVISOR = 6 * (1<<DELAY_SCALE)**3;
 
@@ -56,7 +56,7 @@ module resampler
 
     // sample_in manager
     logic [SAMPLE_WIDTH-1:0]        x_buf [3:0];  // Delayed input samples
-    logic [SAMPLE_WIDTH-1:0]        x [3:0];      // Buffer for Farrow
+    logic [SAMPLE_WIDTH-1:0]        x     [3:0];  // Buffer for Farrow
     logic [SAMPLE_PERIOD_WIDTH-1:0] sample_period_hold;
     logic [SAMPLE_WIDTH-1:0]        sample_ext;
     assign sample_ext = {{(SAMPLE_WIDTH-16){sample_in[15]}}, sample_in};
@@ -103,39 +103,44 @@ module resampler
     // See Vesa Valimaki dissertation chapter 3, 1995
     // "Discrete-Time Modeling of Acoustic Tubes Using Fractional Delay Filters"
     // Note: The block diagram on p102 has the wrong sign on one of the adders
+    
     logic [SAMPLE_WIDTH-1:0]               left_sum;
+
     logic [SAMPLE_WIDTH-1:0]               x1mx2;
     assign                                 x1mx2 = x[1] - x[2];
-    logic [SAMPLE_WIDTH+DELAY_WIDTH-1:0]   top_sum_2;
+    logic [SAMPLE_WIDTH-1:0]               d3_factor; 
+
     logic [SAMPLE_WIDTH-1:0]               x0px2;
     assign                                 x0px2 = x[0] + x[2];
     logic [SAMPLE_WIDTH-1:0]               d2_factor_pre;
-    logic [SAMPLE_WIDTH+DELAY_WIDTH*2-1:0] top_sum;
-    logic [SAMPLE_WIDTH+DELAY_WIDTH*3-1:0] farrow_out;
-    logic [1:0]                            farrow_counter;
-    logic [2:0]                            farrow_out_valid_buf;
-    logic                                  farrow_out_valid;
-    assign                                 farrow_out_valid = farrow_out_valid_buf[2];
+    
+    logic [SAMPLE_WIDTH+DELAY_WIDTH+1-1:0] top_sum_2;
+    logic [SAMPLE_WIDTH+DELAY_WIDTH*2:0]   top_sum;
+    logic [SAMPLE_WIDTH+DELAY_WIDTH*3+1:0] farrow_out;
+
+    logic [1:0] farrow_counter;
+    logic [3:0] farrow_out_valid_buf;
+    logic       farrow_out_valid;
+    assign      farrow_out_valid = farrow_out_valid_buf[3];
     always_ff @ (posedge clk) begin
         if (rst) begin
-            top_sum_2 <= 0;
-            d2_factor_pre <= 0;
-            top_sum <= 0;
             left_sum <= 0;
+            d3_factor <= 0;
+            d2_factor_pre <= 0;
+            
+            top_sum_2 <= 0;
+            top_sum <= 0;
             farrow_out <= 0;
 
             farrow_counter <= 0;
             farrow_out_valid_buf <= 0;
         end else begin
             farrow_out_valid_buf <= {
-                farrow_out_valid_buf[1:0],
+                farrow_out_valid_buf[2:0],
                 prev_div_delay_out_valid
             };
 
-            if (prev_div_delay_out_valid || farrow_counter < 2) begin
-                // Run for three clock cycles every time after delay or
-                // x is updated.
-
+            if (prev_div_delay_out_valid || farrow_counter < 3) begin
                 if (prev_div_delay_out_valid) begin
                     farrow_counter <= 0;
                 end else begin
@@ -143,31 +148,33 @@ module resampler
                 end
 
                 // Cycle 1
-                top_sum_2 <=
-                    $signed(delay) *
-                    $signed((x1mx2<<1) + x1mx2 + (x[3] - x[0]));
+                d3_factor <= (x1mx2<<1) + x1mx2 + (x[3] - x[0]);
                 d2_factor_pre <=
-                    ($signed((x0px2<<1) + x0px2) <<< DELAY_SCALE) -
-                    ($signed(((x[1]<<2) + (x[1]<<1))) <<< DELAY_SCALE);
-
-                // Cycle 2
-                top_sum <=
-                    $signed(delay) * (
-                        $signed(top_sum_2) +
-                        $signed(d2_factor_pre)
-                    );
+                    (
+                        ((x0px2<<1) + x0px2) -
+                        ((x[1]<<2) + (x[1]<<1))
+                    ) <<< DELAY_SCALE;
                 left_sum <= x[3] - (
                     (x[0]<<2) + (x[0]<<1) - (
                         (x[1]<<1) + x[1] + (x[0]<<1)
                     )
                 );
 
+                // Cycle 2
+                top_sum_2 <=
+                    $signed(delay) * $signed(d3_factor) +
+                    $signed(d2_factor_pre);
+
                 // Cycle 3
+                top_sum <=
+                    $signed(delay) * $signed(top_sum_2) -
+                    $signed(left_sum <<< (DELAY_SCALE<<1));
+
+                // Cycle 4
                 farrow_out <=
-                    $signed(delay) *
-                    ($signed(top_sum) - $signed(left_sum << (DELAY_SCALE<<1))) +
+                    $signed(delay) * $signed(top_sum) +
                     $signed(
-                        ((x[1]<<2) + (x[1]<<1)) <<
+                        (((x[1])<<2) + (x[1]<<1)) <<
                         ((DELAY_SCALE<<1) + DELAY_SCALE)
                     );
             end

@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 test_file = os.path.basename(__file__).replace(".py","")
 
 
-SAMPLE_PERIOD_OUT = 2272
+SAMPLE_PERIOD_OUT = 2272/4
 SAMPLE_MAX = 2**15-1
 DELAY_SCALE = 4
 M = 2**DELAY_SCALE
@@ -45,7 +45,7 @@ async def test_static_d(dut):
     x_buf = [0,0,0,0,0]
     d_buf = [0,0]
 
-    d_range = range(0, 4*M, int(4*M/4))
+    d_range = range(0, M, int(M/4))
     for d in d_range:
         print(
             f'\n' + \
@@ -109,6 +109,7 @@ async def test_static_d(dut):
 
 @cocotb.test()
 async def test_sample_period_sweep(dut):
+    return
     F = 1000
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
@@ -179,7 +180,6 @@ async def test_sample_period_sweep(dut):
 
 @cocotb.test()
 async def test_variable_d(dut):
-    return
     F = 1000
     CYCLES = 2
 
@@ -191,7 +191,9 @@ async def test_variable_d(dut):
 
     fig, ax = plt.subplots()
 
-    sample_periods = [2272*4, 2272*2.37, 2272, 2272/1.89, 2272/4]
+    # sample_periods = [2272*4, 2272*2.37, 2272, 2272/1.89, 2272/4]
+    # sample_periods = [2272*4, 2272*2.37, 2272, 2272/1.89, 2272/4]
+    sample_periods = [2272*3.14159]
     for sample_period_in in sample_periods:
         sample_rate_in = 1 / (sample_period_in * 10e-9)
         print(
