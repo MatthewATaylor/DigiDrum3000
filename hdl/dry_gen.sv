@@ -207,12 +207,12 @@ module star_noise #(
   logic [31:0] sum;
 
   always_comb begin
-    sum = noise_source + (inst_intensity << 1) - 9'h100 - (last_last_x_dist << X_SHFT) - (y_dist << Y_SHFT) - (xxyy >> XXYY_SHFT);
+    sum = noise_source + (inst_intensity << 1) - 8'hFF - (last_last_x_dist << X_SHFT) - (y_dist << Y_SHFT) - (xxyy >> XXYY_SHFT);
 
     if (sum[31] || last_last_x_dist >= (1 << (WIDTH_POW)) || y_dist >= (1 << (HEIGHT_POW))) begin
       next_intensity = 0;
     end else begin
-      next_intensity = sum[8] ? 8'hFF : sum[7:0];
+      next_intensity = (|sum[8:7]) ? 8'hFF : sum[6:0];
     end
   end
 

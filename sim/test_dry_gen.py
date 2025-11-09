@@ -128,12 +128,13 @@ def test_dry_gen_runner():
         proj_path / "hdl" / "dry_gen.sv",
     ]
     build_test_args = ["-Wall"]
-    parameters = {"WIDTH_POW": 5, "HEIGHT_POW": 4, "CENTER_X": 32, "CENTER_Y": 32}
-    top_level = "star_noise"
-    if sys.argv[1] == "circle_hollow":
+    if len(sys.argv) <= 1:
+        top_level = "star_noise"
+        parameters = {"WIDTH_POW": 5, "HEIGHT_POW": 4, "CENTER_X": 32, "CENTER_Y": 32}
+    elif sys.argv[1] == "circle_hollow":
         top_level = "circle_hollow"
         parameters = {"RADIUS": 32, "CENTER_X": 32, "CENTER_Y": 32}
-    if sys.argv[1] == "square_noise":
+    elif sys.argv[1] == "square_noise":
         top_level = "square_noise"
         parameters = {"WIDTH": 64, "CENTER_X": 32, "CENTER_Y": 32}
     sys.path.append(str(proj_path / "sim"))

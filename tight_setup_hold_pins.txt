@@ -1,0 +1,49 @@
++==========================+==========================+==================================================================================================+
+| Launch Setup Clock       | Launch Hold Clock        | Pin                                                                                              |
++==========================+==========================+==================================================================================================+
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[2].instr/addr_valid_reg/D                                                        |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[2].instr/FSM_sequential_state_reg[0]/D                                           |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[1].instr/addr_valid_reg/D                                                        |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[0].instr/FSM_sequential_state_reg[0]/D                                           |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[0].instr/addr_valid_reg/D                                                        |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[2].instr/sample_counter_reg[12]/D                                                |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[2].instr/sample_counter_reg[7]/D                                                 |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[2].instr/sample_counter_reg[11]/D                                                |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[2].instr/FSM_sequential_state_reg[1]/D                                           |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[2].instr/trigger_hold_reg/D                                                      |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[2].instr/sample_counter_reg[10]/D                                                |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[0].instr/sample_counter_reg[2]/D                                                 |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[0].instr/sample_counter_reg[3]/D                                                 |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[0].instr/sample_counter_reg[10]/D                                                |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[0].instr/trigger_hold_reg/D                                                      |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[1].instr/trigger_hold_reg/D                                                      |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[1].instr/FSM_sequential_state_reg[1]/D                                           |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[0].instr/FSM_sequential_state_reg[1]/D                                           |
+| clk_controller_clk_wiz_0 | gclk                     | drd_req/genblk1[0].instr/sample_counter_reg[14]/D                                                |
+| clk_controller_clk_wiz_0 | gclk                     | drd_audio/mixer/dout_valid_reg/D                                                                 |
+| clk_controller_clk_wiz_0 | gclk                     | drd_audio/mixer/active_din_ready_reg[1]/D                                                        |
+| clk_controller_clk_wiz_0 | gclk                     | drd_audio/mixer/active_din_ready_reg[0]/D                                                        |
+| clk_controller_clk_wiz_0 | gclk                     | drd_audio/mixer/active_din_ready_reg[2]/D                                                        |
+| gclk                     | gclk                     | drd_audio/dram_read_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_pf_ic_rc.ram_empty_i_reg/D    |
+| gclk                     | gclk                     | drd_audio/dram_read_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/rdp_inst/count_value_i_reg[6]/D   |
+| gclk                     | gclk                     | drd_audio/dram_read_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/rdp_inst/count_value_i_reg[5]/D   |
+| gclk                     | gclk                     | drd_audio/dram_read_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/rdpp1_inst/count_value_i_reg[0]/D |
+| gclk                     | gclk                     | drd_audio/dram_read_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/gen_fwft.empty_fwft_i_reg/D       |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[4][1]/D                                                      |
+| gclk                     | gclk                     | drd_audio/dram_read_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/rdpp1_inst/count_value_i_reg[5]/D |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[4][0]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[2][1]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[2][2]/D                                                      |
+| clk_controller_clk_wiz_0 | clk_controller_clk_wiz_0 | ddr3_top/ddr3_controller_inst/o_wb_stall_calib_reg/D                                             |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[5][2]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[5][1]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[3][0]/D                                                      |
+| gclk                     | gclk                     | drd_audio/dram_read_fifo/xpm_fifo_axis_inst/xpm_fifo_base_inst/rdpp1_inst/count_value_i_reg[6]/D |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[0][2]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[4][2]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[3][1]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[5][0]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[3][2]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[0][1]/D                                                      |
+| gclk                     | gclk                     | pcb/my_reconstructor/out_buffer_reg[1][1]/D                                                      |
++--------------------------+--------------------------+--------------------------------------------------------------------------------------------------+

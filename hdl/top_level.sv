@@ -136,11 +136,11 @@ module top_level
     logic         addr_offsets_valid;
     logic         addr_offsets_valid_pixel;
 
-    logic [9:0] pitch;
-    assign pitch = sw[15:6];
+    logic [9:0] pitch[2:0];
+    //assign pitch = sw[15:6];
     logic [13:0] sample_period;
     pitch_to_sample_period p2sp (
-        .pitch(pitch),
+        .pitch(sw[5] ? pitch[2] : sw[15:6]),
         .sample_period(sample_period)
     );
 
@@ -606,6 +606,19 @@ module top_level
     logic [2:0] reverb_src[2:0];
     logic [2:0] delay_src[2:0];
 
+    logic [9:0] volume[2:0];
+    //logic [9:0] pitch[2:0];
+    logic [9:0] delay_wet[2:0];
+    logic [9:0] delay_rate[2:0];
+    logic [9:0] delay_feedback[2:0];
+    logic [9:0] reverb_wet[2:0];
+    logic [9:0] reverb_size[2:0];
+    logic [9:0] reverb_feedback[2:0];
+    logic [9:0] filter_quality[2:0];
+    logic [9:0] filter_cutoff[2:0];
+    logic [9:0] distortion_drive[2:0];
+    logic [9:0] crush_pressure[2:0];
+
     pcb_interface pcb (
         .clk(clk),
         .rst(rst),
@@ -622,9 +635,29 @@ module top_level
         .distortion_src(distortion_src[0]),
         .filter_src(filter_src[0]),
         .reverb_src(reverb_src[0]),
-        .delay_src(delay_src[0])
+        .delay_src(delay_src[0]),
+
+        .cipo(cipo),
+        .copi(copi),
+        .dclk(dclk),
+        .cs0(cs0),
+        .cs1(cs1),
+
+        .volume(volume[0]),
+        .pitch(pitch[0]),
+        .delay_wet(delay_wet[0]),
+        .delay_rate(delay_rate[0]),
+        .delay_feedback(delay_feedback[0]),
+        .reverb_wet(reverb_wet[0]),
+        .reverb_size(reverb_size[0]),
+        .reverb_feedback(reverb_feedback[0]),
+        .filter_quality(filter_quality[0]),
+        .filter_cutoff(filter_cutoff[0]),
+        .distortion_drive(distortion_drive[0]),
+        .crush_pressure(crush_pressure[0])
     );
 
+    // clock boundry
     always_ff @(posedge clk_dram_ctrl) begin
         output_src[2] <= output_src[1];
         output_src[1] <= output_src[0];
@@ -638,12 +671,42 @@ module top_level
         reverb_src[1] <= reverb_src[0];
         delay_src[2] <= delay_src[1];
         delay_src[1] <= delay_src[0];
+        volume[2] <= volume[1];
+        volume[1] <= volume[0];
+        pitch[2] <= pitch[1];
+        pitch[1] <= pitch[0];
+        delay_wet[2] <= delay_wet[1];
+        delay_wet[1] <= delay_wet[0];
+        delay_rate[2] <= delay_rate[1];
+        delay_rate[1] <= delay_rate[0];
+        delay_feedback[2] <= delay_feedback[1];
+        delay_feedback[1] <= delay_feedback[0];
+        reverb_wet[2] <= reverb_wet[1];
+        reverb_wet[1] <= reverb_wet[0];
+        reverb_size[2] <= reverb_size[1];
+        reverb_size[1] <= reverb_size[0];
+        reverb_feedback[2] <= reverb_feedback[1];
+        reverb_feedback[1] <= reverb_feedback[0];
+        filter_quality[2] <= filter_quality[1];
+        filter_quality[1] <= filter_quality[0];
+        filter_cutoff[2] <= filter_cutoff[1];
+        filter_cutoff[1] <= filter_cutoff[0];
+        distortion_drive[2] <= distortion_drive[1];
+        distortion_drive[1] <= distortion_drive[0];
+        crush_pressure[2] <= crush_pressure[1];
+        crush_pressure[1] <= crush_pressure[0];
     end
 
     logic [31:0] ss_val;
     always_comb begin
-        if (sw[2]) begin
-            ss_val = {
+        case (sw[4:2])
+            3'b001: ss_val = {6'h00, volume[2], 6'h00, pitch[2]};
+            3'b010: ss_val = {6'h00, delay_wet[2], 6'h00, delay_rate[2]};
+            3'b011: ss_val = {6'h00, delay_feedback[2], 6'h00, reverb_wet[2]};
+            3'b100: ss_val = {6'h00, reverb_size[2], 6'h00, reverb_feedback[2]};
+            3'b101: ss_val = {6'h00, filter_quality[2], 6'h00, filter_cutoff[2]};
+            3'b110: ss_val = {6'h00, distortion_drive[2], 6'h00, crush_pressure[2]};
+            3'b111: ss_val = {
                 7'h0, delay_src[2],
                 1'b0, reverb_src[2],
                 1'b0, filter_src[2],
@@ -651,9 +714,8 @@ module top_level
                 1'b0, crush_src[2],
                 1'b0, output_src[2]
             };
-        end else begin
-            ss_val = {2'b00, sample_period, memrequest_complete_counter[15:0]};
-        end
+            default: ss_val = {2'b00, sample_period, memrequest_complete_counter[15:0]};
+        endcase
     end
 
     logic [6:0] ss_c;
