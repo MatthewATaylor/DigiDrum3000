@@ -5,12 +5,12 @@ module pcb_interface (
     input wire clk,
     input wire rst,
 
-    output logic dry_pin,
-    inout  wire  crush_pin,
-    inout  wire  distortion_pin,
-    inout  wire  filter_pin,
-    inout  wire  reverb_pin,
-    inout  wire  delay_pin,
+    inout wire dry_pin,
+    inout wire crush_pin,
+    inout wire distortion_pin,
+    inout wire filter_pin,
+    inout wire reverb_pin,
+    inout wire delay_pin,
 
     output logic [2:0] output_src,
     output logic [2:0] crush_src,
@@ -39,12 +39,14 @@ module pcb_interface (
     //output logic [9:0] crush_pressure
 );
 
+  logic dry_val;
   logic crush_val;
   logic distortion_val;
   logic filter_val;
   logic reverb_val;
   logic delay_val;
 
+  assign dry_pin        = dry_val ? 1'bZ : 1'b0;
   assign crush_pin      = crush_val ? 1'bZ : 1'b0;
   assign distortion_pin = distortion_val ? 1'bZ : 1'b0;
   assign filter_pin     = filter_val ? 1'bZ : 1'b0;
@@ -55,7 +57,7 @@ module pcb_interface (
       .clk(clk),
       .rst(rst),
 
-      .dry(dry_pin),
+      .dry(dry_val),
       .crush_val(crush_val),
       .distortion_val(distortion_val),
       .filter_val(filter_val),

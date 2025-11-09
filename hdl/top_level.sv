@@ -25,7 +25,7 @@ module top_level
         input wire          cipo,
 
         // Patch pins
-        output logic        dry_pin,
+        inout wire          dry_pin,
         inout wire          crush_pin,
         inout wire          distortion_pin,
         inout wire          filter_pin,

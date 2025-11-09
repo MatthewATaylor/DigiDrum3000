@@ -138,6 +138,7 @@ set_property PULLTYPE PULLUP [ get_ports "reverb_pin"]
 set_property PULLTYPE PULLUP [ get_ports "filter_pin"]
 set_property PULLTYPE PULLUP [ get_ports "distortion_pin"]
 set_property PULLTYPE PULLUP [ get_ports "crush_pin"]
+set_property PULLTYPE PULLUP [ get_ports "dry_pin"]
 
 set_property -dict {PACKAGE_PIN F14 IOSTANDARD LVCMOS33 }  [ get_ports "delay_pin" ]
 set_property -dict {PACKAGE_PIN F15 IOSTANDARD LVCMOS33}  [ get_ports "filter_pin" ]
