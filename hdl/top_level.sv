@@ -9,13 +9,28 @@ module top_level
         input  wire  [3:0]  btn,
         output logic [2:0]  rgb0,
         output logic [2:0]  rgb1,
-        input  wire         midi_pmod,
+        input  wire         midi_pin,
         output logic        spkl,
         output logic        spkr,
        
         // UART
         input wire          uart_rxd,
         output logic        uart_txd,
+
+        // SPI ADC
+        output logic        copi,
+        output logic        dclk,
+        output logic        cs0,
+        output logic        cs1,
+        input wire          cipo,
+
+        // Patch pins
+        output logic        dry_pin,
+        inout wire          crush_pin,
+        inout wire          distortion_pin,
+        inout wire          filter_pin,
+        inout wire          reverb_pin,
+        inout wire          delay_pin,
 
         // Seven segment
         output logic [3:0]  ss0_an,  //anode control for upper four digits of seven-seg display
@@ -142,7 +157,7 @@ module top_level
             end
         end else begin
             uart_rxd_buf <= {uart_rxd, uart_rxd_buf[1]};
-            midi_din_buf <= {midi_pmod, midi_din_buf[1]};
+            midi_din_buf <= {midi_pin, midi_din_buf[1]};
 
             // sample_load_complete CDC
             // From 83.333 MHz to 100 MHz
@@ -584,13 +599,70 @@ module top_level
         end
     end
 
+    logic [2:0] output_src[2:0];
+    logic [2:0] crush_src[2:0];
+    logic [2:0] distortion_src[2:0];
+    logic [2:0] filter_src[2:0];
+    logic [2:0] reverb_src[2:0];
+    logic [2:0] delay_src[2:0];
+
+    pcb_interface pcb (
+        .clk(clk),
+        .rst(rst),
+
+        .dry_pin(dry_pin),
+        .delay_pin(delay_pin),
+        .reverb_pin(reverb_pin),
+        .filter_pin(filter_pin),
+        .distortion_pin(distortion_pin),
+        .crush_pin(crush_pin),
+
+        .output_src(output_src[0]),
+        .crush_src(crush_src[0]),
+        .distortion_src(distortion_src[0]),
+        .filter_src(filter_src[0]),
+        .reverb_src(reverb_src[0]),
+        .delay_src(delay_src[0])
+    );
+
+    always_ff @(posedge clk_dram_ctrl) begin
+        output_src[2] <= output_src[1];
+        output_src[1] <= output_src[0];
+        crush_src[2] <= crush_src[1];
+        crush_src[1] <= crush_src[0];
+        distortion_src[2] <= distortion_src[1];
+        distortion_src[1] <= distortion_src[0];
+        filter_src[2] <= filter_src[1];
+        filter_src[1] <= filter_src[0];
+        reverb_src[2] <= reverb_src[1];
+        reverb_src[1] <= reverb_src[0];
+        delay_src[2] <= delay_src[1];
+        delay_src[1] <= delay_src[0];
+    end
+
+    logic [31:0] ss_val;
+    always_comb begin
+        if (sw[2]) begin
+            ss_val = {
+                7'h0, delay_src[2],
+                1'b0, reverb_src[2],
+                1'b0, filter_src[2],
+                1'b0, distortion_src[2],
+                1'b0, crush_src[2],
+                1'b0, output_src[2]
+            };
+        end else begin
+            ss_val = {2'b00, sample_period, memrequest_complete_counter[15:0]};
+        end
+    end
+
     logic [6:0] ss_c;
     assign ss0_c = ss_c;
     assign ss1_c = ss_c;
     seven_segment_controller ssc (
         .clk(clk_dram_ctrl),
         .rst(rst_dram_ctrl),
-        .val({2'b00, sample_period, memrequest_complete_counter[15:0]}),
+        .val(ss_val),
         .cat(ss_c),
         .an({ss0_an, ss1_an})
     );

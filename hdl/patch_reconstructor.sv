@@ -184,6 +184,6 @@ module count_leading_ones #(
       end
     end
   endgenerate
-endmodule
+endmodule  //patch_reconstructor
 
 `default_nettype wire
