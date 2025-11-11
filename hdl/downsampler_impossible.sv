@@ -8,7 +8,7 @@
 `endif  /* ! SYNTHESIS */
 
 // Polyphase 4:1 downsampler
-module downsampler
+module downsampler_impossible
     (
         input  wire         clk,
         input  wire         rst,
@@ -20,49 +20,30 @@ module downsampler
 
     localparam TAPS = 1024;
     localparam BANKS = TAPS/4;
-    localparam BUFFER_DEPTH = TAPS;
-    
-    logic [$clog2(TAPS)-1:0]  buf_addr;
-    logic                     buf_we;
-    logic [15:0]              buf_din;
-    logic [15:0]              buf_dout;
-    logic [$clog2(TAPS)-1:0]  buf_start;
+    localparam BUFFER_DEPTH = TAPS-4;
 
-    logic [43:0]              accum;
+    logic [41:0] buffer [BUFFER_DEPTH-1:0];
+    logic [43:0] accum;
 
-    logic [1:0]               sample_in_counter;
+    logic [15:0] sample_in_hold;
+    logic [1:0]  sample_in_counter;
 
-    logic [$clog2(TAPS)-1:0]  filter_index;
-    logic [17:0]              filter_data;
+    logic [$clog2(TAPS)-1:0]   filter_index;
+    logic [17:0]               filter_data;
 
-    logic [1:0]               coeff_counter;
-    logic [$clog2(BANKS)-1:0] bank_counter;
-    logic [$clog2(BANKS)-1:0] bank_counter_buf [1:0];
+    logic [1:0]                coeff_counter;
+    logic [$clog2(BANKS)-1:0]  bank_counter;
+    logic [$clog2(BANKS)-1:0]  bank_counter_buf [1:0];
 
 
     always_ff @ (posedge clk) begin
         if (rst) begin
             sample_in_counter <= 0;
-            buf_we <= 0;
-            buf_din <= 0;
-            buf_addr <= 0;
-            buf_start <= 0;
-
-            `ifndef SYNTHESIS
-                for (int i=0; i<TAPS; i++) begin
-                    sample_buffer.data[i] <= 0;
-                end
-            `endif
+            sample_in_hold <= 0;
         end else begin
             if (sample_in_valid) begin
+                sample_in_hold <= sample_in;
                 sample_in_counter <= sample_in_counter + 1;
-                buf_we <= 1;
-                buf_din <= sample_in;
-                buf_addr <= buf_start;
-                buf_start <= buf_start - 1;
-            end else begin
-                buf_we <= 0;
-                buf_addr <= buf_start + ({2'b0, bank_counter_buf[0]} << 2);
             end
         end
     end
@@ -71,10 +52,17 @@ module downsampler
     logic is_computing;
     
     logic [33:0] product;
-    assign product = $signed(filter_data) * $signed(buf_dout);
-
+    assign product = $signed(filter_data) * $signed(sample_in_hold);
+    
+    logic [$clog2(TAPS)-1:0] buf_index;
+    assign buf_index = {2'b0, bank_counter_buf[1]} << 2;
+    
     always_ff @ (posedge clk) begin
         if (rst) begin
+            // Uncomment for sim
+            // for (int i=0; i<BUFFER_DEPTH; i++) begin
+            //     buffer[i] <= 0;
+            // end
             is_computing <= 0;
             accum <= 0;
             sample_out_valid <= 0;
@@ -83,19 +71,39 @@ module downsampler
                 if (bank_counter_buf[1] == 0) begin
                     is_computing <= 1;
                     if (sample_in_counter == 1) begin
-                        accum <= $signed(product);
+                        accum <=
+                            $signed(product) +
+                            $signed(buffer[0]);
                     end else begin
-                        accum <= $signed(accum) + $signed(product);
+                        accum <=
+                            $signed(accum) +
+                            $signed(product) +
+                            $signed(buffer[0]);
+                        if (sample_in_counter == 0) begin
+                            sample_out_valid <= 1;
+                        end
+                    end
+                    for (int i=0; i<3; i++) begin
+                        buffer[i] <= buffer[i+1];
                     end
                 end
             end else begin
                 if (bank_counter_buf[1] == BANKS-1) begin
                     is_computing <= 0;
-                    if (sample_in_counter == 0) begin
-                        sample_out_valid <= 1;
+                    buffer[BUFFER_DEPTH-1] <= $signed(product);
+                end else begin
+                    // if bank_counter_buf[1] == 1:
+                    //     buffer[3] <= buffer[4] + product
+                    //     buffer[4] <= buffer[5]
+                    //     buffer[5] <= buffer[6]
+                    //     buffer[6] <= buffer[7]
+                    buffer[buf_index-1] <=
+                        $signed(buffer[buf_index]) +
+                        $signed(product);
+                    for (int i=0; i<3; i++) begin
+                        buffer[buf_index+i] <= buffer[buf_index+i+1];
                     end
                 end
-                accum <= $signed(accum) + $signed(product);
             end
 
             if (sample_out_valid) begin
@@ -150,27 +158,15 @@ module downsampler
     end
 
 
-    dist_ram #(
-        .WIDTH(16),
-        .DEPTH(TAPS)
-    ) sample_buffer (
-        .clk(clk),
-        .addr(buf_addr),
-        .we(buf_we),
-        .din(buf_din),
-        .dout(buf_dout)
-    );
-
-
     // 2 cycle delay
     xilinx_single_port_ram_read_first #(
         .RAM_WIDTH(18),
-        .RAM_DEPTH(TAPS),
+        .RAM_DEPTH(1024),
         .RAM_PERFORMANCE("HIGH_PERFORMANCE"),
         .INIT_FILE(
             `FPATH(downsampler_filter_coeffs.mem)
         )
-    ) filter_bram (
+    ) bram (
         .addra(filter_index),
         .dina(0),
         .clka(clk),

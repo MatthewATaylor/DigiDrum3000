@@ -474,6 +474,7 @@ module top_level
     resampler resampler_i (
         .clk(clk),
         .rst(rst),
+        .sample_period(sample_period),
         .sample_in(sample_raw),
         .sample_in_valid(sample_raw_valid),
         .sample_out(resample),

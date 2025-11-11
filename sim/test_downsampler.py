@@ -14,8 +14,8 @@ test_file = os.path.basename(__file__).replace(".py","")
 
 
 SAMPLE_PERIOD_IN = 2272/4
-F = 10000
-SIG_CYCLES = 16
+F = 5000
+SIG_CYCLES = 6
 DURATION_S = 1/F * SIG_CYCLES
 CLOCK_CYCLES = int(DURATION_S / 10e-9)
 SAMPLE_MAX = 2**15 - 1
@@ -77,6 +77,7 @@ def is_runner():
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
     sources = [proj_path / "hdl" / "downsampler.sv"]
+    sources += [proj_path / "hdl" / "dist_ram.sv"]
     sources += [proj_path / "hdl" / "xilinx_single_port_ram_read_first.v"]
     build_test_args = ["-Wall"]
     parameters = {}
