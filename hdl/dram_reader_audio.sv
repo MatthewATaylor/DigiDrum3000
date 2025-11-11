@@ -14,6 +14,7 @@ module dram_reader_audio
         input  wire  [13:0]  sample_period,
         input  wire  [23:0]  addr_offsets [INSTRUMENT_COUNT:0],
         input  wire          addr_offsets_valid,
+        output logic [15:0]  instrument_samples [INSTRUMENT_COUNT-1:0],
         output logic [15:0]  sample,
         output logic         sample_valid,
 
@@ -29,6 +30,7 @@ module dram_reader_audio
     logic         sample_axis_tvalid [INSTRUMENT_COUNT-1:0];
     logic         sample_axis_tready [INSTRUMENT_COUNT-1:0];
     logic [15:0]  sample_axis_tdata  [INSTRUMENT_COUNT-1:0];
+    assign instrument_samples = sample_axis_tdata;
 
     logic [23:0]  data_addr;
     assign data_addr = unstacker_chunk_axis_tdata[151:128];

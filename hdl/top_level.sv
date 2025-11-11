@@ -9,13 +9,28 @@ module top_level
         input  wire  [3:0]  btn,
         output logic [2:0]  rgb0,
         output logic [2:0]  rgb1,
-        input  wire         midi_pmod,
+        input  wire         midi_pin,
         output logic        spkl,
         output logic        spkr,
        
         // UART
         input wire          uart_rxd,
         output logic        uart_txd,
+
+        // SPI ADC
+        output logic        copi,
+        output logic        dclk,
+        output logic        cs0,
+        output logic        cs1,
+        input wire          cipo,
+
+        // Patch pins
+        inout wire          dry_pin,
+        inout wire          crush_pin,
+        inout wire          distortion_pin,
+        inout wire          filter_pin,
+        inout wire          reverb_pin,
+        inout wire          delay_pin,
 
         // Seven segment
         output logic [3:0]  ss0_an,  //anode control for upper four digits of seven-seg display
@@ -121,11 +136,11 @@ module top_level
     logic         addr_offsets_valid;
     logic         addr_offsets_valid_pixel;
 
-    logic [9:0] pitch;
-    assign pitch = sw[15:6];
+    logic [9:0] pitch[2:0];
+    //assign pitch = sw[15:6];
     logic [13:0] sample_period;
     pitch_to_sample_period p2sp (
-        .pitch(pitch),
+        .pitch(sw[5] ? pitch[2] : sw[15:6]),
         .sample_period(sample_period)
     );
 
@@ -142,7 +157,7 @@ module top_level
             end
         end else begin
             uart_rxd_buf <= {uart_rxd, uart_rxd_buf[1]};
-            midi_din_buf <= {midi_pmod, midi_din_buf[1]};
+            midi_din_buf <= {midi_pin, midi_din_buf[1]};
 
             // sample_load_complete CDC
             // From 83.333 MHz to 100 MHz
@@ -322,6 +337,8 @@ module top_level
     logic         read_data_audio_axis_ready;
     logic [151:0] read_data_audio_axis_data;
 
+    logic [15:0]  current_instrument_samples [INSTRUMENT_COUNT-1:0];
+
     dram_reader_audio #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
     ) drd_audio (
@@ -335,6 +352,7 @@ module top_level
         .addr_offsets_valid(addr_offsets_valid),
         .sample(sample_raw),
         .sample_valid(sample_raw_valid),
+        .instrument_samples(current_instrument_samples),
 
         .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
         .fifo_sender_axis_tready(read_data_audio_axis_ready),
@@ -500,31 +518,51 @@ module top_level
         .audio_out(dac_out)
     );
 
+    logic [23:0] pixel_to_display_24;
+    logic active_draw_to_hdmi;
+    logic v_sync_to_hdmi;
+    logic h_sync_to_hdmi;
+
+    video_processor #(
+        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
+    ) vid_pcr (
+        .clk_100MHz(clk),
+        .clk_pixel(clk_pixel),
+        .rst(rst),
+
+        .instrument_samples(current_instrument_samples),
+
+        .pixel_to_hdmi(pixel_to_display_24),
+        .active_draw_to_hdmi(active_draw_to_hdmi),
+        .v_sync_to_hdmi(v_sync_to_hdmi),
+        .h_sync_to_hdmi(h_sync_to_hdmi)
+      );
+
     logic [9:0] tmds_10b    [0:2];
     logic       tmds_signal [2:0];
  
     tmds_encoder tmds_red (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data({pixel_to_display[15:11], 3'b0}),
+        .video_data(pixel_to_display_24[23:16]),
         .control(2'b0),
-        .video_enable(active_draw_hdmi),
+        .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[2])
     );
     tmds_encoder tmds_green (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data({pixel_to_display[10:5], 2'b0}),
+        .video_data(pixel_to_display_24[15:8]),
         .control(2'b0),
-        .video_enable(active_draw_hdmi),
+        .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[1])
     );
     tmds_encoder tmds_blue (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data({pixel_to_display[4:0], 3'b0}),
-        .control({v_sync_hdmi, h_sync_hdmi}),
-        .video_enable(active_draw_hdmi),
+        .video_data(pixel_to_display_24[7:0]),
+        .control({v_sync_to_hdmi, h_sync_to_hdmi}),
+        .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[0])
     );
     
@@ -571,13 +609,132 @@ module top_level
         end
     end
 
+    logic [2:0] output_src[2:0];
+    logic [2:0] crush_src[2:0];
+    logic [2:0] distortion_src[2:0];
+    logic [2:0] filter_src[2:0];
+    logic [2:0] reverb_src[2:0];
+    logic [2:0] delay_src[2:0];
+
+    logic [9:0] volume[2:0];
+    //logic [9:0] pitch[2:0];
+    logic [9:0] delay_wet[2:0];
+    logic [9:0] delay_rate[2:0];
+    logic [9:0] delay_feedback[2:0];
+    logic [9:0] reverb_wet[2:0];
+    logic [9:0] reverb_size[2:0];
+    logic [9:0] reverb_feedback[2:0];
+    logic [9:0] filter_quality[2:0];
+    logic [9:0] filter_cutoff[2:0];
+    logic [9:0] distortion_drive[2:0];
+    logic [9:0] crush_pressure[2:0];
+
+    pcb_interface pcb (
+        .clk(clk),
+        .rst(rst),
+
+        .dry_pin(dry_pin),
+        .delay_pin(delay_pin),
+        .reverb_pin(reverb_pin),
+        .filter_pin(filter_pin),
+        .distortion_pin(distortion_pin),
+        .crush_pin(crush_pin),
+
+        .output_src(output_src[0]),
+        .crush_src(crush_src[0]),
+        .distortion_src(distortion_src[0]),
+        .filter_src(filter_src[0]),
+        .reverb_src(reverb_src[0]),
+        .delay_src(delay_src[0]),
+
+        .cipo(cipo),
+        .copi(copi),
+        .dclk(dclk),
+        .cs0(cs0),
+        .cs1(cs1),
+
+        .volume(volume[0]),
+        .pitch(pitch[0]),
+        .delay_wet(delay_wet[0]),
+        .delay_rate(delay_rate[0]),
+        .delay_feedback(delay_feedback[0]),
+        .reverb_wet(reverb_wet[0]),
+        .reverb_size(reverb_size[0]),
+        .reverb_feedback(reverb_feedback[0]),
+        .filter_quality(filter_quality[0]),
+        .filter_cutoff(filter_cutoff[0]),
+        .distortion_drive(distortion_drive[0]),
+        .crush_pressure(crush_pressure[0])
+    );
+
+    // clock boundry
+    always_ff @(posedge clk_dram_ctrl) begin
+        output_src[2] <= output_src[1];
+        output_src[1] <= output_src[0];
+        crush_src[2] <= crush_src[1];
+        crush_src[1] <= crush_src[0];
+        distortion_src[2] <= distortion_src[1];
+        distortion_src[1] <= distortion_src[0];
+        filter_src[2] <= filter_src[1];
+        filter_src[1] <= filter_src[0];
+        reverb_src[2] <= reverb_src[1];
+        reverb_src[1] <= reverb_src[0];
+        delay_src[2] <= delay_src[1];
+        delay_src[1] <= delay_src[0];
+        volume[2] <= volume[1];
+        volume[1] <= volume[0];
+        pitch[2] <= pitch[1];
+        pitch[1] <= pitch[0];
+        delay_wet[2] <= delay_wet[1];
+        delay_wet[1] <= delay_wet[0];
+        delay_rate[2] <= delay_rate[1];
+        delay_rate[1] <= delay_rate[0];
+        delay_feedback[2] <= delay_feedback[1];
+        delay_feedback[1] <= delay_feedback[0];
+        reverb_wet[2] <= reverb_wet[1];
+        reverb_wet[1] <= reverb_wet[0];
+        reverb_size[2] <= reverb_size[1];
+        reverb_size[1] <= reverb_size[0];
+        reverb_feedback[2] <= reverb_feedback[1];
+        reverb_feedback[1] <= reverb_feedback[0];
+        filter_quality[2] <= filter_quality[1];
+        filter_quality[1] <= filter_quality[0];
+        filter_cutoff[2] <= filter_cutoff[1];
+        filter_cutoff[1] <= filter_cutoff[0];
+        distortion_drive[2] <= distortion_drive[1];
+        distortion_drive[1] <= distortion_drive[0];
+        crush_pressure[2] <= crush_pressure[1];
+        crush_pressure[1] <= crush_pressure[0];
+    end
+
+    logic [31:0] ss_val;
+    always_comb begin
+        case (sw[4:2])
+            3'b001: ss_val = {6'h00, volume[2], 6'h00, pitch[2]};
+            3'b010: ss_val = {6'h00, delay_wet[2], 6'h00, delay_rate[2]};
+            3'b011: ss_val = {6'h00, delay_feedback[2], 6'h00, reverb_wet[2]};
+            3'b100: ss_val = {6'h00, reverb_size[2], 6'h00, reverb_feedback[2]};
+            3'b101: ss_val = {6'h00, filter_quality[2], 6'h00, filter_cutoff[2]};
+            3'b110: ss_val = {6'h00, distortion_drive[2], 6'h00, crush_pressure[2]};
+            3'b111: ss_val = {
+                7'h0, delay_src[2],
+                1'b0, reverb_src[2],
+                1'b0, filter_src[2],
+                1'b0, distortion_src[2],
+                1'b0, crush_src[2],
+                1'b0, output_src[2]
+            };
+            default: ss_val = {2'b00, sample_period, memrequest_complete_counter[15:0]};
+        endcase
+    end
+
     logic [6:0] ss_c;
     assign ss0_c = ss_c;
     assign ss1_c = ss_c;
     seven_segment_controller ssc (
         .clk(clk_dram_ctrl),
         .rst(rst_dram_ctrl),
-        .val({2'b00, sample_period, memrequest_complete_counter[15:0]}),
+        .val(ss_val),
         .cat(ss_c),
         .an({ss0_an, ss1_an})
     );
@@ -593,124 +750,4 @@ module top_level
     end
     assign led[3] = tg.write_addr_last_valid;
 endmodule
-// old testing code:
-
-//module top_level (
-//    input  wire         clk_100mhz,  //100 MHz onboard clock
-//    input  wire  [15:0] sw,          //all 16 input slide switches
-//    input  wire  [ 3:0] btn,         //all four momentary button switches
-//    output logic [15:0] led,         //16 green output LEDs (located right above switches)
-//    output logic [ 2:0] rgb0,        //RGB channels of RGB LED0
-//    output logic [ 2:0] rgb1,        //RGB channels of RGB LED1
-//    output logic        spkl,        // left line out port
-//    output logic        spkr         // right line out port
-//);
-//
-//  //shut up those rgb LEDs for now (active high):
-//  assign rgb1 = 0;  //set to 0.
-//  assign rgb0 = 0;  //set to 0.
-//  assign led  = sw;
-//
-//  //have btnd control system reset
-//  logic sys_rst;
-//  assign sys_rst = btn[0];
-//
-//  logic spk_out;
-//  assign spkl = spk_out;
-//  assign spkr = spk_out;
-//
-//  logic        sin_wave;
-//  logic        square_wave;
-//  logic        impulse_approx;  // same as square at very high frequency
-//
-//  logic [ 3:0] wave_shift;
-//  logic [31:0] wave_period;
-//  logic [31:0] wave_frequency;
-//  logic [31:0] square_count;
-//  logic        square_state;
-//
-//  logic        divider_busy;
-//  logic [31:0] divider_out;
-//  logic        divider_out_valid;
-//  divider my_divide (
-//      .clk(clk_100mhz),
-//      .rst(sys_rst),
-//      .dividend(32'd50_000_000),
-//      .divisor(wave_frequency),
-//      .data_in_valid(!divider_busy),
-//      .quotient(divider_out),
-//      .remainder(),
-//      .data_out_valid(divider_out_valid),
-//      .busy(divider_busy)
-//  );
-//
-//  always_ff @(posedge clk_100mhz) begin
-//    wave_frequency <= {27'b0, 1'b1, sw[15:12]} << sw[11:8];
-//    wave_shift <= 4'hF - sw[7:4];
-//    wave_period <= divider_out_valid ? divider_out : wave_period;
-//  end
-//
-//  counter wave_count (
-//      .clk(clk_100mhz),
-//      .rst(sys_rst),
-//      .period(wave_period),
-//      .count(square_count)
-//  );
-//
-//  counter sampled_counter (
-//      .clk(clk_100mhz),
-//      .rst(sys_rst),
-//      .period(2272),
-//      .count(sample_cycle_count)
-//  );
-//
-//  logic [15:0] sin_sample;
-//  logic [15:0] sin_upsample;
-//  logic [15:0] sample_out;
-//  logic [31:0] sample_cycle_count;
-//
-//  always_ff @(posedge clk_100mhz) begin
-//    sample_out <= sw[2] ? $signed(sw[0] ? sin_sample : sin_upsample) >>> wave_shift : 0;
-//  end
-//
-//  sin_gen my_sin_gen (
-//      .clk(clk_100mhz),
-//      .rst(sys_rst),
-//      // ideally 2^29 * 2pi * freq / cycles_per_sample
-//      .delta_angle(wave_frequency << 16),
-//      .get_next_sample(sample_cycle_count == 0),
-//      .current_sample(sin_sample)
-//  );
-//
-//  upsampler my_upsample (
-//      .clk(clk_100mhz),
-//      .rst(sys_rst),
-//      .sample_in(sin_sample),
-//      .sample_in_valid(sample_cycle_count == 2),
-//      .sample_out(sin_upsample)
-//  );
-//
-//  dlt_sig_dac_2nd_order ds_dac (
-//      .clk(clk_100mhz),
-//      .rst(sys_rst),
-//      .current_sample(sample_out),
-//      .audio_out(sin_wave)
-//  );
-//
-//  always_ff @(posedge clk_100mhz) begin
-//    square_state <= (square_count == 0) ^ square_state;
-//
-//    impulse_approx <= square_state && (square_count < 1000);
-//    square_wave <= square_state;
-//  end
-//
-//  always_comb begin
-//    case (sw[1:0])
-//      2'b00:   spk_out = sw[2] ? square_wave : 0;
-//      2'b01:   spk_out = sw[2] ? impulse_approx : 0;
-//      default: spk_out = sin_wave;
-//    endcase
-//  end
-//
-//endmodule  // top_level
 `default_nettype wire

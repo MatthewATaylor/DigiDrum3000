@@ -2,104 +2,110 @@
 `default_nettype none
 
 module note_tracker #(
-    parameter INSTRUMENT_COUNT = 3,
-    parameter [6:0] MIDI_KEYS[INSTRUMENT_COUNT-1] = {
-      7'd36,  // bd
-      7'd38,  // sd
-      7'd46  // hh_opened
-    }
+    parameter INSTRUMENT_COUNT = 3
 ) (
     input wire clk_100MHz,
     input wire clk_pixel,
     input wire rst,
 
-    // on clk
-    input wire midi_valid,
-    input wire [6:0] midi_note,
-    input wire [6:0] midi_velocity,
+    // on clk_100MHz
+    input wire [15:0] instrument_samples[INSTRUMENT_COUNT-1:0],
 
     // on clk_pixel
     input wire new_frame,
-    output logic [6:0] inst_velocity[INSTRUMENT_COUNT-1:0]
+    output logic [7:0] max_sample_intensity[INSTRUMENT_COUNT-1:0]
 );
 
-  localparam [6:0] velocity_decay[INSTRUMENT_COUNT-1:0] = {
-    7'h7F,  // bd
-    7'h10,  // sd
-    7'h03  // hh_opened
-  };
+  // sum encoded, i.e. new_frame pulse toggles this
+  logic new_frame_pipe[2:0];
+  // delay update until inst_intensity_pipe has stabilized
+  logic new_frame_delayed[7:0];
+  logic new_frame_clk_100MHz;
+  logic [15:0] sample_unsigned[INSTRUMENT_COUNT-1:0];
+  logic [15:0] running_max_inst_sample[INSTRUMENT_COUNT-1:0];
+  logic [15:0] running_min_inst_sample[INSTRUMENT_COUNT-1:0];
+  logic [15:0] running_max_intensity[INSTRUMENT_COUNT-1:0];
+  logic [7:0] inst_intensity_cross_clk[INSTRUMENT_COUNT-1:0];
 
-  logic [6:0] midi_note_clk_cross_pipe    [3:0];
-  logic [6:0] midi_velocity_clk_cross_pipe[3:0];
-  // sum encoded, i.e. switches when midi_valid is true
-  logic       midi_valid_clk_cross_pipe   [3:0];
+  assign new_frame_clk_100MHz = new_frame_pipe[2] != new_frame_pipe[1];
 
-  // on pixel_clk
-  logic       last_midi_valid;
-
-  logic       midi_sig_valid_pixel;
-  assign midi_sig_valid_pixel =
-    midi_note_clk_cross_pipe[3] == midi_note_clk_cross_pipe[2] &&
-    midi_velocity_clk_cross_pipe[3] == midi_velocity_clk_cross_pipe[2] &&
-    midi_valid_clk_cross_pipe[3] != last_midi_valid && !new_frame;
+  always_comb begin
+    for (integer i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
+      sample_unsigned[i] = {~instrument_samples[i][15], instrument_samples[i][14:0]};
+      running_max_intensity[i] = running_max_inst_sample[i] - running_min_inst_sample[i];
+    end
+  end
 
   always_ff @(posedge clk_pixel) begin
+    for (integer i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
+      if (rst) begin
+        max_sample_intensity[i] <= 0;
+      end else if (new_frame_delayed[7]) begin
+        max_sample_intensity[i] <= inst_intensity_cross_clk[i];
+      end
+    end
+  end
+
+  always_ff @(posedge clk_100MHz) begin
+    for (integer i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
+      if (rst) begin
+        inst_intensity_cross_clk[i] <= 0;
+      end else if (new_frame_clk_100MHz) begin
+        if (|running_max_intensity[i][15:13]) begin
+          inst_intensity_cross_clk[i] <= 8'hFF;
+        end else begin
+          inst_intensity_cross_clk[i] <= running_max_intensity[i][12:5];
+        end
+      end
+    end
+  end
+
+  // find the max peak over a frame [inaccurate below ~30Hz... should be fine]
+  always_ff @(posedge clk_100MHz) begin
     integer i;
+    if (rst || new_frame_clk_100MHz) begin
+      for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
+        running_max_inst_sample[i] <= 0;
+        running_min_inst_sample[i] <= 16'hFFFF;
+      end
+    end else begin
+      for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
+        if (sample_unsigned[i] > running_max_inst_sample[i]) begin
+          running_max_inst_sample[i] <= sample_unsigned[i];
+        end
+        if (sample_unsigned[i] < running_min_inst_sample[i]) begin
+          running_min_inst_sample[i] <= sample_unsigned[i];
+        end
+      end
+    end
+  end
+
+  always_ff @(posedge clk_pixel) begin
     if (rst) begin
-      last_midi_valid <= 0;
-      for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-        inst_velocity[i] <= 0;
+      new_frame_pipe[0] <= 0;
+      for (integer i = 0; i < 8; i = i + 1) begin
+        new_frame_delayed[i] <= 0;
       end
-    end else if (new_frame) begin
-      for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-        inst_velocity[i] <= (inst_velocity[i] > velocity_decay[i])
-          ? inst_velocity[i]-velocity_decay[i] : 0;
-      end
-    end else if (midi_sig_valid_pixel) begin
-      for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
-        inst_velocity[i] <= midi_note_clk_cross_pipe[3] == MIDI_KEYS[i]
-          ? midi_velocity_clk_cross_pipe[3]
-          : inst_velocity[i];
+    end else begin
+      new_frame_pipe[0] <= new_frame ^ new_frame_pipe[0];
+      new_frame_delayed[0] <= new_frame;
+      for (integer i = 0; i < 7; i = i + 1) begin
+        new_frame_delayed[i+1] <= new_frame_delayed[i];
       end
     end
   end
 
   always_ff @(posedge clk_100MHz) begin
     if (rst) begin
-      midi_valid_clk_cross_pipe[0] <= 0;
-      midi_note_clk_cross_pipe[0] <= 0;
-      midi_velocity_clk_cross_pipe[0] <= 0;
+      new_frame_pipe[1] <= 0;
+      new_frame_pipe[2] <= 0;
     end else begin
-      midi_valid_clk_cross_pipe[0] <= midi_valid_clk_cross_pipe[0] ^ midi_valid;
-      midi_note_clk_cross_pipe[0] <= midi_valid ? midi_note : midi_note_clk_cross_pipe[0];
-      midi_velocity_clk_cross_pipe[0] <= midi_valid ? midi_velocity : midi_velocity_clk_cross_pipe[0];
+      new_frame_pipe[1] <= new_frame_pipe[0];
+      new_frame_pipe[2] <= new_frame_pipe[1];
     end
   end
 
-  always_ff @(posedge clk_pixel) begin
-    if (rst) begin
-      midi_valid_clk_cross_pipe[1]    <= 0;
-      midi_valid_clk_cross_pipe[2]    <= 0;
-      midi_valid_clk_cross_pipe[3]    <= 0;
-      midi_note_clk_cross_pipe[1]     <= 0;
-      midi_note_clk_cross_pipe[2]     <= 0;
-      midi_note_clk_cross_pipe[3]     <= 0;
-      midi_velocity_clk_cross_pipe[1] <= 0;
-      midi_velocity_clk_cross_pipe[2] <= 0;
-      midi_velocity_clk_cross_pipe[3] <= 0;
 
-    end else begin
-      midi_valid_clk_cross_pipe[1]    <= midi_valid_clk_cross_pipe[0];
-      midi_valid_clk_cross_pipe[2]    <= midi_valid_clk_cross_pipe[1];
-      midi_valid_clk_cross_pipe[3]    <= midi_valid_clk_cross_pipe[2];
-      midi_note_clk_cross_pipe[1]     <= midi_note_clk_cross_pipe[0];
-      midi_note_clk_cross_pipe[2]     <= midi_note_clk_cross_pipe[1];
-      midi_note_clk_cross_pipe[3]     <= midi_note_clk_cross_pipe[2];
-      midi_velocity_clk_cross_pipe[1] <= midi_velocity_clk_cross_pipe[0];
-      midi_velocity_clk_cross_pipe[2] <= midi_velocity_clk_cross_pipe[1];
-      midi_velocity_clk_cross_pipe[3] <= midi_velocity_clk_cross_pipe[2];
-    end
-  end
 endmodule
 
 `default_nettype wire
