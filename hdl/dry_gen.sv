@@ -120,7 +120,7 @@ module dry_gen #(
     end
   endgenerate
 
-endmodule
+endmodule  // dry_gen
 
 // 3 cycles of delay
 module square_noise #(
@@ -170,12 +170,129 @@ module square_noise #(
       unscaled_intensity <= 0;
     end
   end
+endmodule  // square_noise
 
+// 3 cycles of delay
+module X_noise #(
+    parameter WIDTH = 128,
+    parameter CENTER_X = 400,
+    parameter CENTER_Y = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    input  wire  [ 7:0] noise_source,
+    input  wire  [ 7:0] inst_intensity,
+    output logic [ 7:0] intensity
+);
+  localparam SHFT = 9 - $clog2(WIDTH);
 
-endmodule
+  logic [10:0] x_dist;
+  logic [ 9:0] y_dist;
+  logic [10:0] u_dist;
+  logic [10:0] v_dist;
+  logic [10:0] min_uv;
+  logic [10:0] max_uv;
+  logic [11:0] v_dist_signed;
+  logic [ 7:0] pre_noise_intensity;
+  logic [ 7:0] unscaled_intensity;
+  assign x_dist = h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+  assign v_dist_signed = x_dist - y_dist;
+
+  always_comb begin
+    min_uv = u_dist < v_dist ? u_dist : v_dist;
+    max_uv = u_dist < v_dist ? v_dist : u_dist;
+    pre_noise_intensity = (min_uv << 2) > max_uv ? (min_uv << 2) : max_uv;
+    pre_noise_intensity = (pre_noise_intensity << SHFT) + (8'hFF - (((WIDTH >> 1) - 1) << SHFT));
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      u_dist <= 0;
+      v_dist <= 0;
+      intensity <= 0;
+    end else begin
+      u_dist <= x_dist + y_dist;
+      v_dist <= v_dist_signed[11] ? -v_dist_signed : v_dist_signed;
+      intensity <= (inst_intensity * {8'b0, unscaled_intensity}) >> 8;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      unscaled_intensity <= 0;
+    end else if (u_dist < (WIDTH >> 1) && v_dist < (WIDTH >> 1) && min_uv < (WIDTH >> 3)) begin
+      unscaled_intensity <= pre_noise_intensity > noise_source ? pre_noise_intensity : (noise_source);
+    end else begin
+      unscaled_intensity <= 0;
+    end
+  end
+endmodule  // X_noise
+
+// 3 cycles of delay
+module X_hollow #(
+    parameter WIDTH = 128,
+    parameter CENTER_X = 400,
+    parameter CENTER_Y = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    input  wire  [ 7:0] noise_source,
+    input  wire  [ 7:0] inst_intensity,
+    output logic [ 7:0] intensity
+);
+  localparam SHFT = 9 - $clog2(WIDTH);
+
+  logic [10:0] x_dist;
+  logic [ 9:0] y_dist;
+  logic [10:0] u_dist;
+  logic [10:0] v_dist;
+  logic [10:0] min_uv;
+  logic [10:0] max_uv;
+  logic [11:0] v_dist_signed;
+  logic [ 7:0] pre_bound_intensity;
+  logic [ 7:0] unscaled_intensity;
+  assign x_dist = h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+  assign v_dist_signed = x_dist - y_dist;
+
+  always_comb begin
+    min_uv = u_dist < v_dist ? u_dist : v_dist;
+    max_uv = u_dist < v_dist ? v_dist : u_dist;
+    pre_bound_intensity = (min_uv << 2) > max_uv ? (min_uv << 2) : max_uv;
+    pre_bound_intensity = (pre_bound_intensity << SHFT) + (8'hFF - (((WIDTH >> 1) - 1) << SHFT));
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      u_dist <= 0;
+      v_dist <= 0;
+      intensity <= 0;
+    end else begin
+      u_dist <= x_dist + y_dist;
+      v_dist <= v_dist_signed[11] ? -v_dist_signed : v_dist_signed;
+      intensity <= (inst_intensity * {8'b0, unscaled_intensity}) >> 8;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      unscaled_intensity <= 0;
+    end else if (u_dist < (WIDTH >> 1) && v_dist < (WIDTH >> 1) && min_uv < (WIDTH >> 3)) begin
+      unscaled_intensity <= pre_bound_intensity;
+    end else begin
+      unscaled_intensity <= 0;
+    end
+  end
+endmodule  // X_hollow
 
 // 128 - x*x*y*y>>(4MIN_POW-4-14) + |x|>>WIDTH_POW-9 + |y|>>HEIGHT_POW-9 + noise
 // 3 cycles of delay
+// 1 DSP block
 module star_noise #(
     parameter WIDTH_POW  = $clog2(256),
     parameter HEIGHT_POW = $clog2(128),
@@ -212,7 +329,7 @@ module star_noise #(
     if (sum[31] || last_last_x_dist >= (1 << (WIDTH_POW)) || y_dist >= (1 << (HEIGHT_POW))) begin
       next_intensity = 0;
     end else begin
-      next_intensity = (|sum[8:7]) ? 8'hFF : sum[6:0];
+      next_intensity = (|sum[8:7]) ? 8'hFF : {sum[6:0], 1'b0};
     end
   end
 
@@ -236,7 +353,72 @@ module star_noise #(
       last_last_x_dist <= last_x_dist;
     end
   end
-endmodule
+endmodule  // star_noise
+
+// 128 - x*x*y*y>>(4WIDTH_POW-4-14) + |x|>>WIDTH_POW-9 + y*y*y*y>>(4WIDTH_POW-4-14) + noise
+// 3 cycles of delay
+// 2 DSP blocks
+module slit_noise #(
+    parameter WIDTH_POW = $clog2(256),
+    parameter CENTER_X  = 400,
+    parameter CENTER_Y  = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    input  wire  [ 7:0] noise_source,
+    input  wire  [ 7:0] inst_intensity,
+    output logic [ 7:0] intensity
+);
+  localparam X_SHFT = 9 - WIDTH_POW;
+  localparam XXYY_SHFT = 4 * WIDTH_POW - 18;
+
+  logic [10:0] x_dist;
+  logic [ 9:0] y_dist;
+  logic [10:0] last_x_dist;
+  logic [ 9:0] last_last_x_dist;
+  logic [16:0] x_squared;
+  logic [16:0] y_squared;
+
+  logic [ 7:0] next_intensity;
+  logic [31:0] xxyy;
+  logic [31:0] yyyy;
+  logic [31:0] sum;
+
+  always_comb begin
+    sum = noise_source + (inst_intensity << 1) - 8'hFF - (last_last_x_dist << X_SHFT) - (yyyy >> XXYY_SHFT) - (xxyy >> XXYY_SHFT);
+
+    if (sum[31] || last_last_x_dist >= (1 << (WIDTH_POW)) || y_dist >= (1 << (WIDTH_POW))) begin
+      next_intensity = 0;
+    end else begin
+      next_intensity = (|sum[8:7]) ? 8'hFF : {sum[6:0], 1'b0};
+    end
+  end
+
+  assign x_dist = h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      intensity        <= 0;
+      xxyy             <= 0;
+      yyyy             <= 0;
+      x_squared        <= 0;
+      y_squared        <= 0;
+      last_x_dist      <= 0;
+      last_last_x_dist <= 0;
+    end else begin
+      intensity        <= next_intensity;
+      xxyy             <= x_squared * y_squared;
+      yyyy             <= y_squared * y_squared;
+      x_squared        <= x_dist[7:0] * x_dist[7:0];
+      y_squared        <= y_dist[7:0] * y_dist[7:0];
+      last_x_dist      <= x_dist;
+      last_last_x_dist <= last_x_dist;
+    end
+  end
+endmodule  // slit_noise
 
 // 3 cycles of delay
 module circle_hollow #(
@@ -286,7 +468,68 @@ module circle_hollow #(
       last_y_dist <= y_dist;
     end
   end
+endmodule  //circle_hollow
 
-endmodule  // dry_gen
+// 3 cycle delay
+module hex_hollow #(
+    parameter HEIGHT   = 128,  // STRONGLY recommend power of 2
+    parameter CENTER_X = 400,
+    parameter CENTER_Y = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    input  wire  [ 7:0] inst_intensity,
+    input  wire  [ 7:0] noise_source,
+    output logic [ 7:0] intensity
+);
+  localparam SHFT = $clog2(HEIGHT) - 6;
+
+  logic [10:0] x_dist;
+  logic [ 9:0] y_dist;
+  logic [10:0] last_x_dist;
+  logic [ 9:0] last_y_dist;
+  logic [13:0] ns_dist;  // north / south
+  logic [13:0] ne_dist;  // northeast / southwest
+  logic [13:0] se_dist;  // southeast / northwest
+  logic [13:0] ns_abs_dist;  // north / south
+  logic [13:0] ne_abs_dist;  // northeast / southwest
+  logic [13:0] se_abs_dist;  // southeast / northwest
+  logic [13:0] max_dist;
+
+  assign x_dist = h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+  assign ns_abs_dist = ns_dist;
+  assign ne_abs_dist = ne_dist;
+  assign se_abs_dist = se_dist[13] ? {1'b0, ~se_dist[12:0]} + 1 : se_dist;
+
+  always_ff @(posedge clk) begin
+    if (rst || ({max_dist, 6'h0} >= HEIGHT * {6'h0, inst_intensity})) begin
+      intensity <= 0;
+    end else begin
+      intensity <= (max_dist >> SHFT) + (8'hFF - ((HEIGHT * 8 - 1) >> SHFT));
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      ns_dist   <= 0;
+      ne_dist   <= 0;
+      se_dist   <= 0;
+      max_dist  <= 0;
+      intensity <= 0;
+    end else begin
+      ns_dist <= 8 * y_dist;
+      ne_dist <= 4 * y_dist + 7 * x_dist;
+      se_dist <= 4 * y_dist - 7 * x_dist;
+      if (ns_abs_dist > ne_abs_dist) begin
+        max_dist <= ns_abs_dist > se_abs_dist ? ns_abs_dist : se_abs_dist;
+      end else begin
+        max_dist <= ne_abs_dist > se_abs_dist ? ne_abs_dist : se_abs_dist;
+      end
+    end
+  end
+endmodule  // hex_hollow
 
 `default_nettype wire
