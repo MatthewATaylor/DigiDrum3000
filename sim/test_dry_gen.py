@@ -137,6 +137,18 @@ def test_dry_gen_runner():
     elif sys.argv[1] == "square_noise":
         top_level = "square_noise"
         parameters = {"WIDTH": 64, "CENTER_X": 32, "CENTER_Y": 32}
+    elif sys.argv[1] == "X_noise":
+        top_level = "X_noise"
+        parameters = {"WIDTH": 64, "CENTER_X": 32, "CENTER_Y": 32}
+    elif sys.argv[1] == "X_hollow":
+        top_level = "X_hollow"
+        parameters = {"WIDTH": 64, "CENTER_X": 32, "CENTER_Y": 32}
+    elif sys.argv[1] == "hex_hollow":
+        top_level = "hex_hollow"
+        parameters = {"HEIGHT": 64, "CENTER_X": 32, "CENTER_Y": 32}
+    elif sys.argv[1] == "slit_noise":
+        top_level = "slit_noise"
+        parameters = {"WIDTH_POW": 5, "CENTER_X": 32, "CENTER_Y": 32}
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(
