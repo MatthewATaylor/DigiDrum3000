@@ -35,35 +35,18 @@ def delta_cents(sample_periods):
 
 @cocotb.test()
 async def test_a(dut):
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
-    dut.rst.value = 1
-    await ClockCycles(dut.clk, 2)
-    dut.rst.value = 0
-
     sample_period_outs = []
-    sample_period_fps  = []
-
-    pitch_in_buf          = [0,0,0,0]
-
-    pitch_in = 0
-    while pitch_in_buf[-1] < 1024:
-        if pitch_in < 1024:
-            dut.pitch.value = pitch_in
-
-        if pitch_in > 3:
-            sample_period_out = dut.sample_period.value.integer
-            sample_period_outs.append(sample_period_out)
-            sample_period_fps.append(pitch_to_sample_period_fp(pitch_in_buf[-1]))
-
-            sample_period = pitch_to_sample_period(pitch_in_buf[-1])
-            print(f'pitch={pitch_in_buf[-1]}, expect sample_period={sample_period}, got: {sample_period_out}')
-            assert sample_period_out == sample_period
-
-        pitch_in_buf = [pitch_in] + pitch_in_buf[0:-1]
-        pitch_in += 1
-        await ClockCycles(dut.clk, 1)
-
+    sample_period_fps = []
     pitch_values = range(1024)
+    for pitch in pitch_values:
+        sample_period = pitch_to_sample_period(pitch)
+        dut.pitch.value = pitch
+        await Timer(1, units="ns")
+        sample_period_out = dut.sample_period.value.integer
+        sample_period_outs.append(sample_period_out)
+        sample_period_fps.append(pitch_to_sample_period_fp(pitch))
+        print(f'pitch={pitch}, expect sample_period={sample_period}, got: {sample_period_out}')
+        assert sample_period_out == sample_period
 
     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(8,4))
     sample_period_fps = np.array(sample_period_fps)

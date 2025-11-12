@@ -136,13 +136,16 @@ module top_level
     logic         addr_offsets_valid;
     logic         addr_offsets_valid_pixel;
 
-    logic [9:0] pitch[2:0];
-    //assign pitch = sw[15:6];
+
+    logic [9:0]  pitch [2:0];
     logic [13:0] sample_period;
     pitch_to_sample_period p2sp (
-        .pitch(sw[5] ? pitch[2] : sw[15:6]),
+        .clk(clk),
+        .rst(rst),
+        .pitch(sw[5] ? pitch[0] : sw[15:6]),
         .sample_period(sample_period)
     );
+
 
     // Synchronization
     always_ff @ (posedge clk) begin
@@ -724,7 +727,7 @@ module top_level
                 1'b0, crush_src[2],
                 1'b0, output_src[2]
             };
-            default: ss_val = {2'b00, sample_period, memrequest_complete_counter[15:0]};
+            default: ss_val = {16'b0, memrequest_complete_counter[15:0]};
         endcase
     end
 
