@@ -137,12 +137,44 @@ module top_level
     logic         addr_offsets_valid_pixel;
 
 
+    logic        pitch_increasing;
+    logic [9:0]  pitch_counter;
+    logic [16:0] clk_counter_pitch;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            pitch_counter <= 0;
+            pitch_increasing <= 1;
+            clk_counter_pitch <= 0;
+        end else begin
+            if (clk_counter_pitch == 0) begin
+                if (pitch_increasing) begin
+                    if (pitch_counter == 1023) begin
+                        pitch_counter <= 1022;
+                        pitch_increasing <= 0;
+                    end else begin
+                        pitch_counter <= pitch_counter + 1;
+                    end
+                end else begin
+                    if (pitch_counter == 0) begin
+                        pitch_counter <= 1;
+                        pitch_increasing <= 1;
+                    end else begin
+                        pitch_counter <= pitch_counter - 1;
+                    end
+                end
+            end
+            clk_counter_pitch <= clk_counter_pitch + 1;
+        end
+    end
+
+
     logic [9:0]  pitch [2:0];
     logic [13:0] sample_period;
     pitch_to_sample_period p2sp (
         .clk(clk),
         .rst(rst),
-        .pitch(sw[5] ? pitch[0] : sw[15:6]),
+        //.pitch(sw[5] ? pitch[0] : sw[15:6]),
+        .pitch(pitch_counter),
         .sample_period(sample_period)
     );
 

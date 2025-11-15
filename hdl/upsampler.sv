@@ -117,7 +117,11 @@ module upsampler (
     if (rst) begin
       buffer_start   <= 0;
       upsample_index <= 0;
-
+      `ifndef SYNTHESIS
+          for (int i=0; i<64; i++) begin
+              sample_buffer_lutram.data[i] <= 0;
+          end
+      `endif
     end else begin
       if (sample_in_valid) begin
         upsample_index <= 0;

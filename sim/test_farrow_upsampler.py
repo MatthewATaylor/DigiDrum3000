@@ -9,12 +9,14 @@ from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge, ReadOnl
 from cocotb.utils import get_sim_time as gst
 from cocotb.runner import get_runner
 import matplotlib.pyplot as plt
+import wave
+import numpy as np
 #from vicoco.vivado_runner import get_runner
 test_file = os.path.basename(__file__).replace(".py","")
 
 
 SAMPLE_PERIOD_OUT = 2272/4
-SAMPLE_MAX = 2**15-1
+SAMPLE_MAX = 2**15*0.2
 DELAY_SCALE = 4
 M = 2**DELAY_SCALE
 
@@ -24,6 +26,13 @@ def get_farrow(x, d):
         top_sum_2 = int(d) * (3*(x[1]-x[2]) + (x[3]-x[0]))
         top_sum = int(d) * (M*3*(x[0]+x[2]) - M*6*x[1] + top_sum_2)
         return int(M**3 * 6*x[1] + int(d) * (-M**2 * left_sum + top_sum))
+
+
+def square(theta):
+    if math.sin(theta) > 0:
+        return 1
+    else:
+        return -1
 
 
 @cocotb.test()
@@ -108,7 +117,8 @@ async def test_static_d(dut):
 
 
 @cocotb.test()
-async def test_sample_period_sweep(dut):
+async def test_sample_period_sweep_static_f(dut):
+    return
     F = 1000
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
@@ -173,6 +183,152 @@ async def test_sample_period_sweep(dut):
     ax.set_ylabel('Sample')
     ax.legend()
     fig.suptitle(f'Input Sample Rate Sweep ({F} Hz Signal)')
+    fig.tight_layout()
+    plt.show()
+
+
+@cocotb.test()
+async def test_sample_period_sweep_dynamic_f(dut):
+    return
+    F = 440
+
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    dut.delay_debug_valid.value = 0
+    dut.rst.value = 1
+    await ClockCycles(dut.clk, 2)
+    dut.rst.value = 0
+
+    fig, ax = plt.subplots()
+
+    n_in = []
+    x = []
+    n_out = []
+    y = []
+
+    sample_period_start = 2272/3
+    sample_period_stop = 2272/4
+    clock_cycles = 79123*10
+    setup_cycles = int(clock_cycles/2)
+    sample_period_step = (sample_period_stop-sample_period_start) / clock_cycles
+    sample_period_float = sample_period_start
+    last_sample_cycle = 0
+    for i in range(2*clock_cycles+setup_cycles):
+        sample_period_in = int(sample_period_float)
+        f = F * 2272 / sample_period_in
+        dut.sample_period.value = sample_period_in
+        seconds_per_sample = sample_period_in * 10.0e-9
+
+        if i - last_sample_cycle >= sample_period_in:
+            last_sample_cycle = i
+            n = i / sample_period_in
+            t = n * seconds_per_sample
+            sample = int(SAMPLE_MAX * square(2 * math.pi * f * t))
+            dut.sample_in.value = sample
+            dut.sample_in_valid.value = 1
+
+            n_in.append(i)
+            x.append(sample)
+        else:
+            dut.sample_in_valid.value = 0
+
+        if dut.sample_out_valid.value == 1:
+            sample = dut.sample_out.value.signed_integer
+
+            n_out.append(i)
+            y.append(sample)
+
+            print(f'Received sample: {sample}, cycle={i}, sample_period={sample_period_in}')
+
+        await ClockCycles(dut.clk, 1)
+
+        if i >= setup_cycles:
+            if i >= setup_cycles+clock_cycles:
+                sample_period_float -= sample_period_step
+            else:
+                sample_period_float += sample_period_step
+
+    ax.scatter(n_in, x, color='black', label='Input')
+    ax.plot(n_out, y, marker='.', label='Output')
+
+    ax.set_xlabel('Cycle Count')
+    ax.set_ylabel('Sample')
+    ax.legend()
+    fig.suptitle(f'Input Sample Rate Sweep ({F} Hz Signal)')
+    fig.tight_layout()
+    plt.show()
+
+
+@cocotb.test()
+async def test_sample_period_sweep_wav(dut):
+    samples = None
+    with wave.open('../media/resampled/sq.wav', mode='rb') as wav:
+        nframes = wav.getnframes()
+        frames = wav.readframes(nframes)
+        samples = np.frombuffer(frames, dtype='<h')
+
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    dut.delay_debug_valid.value = 0
+    dut.rst.value = 1
+    await ClockCycles(dut.clk, 2)
+    dut.rst.value = 0
+
+    fig, ax = plt.subplots()
+
+    n_in = []
+    x = []
+    n_out = []
+    y = []
+
+    pitch_start = 0
+    pitch_stop = 1024
+    clock_cycles = 79123*40
+    pitch_step = (pitch_stop-pitch_start) / clock_cycles
+    pitch_float = pitch_start
+    last_sample_cycle = 0
+    sample_index = 0
+    last_sample_received_cycle = None
+    for i in range(clock_cycles):
+        sample_period_in = int(9088 / 2**(pitch_float/256))
+        dut.sample_period.value = sample_period_in
+        seconds_per_sample = sample_period_in * 10.0e-9
+
+        if i - last_sample_cycle >= sample_period_in:
+            last_sample_cycle = i
+            if sample_index >= 10:
+                sample = int(samples[sample_index-10])
+            else:
+                sample = 0
+            dut.sample_in.value = sample
+            dut.sample_in_valid.value = 1
+            sample_index += 1
+
+            n_in.append(i)
+            x.append(sample)
+        else:
+            dut.sample_in_valid.value = 0
+
+        if dut.sample_out_valid.value == 1:
+            if last_sample_received_cycle is not None:
+                assert i - last_sample_received_cycle == 2272/4
+            last_sample_received_cycle = i
+            sample = dut.sample_out.value.signed_integer
+
+            n_out.append(i)
+            y.append(sample)
+
+            print(f'Received sample: {sample}, cycle={i}')
+
+        await ClockCycles(dut.clk, 1)
+
+        pitch_float += pitch_step
+
+    ax.scatter(n_in, x, color='black', label='Input')
+    ax.plot(n_out, y, marker='.', label='Output')
+
+    ax.set_xlabel('Cycle Count')
+    ax.set_ylabel('Sample')
+    ax.legend()
+    fig.suptitle(f'Input Sample Rate Sweep (Snare Drum Sample)')
     fig.tight_layout()
     plt.show()
 

@@ -6,17 +6,17 @@ import numpy as np
 import samplerate
 
 samples = [
-    # 'sq',
     'bd',
     'sd',
     # 't1',
     # 't2',
     # 't3',
-    'hh_opened',
+    # 'hh_opened',
     # 'hh_closed',
     # 'hh_pedal',
     # 'cc',
-    # 'rc'
+    # 'rc',
+    'sq'
 ]
 
 SERIAL_PORTNAME = '/dev/ttyUSB1'
