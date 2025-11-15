@@ -67,6 +67,8 @@ module pitch_to_sample_period
             pitch_lerp_1_reg <= 0;
             pitch_lerp_2_reg <= 0;
             pitch_lerp_3_reg <= 0;
+
+            sample_period <= 2272;
         end else begin
             pitch_reg[0] <= pitch;
             pitch_reg[1] <= pitch_reg[0];

@@ -169,14 +169,31 @@ module top_level
 
 
     logic [9:0]  pitch [2:0];
-    logic [13:0] sample_period;
+    logic [13:0] sample_period_current;
     pitch_to_sample_period p2sp (
         .clk(clk),
         .rst(rst),
         //.pitch(sw[5] ? pitch[0] : sw[15:6]),
         .pitch(pitch_counter),
-        .sample_period(sample_period)
+        .sample_period(sample_period_current)
     );
+
+
+    logic [16:0] sample_period_hold_counter;
+    logic [13:0] sample_period;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            sample_period <= 2272;
+            sample_period_hold_counter <= 0;
+        end else begin
+            if (sample_period_hold_counter >= (sample_period << 3) - 1) begin
+                sample_period <= sample_period_current;
+                sample_period_hold_counter <= 0;
+            end else begin
+                sample_period_hold_counter <= sample_period_hold_counter + 1;
+            end
+        end
+    end
 
 
     // Synchronization
