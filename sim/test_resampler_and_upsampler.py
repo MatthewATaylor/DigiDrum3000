@@ -29,53 +29,6 @@ def square(theta):
 
 
 @cocotb.test()
-async def test_sample_period_sweep_dynamic_f(dut):
-    return
-    F = 220
-
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
-    dut.rst.value = 1
-    await ClockCycles(dut.clk, 2)
-    dut.rst.value = 0
-
-    pitch_start = 0
-    pitch_stop = 1024
-    clock_cycles = 79123*8
-    setup_cycles = int(clock_cycles/2)
-    pitch_step = (pitch_stop-pitch_start) / clock_cycles
-    pitch_float = pitch_start
-    last_sample_cycle = 0
-    last_sample_print = 0
-    for i in range(2*clock_cycles+setup_cycles):
-        sample_period_in = int(9088 / 2**(pitch_float/256))
-        f = F * 2272 / sample_period_in
-        dut.sample_period.value = sample_period_in
-        seconds_per_sample = sample_period_in * 10.0e-9
-
-        if i - last_sample_cycle >= sample_period_in:
-            last_sample_cycle = i
-            n = i / sample_period_in
-            t = n * seconds_per_sample
-            sample = int(SAMPLE_MAX * square(2 * math.pi * f * t))
-            dut.sample_in.value = sample
-            dut.sample_in_valid.value = 1
-        else:
-            dut.sample_in_valid.value = 0
-
-        if i - last_sample_print > 2272:
-            sample = dut.sample_out.value.signed_integer
-            print(f'Sample value: {sample}')
-
-        await ClockCycles(dut.clk, 1)
-
-        if i >= setup_cycles:
-            if i >= setup_cycles+clock_cycles:
-                pitch_float -= pitch_step
-            else:
-                pitch_float += pitch_step
-
-
-@cocotb.test()
 async def test_sample_period_sweep_wav(dut):
     samples = None
     with wave.open('../media/resampled/sq.wav', mode='rb') as wav:

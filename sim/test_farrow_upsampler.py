@@ -328,7 +328,7 @@ async def test_sample_period_sweep_wav(dut):
     ax.set_xlabel('Cycle Count')
     ax.set_ylabel('Sample')
     ax.legend()
-    fig.suptitle(f'Input Sample Rate Sweep (Snare Drum Sample)')
+    fig.suptitle(f'Input Sample Rate Sweep (WAV File)')
     fig.tight_layout()
     plt.show()
 
