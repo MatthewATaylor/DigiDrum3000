@@ -24,16 +24,16 @@ module traffic_generator
         output logic         write_axis_ready,
 
         // Read address AXIS FIFO input
-        input wire   [23:0]  read_addr_axis_data,
+        input wire   [39:0]  read_addr_axis_data,
         input wire           read_addr_axis_tlast,
         input wire           read_addr_axis_valid,
         output logic         read_addr_axis_ready,
 
         // Audio read data AXIS FIFO output
         // tlast always low
-        output logic         read_data_audio_axis_valid,
-        input wire           read_data_audio_axis_ready,
-        output logic [151:0] read_data_audio_axis_data,
+        output logic                 read_data_audio_axis_valid,
+        input wire                   read_data_audio_axis_ready,
+        output logic [16+24+128-1:0] read_data_audio_axis_data,
 
         // Video read data AXIS FIFO output
         output logic         read_data_video_axis_valid,
@@ -118,22 +118,40 @@ module traffic_generator
         end
     end
 
+
+    logic [13:0] memrequest_sample_period;
+
     logic [23:0] response_addr;
+    logic [13:0] response_sample_period;
     logic        response_wr_enable;
+    
     command_fifo #(
         .DEPTH(64),
-        .WIDTH(25)
+        .WIDTH(39)
     ) mcf (
         .clk(clk_dram_ctrl),
         .rst(rst_dram_ctrl),
         .write(memrequest_en),
-        .command_in({memrequest_addr, memrequest_write_enable}),
+        .command_in(
+            {
+                memrequest_addr,
+                memrequest_write_enable,
+                memrequest_sample_period
+            }
+        ),
         .full(),
         
-        .command_out({response_addr, response_wr_enable}),
+        .command_out(
+            {
+                response_addr,
+                response_wr_enable,
+                response_sample_period
+            }
+        ),
         .read(memrequest_complete),
         .empty()
     );
+
 
     logic response_is_video;
     assign response_is_video =
@@ -141,7 +159,12 @@ module traffic_generator
         (response_addr <= write_addr_last + FRAME_BUFFER_DEPTH);
 
     // Set data/valid signals for read data FIFOs
-    assign read_data_audio_axis_data = {response_addr, memrequest_resp_data};
+    assign read_data_audio_axis_data = {
+        2'b0,
+        response_sample_period,
+        response_addr,
+        memrequest_resp_data
+    };
     assign read_data_video_axis_data = memrequest_resp_data;
     assign read_data_audio_axis_valid =
         !response_wr_enable && memrequest_complete && !response_is_video;
@@ -211,30 +234,35 @@ module traffic_generator
         case (state)
             RST: begin
                 memrequest_addr = 0;
+                memrequest_sample_period = 14'b0;
                 memrequest_en = 0;
                 memrequest_write_data = 0;
                 memrequest_write_enable = 0;
             end
             WR_AUDIO, WR_VIDEO: begin
                 memrequest_addr = write_address;
+                memrequest_sample_period = 14'b0;
                 memrequest_en = write_axis_valid && !memrequest_busy;
                 memrequest_write_enable = write_axis_valid && !memrequest_busy;
                 memrequest_write_data = write_axis_data;
             end
             RD_AUDIO: begin
-                memrequest_addr = read_addr_axis_data;
+                memrequest_addr = read_addr_axis_data[23:0];
+                memrequest_sample_period = read_addr_axis_data[37:24];
                 memrequest_en = read_addr_axis_valid && !memrequest_busy;
                 memrequest_write_enable = 0;
                 memrequest_write_data = 0;
             end
             RD_VIDEO: begin
                 memrequest_addr = video_read_request_address;
+                memrequest_sample_period = 14'b0;
                 memrequest_en = video_read_request_valid && !memrequest_busy;
                 memrequest_write_enable = 0;
                 memrequest_write_data = 0;
             end
             default: begin
                 memrequest_addr = 0;
+                memrequest_sample_period = 14'b0;
                 memrequest_en = 0;
                 memrequest_write_data = 0;
                 memrequest_write_enable = 0;

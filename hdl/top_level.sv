@@ -137,37 +137,6 @@ module top_level
     logic         addr_offsets_valid_pixel;
 
 
-    logic        pitch_increasing;
-    logic [9:0]  pitch_counter;
-    logic [16:0] clk_counter_pitch;
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            pitch_counter <= 0;
-            pitch_increasing <= 1;
-            clk_counter_pitch <= 0;
-        end else begin
-            if (clk_counter_pitch == 0) begin
-                if (pitch_increasing) begin
-                    if (pitch_counter == 1023) begin
-                        pitch_counter <= 1022;
-                        pitch_increasing <= 0;
-                    end else begin
-                        pitch_counter <= pitch_counter + 1;
-                    end
-                end else begin
-                    if (pitch_counter == 0) begin
-                        pitch_counter <= 1;
-                        pitch_increasing <= 1;
-                    end else begin
-                        pitch_counter <= pitch_counter - 1;
-                    end
-                end
-            end
-            clk_counter_pitch <= clk_counter_pitch + 1;
-        end
-    end
-
-
     logic [9:0]  pitch [2:0];
     logic [13:0] sample_period;
     pitch_to_sample_period p2sp (
@@ -337,7 +306,7 @@ module top_level
         .fifo_receiver_axis_tlast(write_axis_tlast)
     );
 
-    logic [23:0]  read_addr_axis_data;
+    logic [37:0]  read_addr_axis_data;
     logic         read_addr_axis_tlast;
     logic         read_addr_axis_valid;
     logic         read_addr_axis_ready;
@@ -369,9 +338,10 @@ module top_level
 
     logic         read_data_audio_axis_valid;
     logic         read_data_audio_axis_ready;
-    logic [151:0] read_data_audio_axis_data;
+    logic [165:0] read_data_audio_axis_data;
 
     logic [15:0]  current_instrument_samples [INSTRUMENT_COUNT-1:0];
+    logic [13:0]  sample_period_dram_out;
 
     dram_reader_audio #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
@@ -381,7 +351,6 @@ module top_level
         .rst(rst),
         .rst_dram_ctrl(rst_dram_ctrl),
 
-        .sample_period(sample_period),
         .addr_offsets(addr_offsets),
         .addr_offsets_valid(addr_offsets_valid),
         .sample(sample_raw),
@@ -390,7 +359,9 @@ module top_level
 
         .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
         .fifo_sender_axis_tready(read_data_audio_axis_ready),
-        .fifo_sender_axis_tdata(read_data_audio_axis_data)
+        .fifo_sender_axis_tdata(read_data_audio_axis_data),
+
+        .sample_period(sample_period_dram_out)
     );
 
     logic         read_data_video_axis_valid;
@@ -526,7 +497,7 @@ module top_level
     resampler resampler_i (
         .clk(clk),
         .rst(rst),
-        .sample_period(sample_period),
+        .sample_period(sample_period_dram_out),
         .sample_in(sample_raw),
         .sample_in_valid(sample_raw_valid),
         .sample_out(resample),
