@@ -118,22 +118,40 @@ module traffic_generator
         end
     end
 
+
+    logic [13:0] memrequest_sample_period;
+
     logic [23:0] response_addr;
+    logic [13:0] response_sample_period;
     logic        response_wr_enable;
+    
     command_fifo #(
         .DEPTH(64),
-        .WIDTH(25)
+        .WIDTH(39)
     ) mcf (
         .clk(clk_dram_ctrl),
         .rst(rst_dram_ctrl),
         .write(memrequest_en),
-        .command_in({memrequest_addr, memrequest_write_enable}),
+        .command_in(
+            {
+                memrequest_addr,
+                memrequest_write_enable,
+                memrequest_sample_period
+            }
+        ),
         .full(),
         
-        .command_out({response_addr, response_wr_enable}),
+        .command_out(
+            {
+                response_addr,
+                response_wr_enable,
+                response_sample_period
+            }
+        ),
         .read(memrequest_complete),
         .empty()
     );
+
 
     logic response_is_video;
     assign response_is_video =

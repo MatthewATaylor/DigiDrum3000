@@ -53,13 +53,13 @@ module dram_read_requester
     end
 
     clockdomain_fifo #(
-        .DEPTH(128), .WIDTH(24), .PROGFULL_DEPTH(12)
+        .DEPTH(128), .WIDTH(38), .PROGFULL_DEPTH(12)
     ) dram_read_addr_fifo (
         .sender_rst(rst),
         .sender_clk(clk),
         .sender_axis_tvalid(fifo_instr_addr_valid),
         .sender_axis_tready(),
-        .sender_axis_tdata(fifo_instr_addr),
+        .sender_axis_tdata({fifo_instr_addr, sample_period_hold}),
         .sender_axis_tlast(0),
         .sender_axis_prog_full(),
 
