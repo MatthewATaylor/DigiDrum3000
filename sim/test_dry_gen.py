@@ -149,6 +149,9 @@ def test_dry_gen_runner():
     elif sys.argv[1] == "slit_noise":
         top_level = "slit_noise"
         parameters = {"WIDTH_POW": 5, "CENTER_X": 32, "CENTER_Y": 32}
+    else:
+        top_level = "star_noise"
+        parameters = {"WIDTH_POW": 5, "HEIGHT_POW": 4, "CENTER_X": 32, "CENTER_Y": 32}
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(

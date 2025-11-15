@@ -137,7 +137,19 @@ module top_level
     logic         addr_offsets_valid_pixel;
 
 
-    logic [9:0]  pitch [2:0];
+    logic [9:0] volume[2:0];
+    logic [9:0] pitch [2:0];
+    logic [9:0] delay_wet[2:0];
+    logic [9:0] delay_rate[2:0];
+    logic [9:0] delay_feedback[2:0];
+    logic [9:0] reverb_wet[2:0];
+    logic [9:0] reverb_size[2:0];
+    logic [9:0] reverb_feedback[2:0];
+    logic [9:0] filter_quality[2:0];
+    logic [9:0] filter_cutoff[2:0];
+    logic [9:0] distortion_drive[2:0];
+    logic [9:0] crush_pressure[2:0];
+
     logic [13:0] sample_period;
     pitch_to_sample_period p2sp (
         .clk(clk),
@@ -536,6 +548,18 @@ module top_level
         .rst(rst),
 
         .instrument_samples(current_instrument_samples),
+        .volume_on_clk(volume[0]),
+        .pitch_on_clk(pitch[0]),
+        .delay_wet_on_clk(delay_wet[0]),
+        .delay_rate_on_clk(delay_rate[0]),
+        .delay_feedback_on_clk(delay_feedback[0]),
+        .reverb_wet_on_clk(reverb_wet[0]),
+        .reverb_size_on_clk(reverb_size[0]),
+        .reverb_feedback_on_clk(reverb_feedback[0]),
+        .filter_quality_on_clk(filter_quality[0]),
+        .filter_cutoff_on_clk(filter_cutoff[0]),
+        .distortion_drive_on_clk(distortion_drive[0]),
+        .crush_pressure_on_clk(crush_pressure[0]),
 
         .pixel_to_hdmi(pixel_to_display_24),
         .active_draw_to_hdmi(active_draw_to_hdmi),
@@ -620,19 +644,6 @@ module top_level
     logic [2:0] filter_src[2:0];
     logic [2:0] reverb_src[2:0];
     logic [2:0] delay_src[2:0];
-
-    logic [9:0] volume[2:0];
-    //logic [9:0] pitch[2:0];
-    logic [9:0] delay_wet[2:0];
-    logic [9:0] delay_rate[2:0];
-    logic [9:0] delay_feedback[2:0];
-    logic [9:0] reverb_wet[2:0];
-    logic [9:0] reverb_size[2:0];
-    logic [9:0] reverb_feedback[2:0];
-    logic [9:0] filter_quality[2:0];
-    logic [9:0] filter_cutoff[2:0];
-    logic [9:0] distortion_drive[2:0];
-    logic [9:0] crush_pressure[2:0];
 
     pcb_interface pcb (
         .clk(clk),

@@ -275,7 +275,7 @@ module X_hollow #(
     end else begin
       u_dist <= x_dist + y_dist;
       v_dist <= v_dist_signed[11] ? -v_dist_signed : v_dist_signed;
-      intensity <= (inst_intensity * {8'b0, unscaled_intensity}) >> 8;
+      intensity <= inst_intensity < unscaled_intensity ? 8'h0 : unscaled_intensity;
     end
   end
 
