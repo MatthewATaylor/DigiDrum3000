@@ -11,12 +11,12 @@ samples = [
     # 't1',
     # 't2',
     # 't3',
-    # 'hh_opened',
+    'hh_opened',
     # 'hh_closed',
     # 'hh_pedal',
     # 'cc',
     # 'rc',
-    'sq'
+    # 'sq'
 ]
 
 SERIAL_PORTNAME = '/dev/ttyUSB1'

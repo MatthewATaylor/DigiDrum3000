@@ -11,7 +11,6 @@ module dram_reader_audio
         input wire rst,
         input wire rst_dram_ctrl,
 
-        input  wire  [13:0]  sample_period,
         input  wire  [23:0]  addr_offsets [INSTRUMENT_COUNT:0],
         input  wire          addr_offsets_valid,
         output logic [15:0]  instrument_samples [INSTRUMENT_COUNT-1:0],
@@ -20,21 +19,25 @@ module dram_reader_audio
 
         input  wire          fifo_sender_axis_tvalid,
         output logic         fifo_sender_axis_tready,
-        input  wire  [151:0] fifo_sender_axis_tdata
+        input  wire  [167:0] fifo_sender_axis_tdata,
+
+        output logic [13:0]  sample_period
     );
 
     logic                        unstacker_chunk_axis_tvalid;
     logic [INSTRUMENT_COUNT-1:0] unstacker_chunk_axis_tready;
-    logic [151:0]                unstacker_chunk_axis_tdata;
+    logic [167:0]                unstacker_chunk_axis_tdata;
     
     logic         sample_axis_tvalid [INSTRUMENT_COUNT-1:0];
     logic         sample_axis_tready [INSTRUMENT_COUNT-1:0];
     logic [15:0]  sample_axis_tdata  [INSTRUMENT_COUNT-1:0];
     assign instrument_samples = sample_axis_tdata;
 
+    assign sample_period = unstacker_chunk_axis_tdata[165:152];
+
     logic [23:0]  data_addr;
     assign data_addr = unstacker_chunk_axis_tdata[151:128];
-   
+
     logic [INSTRUMENT_COUNT-1:0] instr_one_hot;
     always_comb begin
         for (int i=0; i<INSTRUMENT_COUNT; i++) begin
@@ -46,7 +49,7 @@ module dram_reader_audio
     end
 
     clockdomain_fifo #(
-        .DEPTH(128), .WIDTH(152), .PROGFULL_DEPTH(12)
+        .DEPTH(128), .WIDTH(168), .PROGFULL_DEPTH(12)
     ) dram_read_fifo (
         .sender_rst(rst_dram_ctrl),
         .sender_clk(clk_dram_ctrl),

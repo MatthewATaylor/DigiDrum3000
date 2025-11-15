@@ -61,7 +61,7 @@ module sample_mixer
 
             sample_counter <= 0;
         end else begin
-            if (sample_counter == sample_period-1) begin
+            if (sample_counter >= sample_period-1) begin
                 sample_counter <= 0;
                 dout_valid <= 1;
             end else begin
@@ -92,7 +92,7 @@ module sample_mixer
                 dout_valid <= 0;
             end
 
-            if ((sample_counter == sample_period-1) || prev_rst) begin
+            if ((sample_counter >= sample_period-1) || prev_rst) begin
                 for (int i=0; i<INSTRUMENT_COUNT; i++) begin
                     active_din_ready[i] <= 1;
                 end

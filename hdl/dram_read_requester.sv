@@ -19,11 +19,13 @@ module dram_read_requester
 
         output logic         fifo_receiver_axis_tvalid,
         input  wire          fifo_receiver_axis_tready,
-        output logic [23:0]  fifo_receiver_axis_tdata,
+        output logic [39:0]  fifo_receiver_axis_tdata,
         output logic         fifo_receiver_axis_tlast,
         
         input  wire  [2:0]   instr_trig_debug
     );
+
+    logic [13:0] sample_period_hold;
 
     logic [23:0] instr_addrs       [INSTRUMENT_COUNT-1:0];
     logic        instr_addr_valids [INSTRUMENT_COUNT-1:0];
@@ -53,13 +55,13 @@ module dram_read_requester
     end
 
     clockdomain_fifo #(
-        .DEPTH(128), .WIDTH(38), .PROGFULL_DEPTH(12)
+        .DEPTH(128), .WIDTH(40), .PROGFULL_DEPTH(12)
     ) dram_read_addr_fifo (
         .sender_rst(rst),
         .sender_clk(clk),
         .sender_axis_tvalid(fifo_instr_addr_valid),
         .sender_axis_tready(),
-        .sender_axis_tdata({fifo_instr_addr, sample_period_hold}),
+        .sender_axis_tdata({2'b0, sample_period_hold, fifo_instr_addr}),
         .sender_axis_tlast(0),
         .sender_axis_prog_full(),
 
@@ -84,6 +86,24 @@ module dram_read_requester
         .velocity(midi_vel)
     );
 
+    // Only respond to sample_period updates every sample chunk
+    logic [16:0] sample_counter;
+    logic [16:0] sample_period_hold_x8;
+    assign sample_period_hold_x8 = {3'b0, sample_period_hold} << 3;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            sample_counter <= 0;
+            sample_period_hold <= 2272;
+        end else begin
+            if (sample_counter == sample_period_hold_x8 - 1) begin
+                sample_period_hold <= sample_period;
+                sample_counter <= 0;
+            end else begin
+                sample_counter <= sample_counter + 1;
+            end
+        end
+    end
+
     genvar i;
     generate
         for (i=0; i<INSTRUMENT_COUNT; i++) begin
@@ -93,7 +113,7 @@ module dram_read_requester
                 .clk(clk),
                 .rst(rst),
                
-                .sample_period(sample_period),
+                .sample_counter(sample_counter),
                 //.trigger(midi_dout_valid),
                 //.midi_key(midi_key),
                 .trigger(instr_trig_debug[i]),
