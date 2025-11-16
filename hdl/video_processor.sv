@@ -9,7 +9,10 @@ module video_processor #(
     input wire rst,
 
     // clk_100MHz
-    input wire [15:0] instrument_samples[INSTRUMENT_COUNT-1:0],
+    //input wire [15:0] instrument_samples[INSTRUMENT_COUNT-1:0],
+    input wire midi_valid,
+    input wire [6:0] midi_key,
+    input wire [6:0] midi_velocity,
     //input wire [2:0] effect_sources [5:0],
     //input wire [15:0] upsampled_audio_ouput,
     input wire [9:0] volume_on_clk,
@@ -39,22 +42,28 @@ module video_processor #(
     output logic        v_sync_to_hdmi,
     output logic        h_sync_to_hdmi
 );
-  logic [9:0] volume_on_pixel_clk;
-  logic [9:0] pitch_on_pixel_clk;
-  logic [9:0] delay_wet_on_pixel_clk;
-  logic [9:0] delay_rate_on_pixel_clk;
-  logic [9:0] delay_feedback_on_pixel_clk;
-  logic [9:0] reverb_wet_on_pixel_clk;
-  logic [9:0] reverb_size_on_pixel_clk;
-  logic [9:0] reverb_feedback_on_pixel_clk;
-  logic [9:0] filter_quality_on_pixel_clk;
-  logic [9:0] filter_cutoff_on_pixel_clk;
-  logic [9:0] distortion_drive_on_pixel_clk;
-  logic [9:0] crush_pressure_on_pixel_clk;
+  logic [ 9:0] volume_on_pixel_clk;
+  logic [ 9:0] pitch_on_pixel_clk;
+  logic [ 9:0] delay_wet_on_pixel_clk;
+  logic [ 9:0] delay_rate_on_pixel_clk;
+  logic [ 9:0] delay_feedback_on_pixel_clk;
+  logic [ 9:0] reverb_wet_on_pixel_clk;
+  logic [ 9:0] reverb_size_on_pixel_clk;
+  logic [ 9:0] reverb_feedback_on_pixel_clk;
+  logic [ 9:0] filter_quality_on_pixel_clk;
+  logic [ 9:0] filter_cutoff_on_pixel_clk;
+  logic [ 9:0] distortion_drive_on_pixel_clk;
+  logic [ 9:0] crush_pressure_on_pixel_clk;
+
+  logic [10:0] sig_gen_h_count;
+  logic [ 9:0] sig_gen_v_count;
+  logic        sig_gen_active_draw;
+  logic        sig_gen_new_frame;
 
   clk_cross_buffer my_buf (
       .clk_pixel(clk_pixel),
       .rst      (rst),
+      .new_frame(sig_gen_new_frame),
 
       .volume_on_clk          (volume_on_clk),
       .pitch_on_clk           (pitch_on_clk),
@@ -83,12 +92,6 @@ module video_processor #(
       .crush_pressure_on_pixel_clk  (crush_pressure_on_pixel_clk)
   );
 
-
-  logic [10:0] sig_gen_h_count;
-  logic [ 9:0] sig_gen_v_count;
-  logic        sig_gen_active_draw;
-  logic        sig_gen_new_frame;
-
   video_sig_gen_basic my_sig_gen (
       .clk(clk_pixel),
       .rst(rst),
@@ -99,18 +102,21 @@ module video_processor #(
       .new_frame(sig_gen_new_frame)
   );
 
-  logic [7:0] inst_sample_intensity[INSTRUMENT_COUNT-1:0];
-  note_tracker #(
+  logic [7:0] inst_intensity[INSTRUMENT_COUNT-1:0];
+  note_tracker_midi #(
       .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
   ) my_note_tracker (
       .clk_100MHz(clk_100MHz),
       .clk_pixel(clk_pixel),
       .rst(rst),
 
-      .instrument_samples(instrument_samples),
+      .midi_key(midi_key),
+      .midi_valid(midi_valid),
+      .midi_velocity(midi_velocity),
+      .pitch(pitch_on_pixel_clk),
 
       .new_frame(sig_gen_new_frame),
-      .max_sample_intensity(inst_sample_intensity)
+      .inst_intensity(inst_intensity)
   );
 
   logic [7:0] dry_intensity;
@@ -125,7 +131,7 @@ module video_processor #(
       .active_draw(sig_gen_active_draw),
       .h_count(sig_gen_h_count),
       .v_count(sig_gen_v_count),
-      .inst_intensity(inst_sample_intensity),
+      .inst_intensity(inst_intensity),
 
       .intensity(dry_intensity)
   );
@@ -137,7 +143,7 @@ module video_processor #(
       .active_draw(sig_gen_active_draw),
       .h_count(sig_gen_h_count),
       .v_count(sig_gen_v_count),
-      .inst_intensity(inst_sample_intensity),
+      .inst_intensity(inst_intensity),
 
       .wet(delay_wet_on_pixel_clk),
       .rate(delay_rate_on_pixel_clk),
@@ -152,7 +158,7 @@ module video_processor #(
       total_intensity <= 0;
     end else begin
       dry_intensity_pipe <= dry_intensity;
-      total_intensity <= dry_intensity_pipe ^ delay_intensity;
+      total_intensity <= dry_intensity_pipe > delay_intensity ? dry_intensity_pipe - delay_intensity : delay_intensity - dry_intensity_pipe;
     end
   end
 

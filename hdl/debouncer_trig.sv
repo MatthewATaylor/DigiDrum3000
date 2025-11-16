@@ -29,9 +29,6 @@ module debouncer_trig
         end else begin
             if (counter == COUNTER_MAX-1) begin
                 current <= old_dirty;
-                if (!current && old_dirty) begin
-                    clean <= 1;
-                end
                 counter <= 0;
             end else if (dirty == old_dirty) begin
                 counter <= counter + 1;
@@ -39,10 +36,7 @@ module debouncer_trig
                 counter <= 0;
             end
             old_dirty <= dirty;
-
-            if (clean) begin
-                clean <= 0;
-            end
+            clean <= counter == COUNTER_MAX-1 && !current && old_dirty;
         end
     end
 endmodule

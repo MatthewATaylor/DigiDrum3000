@@ -22,14 +22,14 @@ module delay_gen #(
 
   logic [31:0] quotient;
   logic        quotient_valid;
-  logic [ 7:0] period;
+  logic [ 9:0] period;
   logic [ 9:0] rate_cached;
 
   divider rate_div (
       .clk(clk),
       .rst(rst),
-      .dividend(32'hFF),
-      .divisor(rate < 4 ? 1 : (rate >> 2)),
+      .dividend(32'hFFF),
+      .divisor(rate < 4 ? 4 : rate),
       .data_in_valid(h_count == 80 && v_count == 721),
       .quotient(quotient),
       .remainder(),
@@ -47,15 +47,29 @@ module delay_gen #(
     end
   end
 
-  logic [7:0] requested_sample     [INSTRUMENT_COUNT-1:0];
-  logic [5:0] request_address      [INSTRUMENT_COUNT-1:0];
-  logic       pos_valid            [INSTRUMENT_COUNT-1:0];
-  logic       last_pos_valid       [INSTRUMENT_COUNT-1:0];
-  logic [7:0] feedbacked_sample    [INSTRUMENT_COUNT-1:0];
-  logic [7:0] feedback_timer;
-  logic       apply_feedback_decay;
+  logic [ 7:0] requested_sample        [INSTRUMENT_COUNT-1:0];
+  logic [ 5:0] request_address         [INSTRUMENT_COUNT-1:0];
+  logic        pos_valid               [INSTRUMENT_COUNT-1:0];
+  logic        last_pos_valid          [INSTRUMENT_COUNT-1:0];
+  logic [ 7:0] feedbacked_sample       [INSTRUMENT_COUNT-1:0];
+  logic [ 7:0] half_x_dist             [INSTRUMENT_COUNT-1:0];
+  logic [15:0] rate_x_offset           [INSTRUMENT_COUNT-1:0];
 
-  assign apply_feedback_decay = feedback_timer > period;
+  logic [15:0] rate_times_h_count;
+  logic [15:0] last_rate_times_h_count;
+  logic        apply_feedback_decay;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      rate_times_h_count <= 0;
+      last_rate_times_h_count <= 0;
+    end else begin
+      rate_times_h_count <= rate[9:2] * (h_count + 6'h2);
+      last_rate_times_h_count <= rate_times_h_count;
+    end
+  end
+
+  assign apply_feedback_decay = |h_count[5:0] && rate_times_h_count[15:8] > last_rate_times_h_count[15:8];
 
   logic [7:0] sample_buffer_in  [INSTRUMENT_COUNT-1:0];
   logic [7:0] sample_buffer_out [INSTRUMENT_COUNT-1:0];
@@ -84,7 +98,6 @@ module delay_gen #(
 
   always_ff @(posedge clk) begin
     if (rst) begin
-      feedback_timer <= 0;
       for (integer i = 0; i < INSTRUMENT_COUNT; i += 1) begin
         feedbacked_sample[i] <= 0;
         requested_sample[i] <= 0;
@@ -95,9 +108,6 @@ module delay_gen #(
         feedbacked_sample[i] <= apply_feedback_decay ? (sample_buffer_out[i] * {8'h0, feedback[9:2]}) >> 8 : sample_buffer_out[i];
         requested_sample[i] <= 8'hXX;
         last_pos_valid[i] <= 8'hXX;
-      end
-      if (h_count == 63) begin
-        feedback_timer <= apply_feedback_decay ? feedback_timer + 1 - period : feedback_timer + 1;
       end
     end else begin
       for (integer i = 0; i < INSTRUMENT_COUNT; i += 1) begin
@@ -130,6 +140,20 @@ module delay_gen #(
     end
   end
 
+  always_ff @(posedge clk) begin
+    for (integer i = 0; i < INSTRUMENT_COUNT; i += 1) begin
+      if (rst) begin
+        rate_x_offset[i]   <= 0;
+        request_address[i] <= 0;
+        pos_valid[i]       <= 0;
+      end else begin
+        rate_x_offset[i] <= half_x_dist[i] * rate[9:2];
+        request_address[i] <= ((rate_x_offset[i][15:10] + 1) * (|period[9:8] ? {6'h0, period[9:2], 2'h0} : {8'h0, period[7:0]})) >> 2;
+        pos_valid[i] <= rate_x_offset[i][9];
+      end
+    end
+  end
+
 
   square_left #(
       .WIDTH(512),
@@ -140,10 +164,7 @@ module delay_gen #(
       .rst(rst),
       .h_count(h_count),
       .v_count(v_count),
-      .delay_rate(rate_cached),
-      .delay_period(period),
-      .history_address(request_address[0]),
-      .shape_valid(pos_valid[0])
+      .half_x_dist(half_x_dist[0])
   );
 
   square_left #(
@@ -155,11 +176,7 @@ module delay_gen #(
       .rst(rst),
       .h_count(h_count),
       .v_count(v_count),
-      .delay_rate(rate_cached),
-      .delay_period(period),
-      .history_address(request_address[1]),
-      .shape_valid(pos_valid[1])
-
+      .half_x_dist(half_x_dist[1])
   );
 
   square_left #(
@@ -171,15 +188,11 @@ module delay_gen #(
       .rst(rst),
       .h_count(h_count),
       .v_count(v_count),
-      .delay_rate(rate_cached),
-      .delay_period(period),
-      .history_address(request_address[2]),
-      .shape_valid(pos_valid[2])
-
+      .half_x_dist(half_x_dist[2])
   );
 endmodule  // delay_gen
 
-// 3 cycle delay
+// 1 cycle delay
 module square_left #(
     parameter WIDTH = 128,
     parameter CENTER_X = 400,
@@ -189,35 +202,19 @@ module square_left #(
     input  wire         rst,
     input  wire  [10:0] h_count,
     input  wire  [ 9:0] v_count,
-    input  wire  [ 9:0] delay_rate,
-    input  wire  [ 7:0] delay_period,
-    output logic [ 5:0] history_address,
-    output logic        shape_valid
+    output logic [ 7:0] half_x_dist
 );
   localparam LEFT_EDGE_X = CENTER_X - WIDTH / 2;
   localparam TOP_EDGE_Y = CENTER_Y + WIDTH / 2;
   localparam BOTTOM_EDGE_Y = CENTER_Y - WIDTH / 2;
 
-  // - figure out x offset from edge
-  // - mulitply by delay_rate
-  // - use upper bits for address and lower bits to determine shape_valid
-  logic [ 8:0] x_offset;
-  logic [15:0] rate_x_offset;
-
   always_ff @(posedge clk) begin
     if (rst) begin
-      x_offset <= 0;
-      rate_x_offset <= 0;
-      history_address <= 0;
+      half_x_dist <= 0;
+    end else if (v_count < TOP_EDGE_Y && v_count > BOTTOM_EDGE_Y && h_count < LEFT_EDGE_X) begin
+      half_x_dist <= (LEFT_EDGE_X - h_count) >> 1;
     end else begin
-      if (v_count < TOP_EDGE_Y && v_count > BOTTOM_EDGE_Y && h_count < LEFT_EDGE_X) begin
-        x_offset <= (LEFT_EDGE_X - h_count);
-      end else begin
-        x_offset <= 0;
-      end
-      rate_x_offset <= x_offset[8:1] * delay_rate[9:2];
-      history_address <= ((rate_x_offset[15:10] + 1) * {8'h0, delay_period});
-      shape_valid <= rate_x_offset[9];
+      half_x_dist <= 0;
     end
   end
 endmodule  // square_left

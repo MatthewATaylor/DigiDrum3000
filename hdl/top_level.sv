@@ -562,7 +562,10 @@ module top_level
         .clk_pixel(clk_pixel),
         .rst(rst),
 
-        .instrument_samples(current_instrument_samples),
+        //.instrument_samples(current_instrument_samples),
+        .midi_key(instr_trig_debug[0] ? 7'd36 : instr_trig_debug[1] ? 7'd38 : 7'd46),
+        .midi_valid(|instr_trig_debug),
+        .midi_velocity(7'h7F),
         .volume_on_clk(volume[0]),
         .pitch_on_clk(pitch[0]),
         .delay_wet_on_clk(delay_wet[0]),
