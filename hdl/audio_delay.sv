@@ -83,7 +83,7 @@ module audio_delay
         .addra(bram_rd_addr),
         .addrb(bram_wr_addr),
         .dina(),
-        .dinb(bram_din),
+        .dinb({2'b0, bram_din}),
         .clka(clk),
         .clkb(clk),
         .wea(1'b0),
@@ -94,7 +94,7 @@ module audio_delay
         .rstb(rst),
         .regcea(1'b1),
         .regceb(1'b1),
-        .douta(bram_dout),
+        .douta({2'b0, bram_dout}),
         .doutb()
     );
 

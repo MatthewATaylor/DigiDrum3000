@@ -241,7 +241,7 @@ module farrow_upsampler
         .clk(clk),
         .rst(rst),
         .dividend(div_delay_dividend),
-        .divisor(sample_period_hold),
+        .divisor({{DELAY_SCALE{1'b0}}, sample_period_hold}),
         .data_in_valid(compute_trigger),
         .quotient(div_delay_quotient),
         .remainder(),

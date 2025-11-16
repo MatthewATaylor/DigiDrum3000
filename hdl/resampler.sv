@@ -20,7 +20,7 @@ module resampler
         .clk(clk),
         .rst(rst),
 
-        .sample_period(sample_period),
+        .sample_period({2'b0, sample_period}),
         
         .sample_in(sample_in),
         .sample_in_valid(sample_in_valid),

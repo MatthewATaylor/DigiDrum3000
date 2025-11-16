@@ -319,7 +319,7 @@ module top_level
         .fifo_receiver_axis_tlast(write_axis_tlast)
     );
 
-    logic [37:0]  read_addr_axis_data;
+    logic [39:0]  read_addr_axis_data;
     logic         read_addr_axis_tlast;
     logic         read_addr_axis_valid;
     logic         read_addr_axis_ready;
@@ -351,7 +351,7 @@ module top_level
 
     logic         read_data_audio_axis_valid;
     logic         read_data_audio_axis_ready;
-    logic [165:0] read_data_audio_axis_data;
+    logic [167:0] read_data_audio_axis_data;
 
     logic [15:0]  current_instrument_samples [INSTRUMENT_COUNT-1:0];
     logic [13:0]  sample_period_dram_out;
