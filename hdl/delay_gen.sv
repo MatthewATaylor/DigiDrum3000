@@ -23,13 +23,22 @@ module delay_gen #(
   logic [31:0] quotient;
   logic        quotient_valid;
   logic [ 9:0] period;
-  logic [ 9:0] rate_cached;
+
+  logic [10:0] pot_time;
+  logic [15:0] delay_time;
+  logic [ 9:0] rate_actual;
+
+  // [1, 1024]
+  assign pot_time   = rate > 10'h3E0 ? 11'd1024 - 10'h3E0 : 11'd1024 - rate;
+
+  // [64 - 1, 1024*64 - 1] = [1.4 ms, 1.5 s] @ sp=2272
+  assign delay_time = ({6'b0, pot_time} << 6) - 1;
 
   divider rate_div (
       .clk(clk),
       .rst(rst),
       .dividend(32'hFFF),
-      .divisor(rate < 4 ? 4 : rate),
+      .divisor(period < 4 ? 4 : period),
       .data_in_valid(h_count == 80 && v_count == 721),
       .quotient(quotient),
       .remainder(),
@@ -40,15 +49,18 @@ module delay_gen #(
   always_ff @(posedge clk) begin
     if (rst) begin
       period <= 0;
-      rate_cached <= 0;
-    end else if (quotient_valid) begin
-      period <= quotient;
-      rate_cached <= rate;
+      rate_actual <= 0;
+    end else begin
+      // delay_time * 4 * (60 * 2272 / 100000000)->(~357/2^18)->(1>>10 + 1>>12 + 1>>13 + 1>>16 + 1>>18)
+      period <= (delay_time >> 8) + (delay_time >> 10) + (delay_time >> 11) + (delay_time >> 14) + (delay_time >> 16);
+      if (quotient_valid) begin
+        rate_actual <= quotient;
+      end
     end
   end
 
   logic [ 7:0] requested_sample        [INSTRUMENT_COUNT-1:0];
-  logic [ 5:0] request_address         [INSTRUMENT_COUNT-1:0];
+  logic [ 7:0] request_address         [INSTRUMENT_COUNT-1:0];
   logic        pos_valid               [INSTRUMENT_COUNT-1:0];
   logic        last_pos_valid          [INSTRUMENT_COUNT-1:0];
   logic [ 7:0] feedbacked_sample       [INSTRUMENT_COUNT-1:0];
@@ -64,7 +76,7 @@ module delay_gen #(
       rate_times_h_count <= 0;
       last_rate_times_h_count <= 0;
     end else begin
-      rate_times_h_count <= rate[9:2] * (h_count + 6'h2);
+      rate_times_h_count <= rate_actual[9:2] * (h_count + 6'h2);
       last_rate_times_h_count <= rate_times_h_count;
     end
   end
@@ -112,7 +124,7 @@ module delay_gen #(
     end else begin
       for (integer i = 0; i < INSTRUMENT_COUNT; i += 1) begin
         requested_sample[i] <= sample_buffer_out[i];
-        last_pos_valid[i]   <= pos_valid[i];
+        last_pos_valid[i]   <= pos_valid[i] && request_address[i][7:6] == 2'b00;
       end
     end
   end
@@ -147,7 +159,7 @@ module delay_gen #(
         request_address[i] <= 0;
         pos_valid[i]       <= 0;
       end else begin
-        rate_x_offset[i] <= half_x_dist[i] * rate[9:2];
+        rate_x_offset[i] <= half_x_dist[i] * rate_actual[9:2];
         request_address[i] <= ((rate_x_offset[i][15:10] + 1) * (|period[9:8] ? {6'h0, period[9:2], 2'h0} : {8'h0, period[7:0]})) >> 2;
         pos_valid[i] <= rate_x_offset[i][9];
       end

@@ -1,24 +1,21 @@
-+==========================+==========================+================================================================================+
-| Launch Setup Clock       | Launch Hold Clock        | Pin                                                                            |
-+==========================+==========================+================================================================================+
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_12_12/RAMS64E_C/ADR1 |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_12_12/RAMS64E_D/ADR1 |
-| clk_controller_clk_wiz_0 | clk_controller_clk_wiz_0 | ddr3_top/ddr3_controller_inst/o_wb_stall_reg_rep/D                             |
-| clk_controller_clk_wiz_0 | clk_controller_clk_wiz_0 | ddr3_top/ddr3_controller_inst/o_wb_stall_reg/D                                 |
-| clk_controller_clk_wiz_0 | clk_controller_clk_wiz_0 | ddr3_top/ddr3_controller_inst/o_wb_stall_calib_reg/D                           |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_13_13/RAMS64E_B/ADR1 |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_12_12/RAMS64E_A/ADR1 |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_13_13/RAMS64E_A/ADR1 |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_12_12/RAMS64E_B/ADR1 |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_256_511_6_6/RAMS64E_C/ADR1    |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_13_13/RAMS64E_C/ADR1 |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_256_511_6_6/RAMS64E_D/ADR1    |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_15_15/RAMS64E_B/ADR1  |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_13_13/RAMS64E_D/ADR1 |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_13_13/RAMS64E_C/ADR5 |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_256_511_6_6/RAMS64E_A/ADR1    |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_8_8/RAMS64E_A/ADR1    |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_8_8/RAMS64E_B/ADR1    |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_256_511_6_6/RAMS64E_B/ADR1    |
-| gclk                     | gclk                     | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_13_13/RAMS64E_D/ADR5 |
-+--------------------------+--------------------------+--------------------------------------------------------------------------------+
++====================+===================+================================================================================+
+| Launch Setup Clock | Launch Hold Clock | Pin                                                                            |
++====================+===================+================================================================================+
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_14_14/RAMS64E_A/ADR1  |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_14_14/RAMS64E_B/ADR1  |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_14_14/RAMS64E_A/ADR3  |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_14_14/RAMS64E_B/ADR3  |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_9_9/RAMS64E_B/ADR1   |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_9_9/RAMS64E_A/ADR1   |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_4_4/RAMS64E_B/ADR1    |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_4_4/RAMS64E_A/ADR1    |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_1_1/RAMS64E_B/ADR1   |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_1_1/RAMS64E_A/ADR1   |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_7_7/RAMS64E_A/ADR1    |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_7_7/RAMS64E_B/ADR1    |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_8_8/RAMS64E_B/ADR1    |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_12_12/RAMS64E_A/ADR3 |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_8_8/RAMS64E_A/ADR1    |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_512_767_8_8/RAMS64E_C/ADR1    |
+| gclk               | gclk              | resampler_i/downsampler_i/sample_buffer/data_reg_768_1023_10_10/RAMS64E_B/ADR1 |
++--------------------+-------------------+--------------------------------------------------------------------------------+
