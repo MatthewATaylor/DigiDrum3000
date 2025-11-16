@@ -154,8 +154,8 @@ module top_level
     pitch_to_sample_period p2sp (
         .clk(clk),
         .rst(rst),
-        .pitch(10'd512),
         //.pitch(sw[5] ? pitch[0] : sw[15:6]),
+        .pitch(sw[5] ? 10'd512 : sw[15:6]),
         .sample_period(sample_period)
     );
 
@@ -517,13 +517,20 @@ module top_level
         .sample_out_valid(resample_valid)
     );
 
+    logic [9:0] delay_rate_lfo_out;
+    triangle_lfo delay_rate_lfo (
+        .clk(clk),
+        .rst(rst),
+        .out(delay_rate_lfo_out)
+    );
+
     logic [15:0] delay_out;
     logic        delay_out_valid;
     audio_delay delay (
         .clk(clk),
         .rst(rst),
         .pot_wet(10'b0),
-        .pot_rate(sw[15:6]),
+        .pot_rate(sw[5] ? sw[15:6] : ((delay_rate_lfo_out >> 2) + 600)),
         .pot_feedback(10'b0),
         .sample_in(resample),
         .sample_in_valid(resample_valid),

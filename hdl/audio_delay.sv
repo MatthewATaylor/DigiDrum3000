@@ -52,15 +52,17 @@ module audio_delay
         end else begin
             if (sample_in_valid) begin
                 sample_in_buf <= sample_in;
-                bram_din <= sample_in;
+                bram_din <=
+                    ($signed(sample_in) >>> 1) +
+                    ($signed(sample_out) >>> 1);
                 bram_wr_addr <= bram_wr_addr + 1;
             end
 
             if (sample_in_valid_buf[1]) begin
                 sample_out_valid <= 1;
                 sample_out <=
-                    ($signed(bram_dout) >>> 1) + 
-                    ($signed(sample_in_buf) >>> 1);
+                    ($signed(sample_in_buf) >>> 1) +
+                    ($signed(bram_dout) >>> 1);
             end
 
             sample_in_valid_buf <= {sample_in_valid_buf[0], sample_in_valid};
