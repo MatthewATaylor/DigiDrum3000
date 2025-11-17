@@ -113,11 +113,15 @@ def test_delay_gen_runner():
     sys.path.append(str(proj_path / "sim" / "model"))
     sources = [
         proj_path / "hdl" / "delay_gen.sv",
+        proj_path / "hdl" / "sqrt_approx.sv",
     ]
     build_test_args = ["-Wall"]
     if len(sys.argv) <= 1 or sys.argv[1] == "square_left":
         top_level = "square_left"
         parameters = {"WIDTH": 64, "CENTER_X": 64, "CENTER_Y": 32}
+    elif sys.argv[1] == "circle_left_right":
+        top_level = "circle_left_right"
+        parameters = {"RADIUS": 32, "CENTER_X": 64, "CENTER_Y": 32}
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(

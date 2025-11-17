@@ -167,11 +167,11 @@ module delay_gen #(
   end
 
 
-  square_left #(
-      .WIDTH(512),
+  circle_left_right #(
+      .RADIUS  (256),
       .CENTER_X(640),
       .CENTER_Y(450)
-  ) bd_square (
+  ) bd_cicrle (
       .clk(clk),
       .rst(rst),
       .h_count(h_count),
@@ -240,5 +240,53 @@ module square_left #(
     end
   end
 endmodule  // square_left
+
+// 2 cycle delay
+module circle_left_right #(
+    parameter RADIUS   = 64,
+    parameter CENTER_X = 400,
+    parameter CENTER_Y = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    output logic [ 7:0] half_x_dist
+);
+  localparam LEFT_EDGE_X = CENTER_X - RADIUS;
+  localparam RIGHT_EDGE_X = CENTER_X + RADIUS;
+  localparam BOTTOM_EDGE_Y = CENTER_Y + ((RADIUS * 180) >> 8);
+  localparam TOP_EDGE_Y = CENTER_Y - ((RADIUS * 180) >> 8);
+
+  logic [10:0] x_dist_naive;
+  logic [ 9:0] y_dist;
+  logic        valid_pos;
+
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+
+  logic [15:0] rad_sq_minus_y_sq;
+  logic [ 7:0] x_offset_from_y;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      rad_sq_minus_y_sq <= 0;
+      x_dist_naive <= 0;
+      half_x_dist <= 0;
+      valid_pos <= 0;
+    end else begin
+      x_dist_naive <= h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
+      rad_sq_minus_y_sq <= (RADIUS * RADIUS - 1) - y_dist[7:0] * y_dist[7:0];
+      valid_pos <= v_count < BOTTOM_EDGE_Y && v_count > TOP_EDGE_Y;
+      half_x_dist <= (valid_pos && x_dist_naive > x_offset_from_y) ? (x_dist_naive - x_offset_from_y) >> 1 : 0;
+    end
+  end
+
+  sqrt_approx #(
+      .WIDTH(16)
+  ) my_sqrt (
+      .d_in (rad_sq_minus_y_sq),
+      .d_out(x_offset_from_y)
+  );
+endmodule  // circle_left_right
 
 `default_nettype wire
