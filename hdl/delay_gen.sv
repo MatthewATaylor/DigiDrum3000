@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps  //
 `default_nettype none
 
-// 6 cycle delay
+// 7 cycle delay
 module delay_gen #(
     parameter INSTRUMENT_COUNT = 3
 ) (
@@ -204,7 +204,7 @@ module delay_gen #(
   );
 endmodule  // delay_gen
 
-// 1 cycle delay
+// 2 cycle delay
 module square_left #(
     parameter WIDTH = 128,
     parameter CENTER_X = 400,
@@ -217,16 +217,26 @@ module square_left #(
     output logic [ 7:0] half_x_dist
 );
   localparam LEFT_EDGE_X = CENTER_X - WIDTH / 2;
-  localparam TOP_EDGE_Y = CENTER_Y + WIDTH / 2;
-  localparam BOTTOM_EDGE_Y = CENTER_Y - WIDTH / 2;
+  localparam BOTTOM_EDGE_Y = CENTER_Y + WIDTH / 2;
+  localparam TOP_EDGE_Y = CENTER_Y - WIDTH / 2;
+
+  logic [7:0] next_half_x_dist;
 
   always_ff @(posedge clk) begin
     if (rst) begin
       half_x_dist <= 0;
-    end else if (v_count < TOP_EDGE_Y && v_count > BOTTOM_EDGE_Y && h_count < LEFT_EDGE_X) begin
-      half_x_dist <= (LEFT_EDGE_X - h_count) >> 1;
     end else begin
-      half_x_dist <= 0;
+      half_x_dist <= next_half_x_dist;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      next_half_x_dist <= 0;
+    end else if (v_count >= TOP_EDGE_Y && v_count < BOTTOM_EDGE_Y && h_count < LEFT_EDGE_X) begin
+      next_half_x_dist <= (LEFT_EDGE_X - h_count) >> 1;
+    end else begin
+      next_half_x_dist <= 0;
     end
   end
 endmodule  // square_left

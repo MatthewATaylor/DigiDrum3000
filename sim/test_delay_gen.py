@@ -66,31 +66,22 @@ def reverse_bits(n, size):
     return reversed_n
 
 
+IMAGE_WIDTH = 128
+
+
 async def drive_pixel(dut, i, image):
     await FallingEdge(dut.clk)
-    to_write = dut.intensity.value
-    dut.h_count.value = i % 64
-    dut.v_count.value = i // 64
-    dut.noise_source.value = random.randint(0, 255)
-    if i >= 3:
-        image.putpixel(((i - 3) % 64, (i - 3) // 64), (to_write, to_write, to_write))
-
-
-async def image_rend(dut, intensity):
-    dut.h_count.value = 0
-    dut.v_count.value = 0
-    dut.noise_source.value = 0
-    dut.inst_intensity = intensity
-    # use helper function to assert reset signal
-    await reset(dut.rst, dut.clk)
-
-    test_image = Image.new("RGB", (64, 64))
-
-    await FallingEdge(dut.clk)
-    for i in range(64 * 64 + 3):
-        await drive_pixel(dut, i, test_image)
-
-    return test_image
+    half_dist = dut.half_x_dist.value
+    dut.h_count.value = i % IMAGE_WIDTH
+    dut.v_count.value = i // IMAGE_WIDTH
+    to_write = 31
+    if int(half_dist) <= 2 and int(half_dist) > 0:
+        to_write = 255
+    if i >= 2:
+        image.putpixel(
+            ((i - 2) % IMAGE_WIDTH, (i - 2) // IMAGE_WIDTH),
+            (to_write, to_write, to_write),
+        )
 
 
 @cocotb.test()
@@ -100,22 +91,18 @@ async def test_delay_gen(dut):
     """
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     # set all inputs to 0
-    images = []
-    for i in range(255, -1, -8):
-        image = await image_rend(dut, i)
-        images.append(image)
+    dut.h_count.value = 0
+    dut.v_count.value = 0
+    # use helper function to assert reset signal
+    await reset(dut.rst, dut.clk)
 
-    images[0].save(
-        "vid.gif",
-        save_all=True,
-        append_images=images[1:],
-        optimize=False,
-        duration=32,
-        loop=0,
-    )
+    test_image = Image.new("RGB", (128, 64))
 
-    print(os.path.curdir)
-    subprocess.run(["pix", os.path.curdir + "/vid.gif"])
+    await FallingEdge(dut.clk)
+    for i in range(64 * 128 + 2):
+        await drive_pixel(dut, i, test_image)
+
+    test_image.show()
 
 
 def test_delay_gen_runner():
@@ -128,30 +115,9 @@ def test_delay_gen_runner():
         proj_path / "hdl" / "delay_gen.sv",
     ]
     build_test_args = ["-Wall"]
-    if len(sys.argv) <= 1:
-        top_level = "star_noise"
-        parameters = {"WIDTH_POW": 5, "HEIGHT_POW": 4, "CENTER_X": 32, "CENTER_Y": 32}
-    elif sys.argv[1] == "circle_hollow":
-        top_level = "circle_hollow"
-        parameters = {"RADIUS": 32, "CENTER_X": 32, "CENTER_Y": 32}
-    elif sys.argv[1] == "square_noise":
-        top_level = "square_noise"
-        parameters = {"WIDTH": 64, "CENTER_X": 32, "CENTER_Y": 32}
-    elif sys.argv[1] == "X_noise":
-        top_level = "X_noise"
-        parameters = {"WIDTH": 64, "CENTER_X": 32, "CENTER_Y": 32}
-    elif sys.argv[1] == "X_hollow":
-        top_level = "X_hollow"
-        parameters = {"WIDTH": 64, "CENTER_X": 32, "CENTER_Y": 32}
-    elif sys.argv[1] == "hex_hollow":
-        top_level = "hex_hollow"
-        parameters = {"HEIGHT": 64, "CENTER_X": 32, "CENTER_Y": 32}
-    elif sys.argv[1] == "slit_noise":
-        top_level = "slit_noise"
-        parameters = {"WIDTH_POW": 5, "CENTER_X": 32, "CENTER_Y": 32}
-    else:
-        top_level = "star_noise"
-        parameters = {"WIDTH_POW": 5, "HEIGHT_POW": 4, "CENTER_X": 32, "CENTER_Y": 32}
+    if len(sys.argv) <= 1 or sys.argv[1] == "square_left":
+        top_level = "square_left"
+        parameters = {"WIDTH": 64, "CENTER_X": 64, "CENTER_Y": 32}
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(
