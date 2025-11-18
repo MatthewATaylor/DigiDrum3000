@@ -40,6 +40,14 @@ module color_gen (
   logic [17:0] g_unscaled;
   logic [17:0] b_unscaled;
 
+  logic [7:0] dither;
+
+  dither_gen #(4) my_dither (
+      .a(h_count[3:0]),
+      .b(v_count[3:0]),
+      .out(dither)
+  );
+
   logic [ 7:0] r;
   logic [ 7:0] g;
   logic [ 7:0] b;
@@ -102,9 +110,9 @@ module color_gen (
         Cg <= $signed({1'b0, C_mult}) * $signed(Cg_sin[14:7]);
       end
 
-      r_unscaled <= $signed({1'b0, Y}) + $signed(Co) - $signed(Cg);
-      g_unscaled <= $signed({1'b0, Y}) + $signed(Cg);
-      b_unscaled <= $signed({1'b0, Y}) - $signed(Co) - $signed(Cg);
+      r_unscaled <= $signed({1'b0, Y}) + $signed(Co) - $signed(Cg) + $signed(dither);
+      g_unscaled <= $signed({1'b0, Y}) + $signed(Cg) + $signed(dither << 2);
+      b_unscaled <= $signed({1'b0, Y}) - $signed(Co) - $signed(Cg) + $signed(dither);
 
       r <= r_unscaled[17] ? 0 : r_unscaled[16] ? 8'hFF : r_unscaled[15:8];
       g <= g_unscaled[17] ? 0 : g_unscaled[16] ? 8'hFF : g_unscaled[15:8];

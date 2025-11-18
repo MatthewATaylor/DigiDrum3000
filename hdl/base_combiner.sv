@@ -48,9 +48,9 @@ module base_combiner (
       end else begin
         combined_brightness <= brightness_from_dry;
       end
-      scaled_red <= {pixel_color_in[23:16], 8'h00};  //combined_brightness * pixel_color_in[23:16];
-      scaled_green <= {pixel_color_in[15:8], 8'h00};  //combined_brightness * pixel_color_in[15:8];
-      scaled_blue <= {pixel_color_in[7:0], 8'h00};  //combined_brightness * pixel_color_in[7:0];
+      scaled_red <= combined_brightness * pixel_color_in[23:16];
+      scaled_green <= combined_brightness * pixel_color_in[15:8];
+      scaled_blue <= combined_brightness * pixel_color_in[7:0];
       h_count_pipe[0] <= h_count_in;
       h_count_pipe[1] <= h_count_pipe[0];
       v_count_pipe[0] <= v_count_in;
