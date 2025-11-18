@@ -285,6 +285,51 @@ module star_right #(
 
 endmodule  // star_right
 
+// 2 cycle delay
+module star_left #(
+    // assumes that WIDTH_POW >= HEIGHT_POW >= 4
+    parameter HEIGHT_POW = $clog2(128),
+    parameter CENTER_X   = 400,
+    parameter CENTER_Y   = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    output logic [ 7:0] half_x_dist
+);
+  localparam Y_HIGH_CUTOFF = 1 << HEIGHT_POW - 1;
+  localparam Y_MID_CUTOFF = 1 << HEIGHT_POW - 2;
+  localparam Y_LOW_CUTOFF = 1 << HEIGHT_POW - 3;
+
+  logic [10:0] x_dist_naive;
+  logic [ 9:0] y_dist;
+  logic [ 9:0] x_offset_from_y;
+  logic        valid_pos;
+
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      valid_pos <= 0;
+      x_dist_naive <= 0;
+      x_offset_from_y <= 0;
+      half_x_dist <= 0;
+    end else begin
+      valid_pos <= y_dist < Y_HIGH_CUTOFF && y_dist > Y_LOW_CUTOFF && h_count < CENTER_X;
+      x_dist_naive <= CENTER_X - h_count;
+      half_x_dist <= valid_pos && (x_dist_naive - x_offset_from_y < 11'h400) ? (x_dist_naive - x_offset_from_y) >> 1 : 0;
+      if (y_dist > Y_MID_CUTOFF) begin
+        x_offset_from_y <= ((1 << HEIGHT_POW - 1) - y_dist) >> 2;
+      end else begin
+        x_offset_from_y <= (1 << HEIGHT_POW - 2) - y_dist + (1 << HEIGHT_POW - 4);
+      end
+    end
+  end
+
+endmodule  // star_left
+
+// 2 cycle delay
 module X_left #(
     parameter WIDTH = 128,
     parameter CENTER_X = 400,
@@ -316,10 +361,121 @@ module X_left #(
       x_offset_from_y <= y_dist < CORNER_CUTOFF ? y_dist : 2 * CORNER_CUTOFF - y_dist;
       x_dist_naive <= CENTER_X - h_count;
       valid_pos <= y_dist < VALID_CUTOFF && h_count < (CENTER_X - WIDTH / 8);
-      half_x_dist <= (valid_pos && x_dist_naive > x_offset_from_y) ? (x_dist_naive - x_offset_from_y - WIDTH/8) >> 1 : 0;
+      half_x_dist <= (valid_pos && x_dist_naive > x_offset_from_y + WIDTH/8) ? (x_dist_naive - x_offset_from_y - WIDTH/8) >> 1 : 0;
     end
   end
 endmodule  // X_left
+
+// 2 cycle delay
+module X_right #(
+    parameter WIDTH = 128,
+    parameter CENTER_X = 400,
+    parameter CENTER_Y = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    output logic [ 7:0] half_x_dist
+);
+  localparam CORNER_CUTOFF = (WIDTH * 3) >> 4;
+  localparam VALID_CUTOFF = (WIDTH * 5) >> 4;
+
+  logic [10:0] x_dist_naive;
+  logic [ 9:0] y_dist;
+  logic [ 9:0] x_offset_from_y;
+  logic        valid_pos;
+
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      x_dist_naive <= 0;
+      half_x_dist <= 0;
+      x_offset_from_y <= 0;
+      valid_pos <= 0;
+    end else begin
+      x_offset_from_y <= y_dist < CORNER_CUTOFF ? y_dist : 2 * CORNER_CUTOFF - y_dist;
+      x_dist_naive <= h_count - CENTER_X;
+      valid_pos <= y_dist < VALID_CUTOFF && h_count > (CENTER_X + WIDTH / 8);
+      half_x_dist <= (valid_pos && x_dist_naive > x_offset_from_y + WIDTH/8) ? (x_dist_naive - x_offset_from_y - WIDTH/8) >> 1 : 0;
+    end
+  end
+endmodule  // X_right
+
+// 2 cycle delay
+module hex_right #(
+    parameter HEIGHT   = 128,
+    parameter CENTER_X = 400,
+    parameter CENTER_Y = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    output logic [ 7:0] half_x_dist
+);
+  localparam Y_CUTOFF = HEIGHT / 2;
+
+  logic [10:0] x_dist_naive;
+  logic [ 9:0] y_dist;
+  logic [ 9:0] x_offset_from_y;
+  logic        valid_pos;
+
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      x_dist_naive <= 0;
+      half_x_dist <= 0;
+      x_offset_from_y <= 0;
+      valid_pos <= 0;
+    end else begin
+      x_offset_from_y <= (HEIGHT * 4) / 7 - (y_dist >> 1) - (y_dist >> 4);  // -9|y|/16 (almost 4/7)
+      x_dist_naive <= h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
+      valid_pos <= y_dist < Y_CUTOFF;
+      half_x_dist <= (valid_pos && x_dist_naive > x_offset_from_y) ? (x_dist_naive - x_offset_from_y) >> 1 : 0;
+    end
+  end
+
+endmodule  // hex_right
+
+// 2 cycle delay
+module slit_left_right #(
+    parameter WIDTH_POW = $clog2(256),
+    parameter CENTER_X  = 400,
+    parameter CENTER_Y  = 400
+) (
+    input  wire         clk,
+    input  wire         rst,
+    input  wire  [10:0] h_count,
+    input  wire  [ 9:0] v_count,
+    output logic [ 7:0] half_x_dist
+);
+  localparam WIDTH = 1 << WIDTH_POW;
+  localparam Y_CUTOFF = WIDTH / 5;
+
+  logic [10:0] x_dist_naive;
+  logic [ 9:0] y_dist;
+  logic [ 9:0] x_offset_from_y;
+  logic        valid_pos;
+
+  assign y_dist = v_count > CENTER_Y ? v_count - CENTER_Y : CENTER_Y - v_count;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      x_dist_naive <= 0;
+      half_x_dist <= 0;
+      x_offset_from_y <= 0;
+      valid_pos <= 0;
+    end else begin
+      x_offset_from_y <= WIDTH / 2 - (y_dist << 1) - (y_dist >> 1);  // -5|y|/2
+      x_dist_naive <= h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
+      valid_pos <= y_dist < Y_CUTOFF;
+      half_x_dist <= (valid_pos && x_dist_naive > x_offset_from_y) ? (x_dist_naive - x_offset_from_y) >> 1 : 0;
+    end
+  end
+endmodule  // slit_left_right
 
 // 2 cycle delay
 module circle_left_right #(
