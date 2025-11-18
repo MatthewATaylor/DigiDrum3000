@@ -122,6 +122,12 @@ def test_delay_gen_runner():
     elif sys.argv[1] == "circle_left_right":
         top_level = "circle_left_right"
         parameters = {"RADIUS": 32, "CENTER_X": 64, "CENTER_Y": 32}
+    elif sys.argv[1] == "star_right":
+        top_level = "star_right"
+        parameters = {"HEIGHT_POW": 6, "CENTER_X": 64, "CENTER_Y": 32}
+    elif sys.argv[1] == "X_left":
+        top_level = "X_left"
+        parameters = {"WIDTH": 64, "CENTER_X": 64, "CENTER_Y": 32}
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(
