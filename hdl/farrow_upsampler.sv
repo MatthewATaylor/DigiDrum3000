@@ -111,7 +111,9 @@ module farrow_upsampler
     logic [SAMPLE_WIDTH-1:0]               x0px2;
     assign                                 x0px2 = x[0] + x[2];
     logic [SAMPLE_WIDTH-1:0]               d2_factor_pre;
-    
+
+    logic [SAMPLE_WIDTH-1:0]               farrow_out_addend;
+
     logic [SAMPLE_WIDTH+DELAY_WIDTH+1-1:0] top_sum_2;
     logic [SAMPLE_WIDTH+DELAY_WIDTH*2:0]   top_sum;
     logic [SAMPLE_WIDTH+DELAY_WIDTH*3+1:0] farrow_out;
@@ -125,6 +127,7 @@ module farrow_upsampler
             left_sum <= 0;
             d3_factor <= 0;
             d2_factor_pre <= 0;
+            farrow_out_addend <= 0;
             
             top_sum_2 <= 0;
             top_sum <= 0;
@@ -157,6 +160,9 @@ module farrow_upsampler
                         (x[1]<<1) + x[1] + (x[0]<<1)
                     )
                 );
+                farrow_out_addend <= 
+                    (((x[1])<<2) + (x[1]<<1)) <<
+                    ((DELAY_SCALE<<1) + DELAY_SCALE);
 
                 // Cycle 2
                 top_sum_2 <=
@@ -171,10 +177,7 @@ module farrow_upsampler
                 // Cycle 4
                 farrow_out <=
                     $signed(delay) * $signed(top_sum) +
-                    $signed(
-                        (((x[1])<<2) + (x[1]<<1)) <<
-                        ((DELAY_SCALE<<1) + DELAY_SCALE)
-                    );
+                    $signed(farrow_out_addend);
             end
         end
     end

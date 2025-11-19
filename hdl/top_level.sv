@@ -517,13 +517,6 @@ module top_level
         .sample_out_valid(resample_valid)
     );
 
-    logic [9:0] delay_rate_lfo_out;
-    triangle_lfo delay_rate_lfo (
-        .clk(clk),
-        .rst(rst),
-        .out(delay_rate_lfo_out)
-    );
-
     logic [15:0] delay_out;
     logic        delay_out_valid;
     audio_delay delay (
