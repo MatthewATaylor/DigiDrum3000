@@ -27,7 +27,8 @@ module resampler_and_upsampler
     resampler resampler_i (
         .clk(clk),
         .rst(rst),
-        .sample_period(sample_period),
+        .sample_period_in(sample_period),
+        .sample_period_farrow_out(14'd568),
         .sample_in(sample_in),
         .sample_in_valid(sample_in_valid),
         .sample_out(resample),

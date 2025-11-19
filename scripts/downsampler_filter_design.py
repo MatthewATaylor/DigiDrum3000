@@ -98,7 +98,7 @@ def peak_delay_microseconds(filt_coeffs):
 #     1078 * 2 - 1, 20800, width=1000, pass_zero="lowpass", fs=sample_rate, scale=True
 # )
 filt_coeffs = scipy.signal.firwin(
-    1078 * 2 - 1, 20800, width=1000, pass_zero="lowpass", fs=sample_rate, scale=True
+    520 * 2 - 1, 20800, width=2000, pass_zero="lowpass", fs=sample_rate, scale=True
 )
 # filt_coeffs = scipy.signal.firls(
 #    512 * 2 - 1,
@@ -108,7 +108,7 @@ filt_coeffs = scipy.signal.firwin(
 # )
 filt_coeffs = scipy.signal.minimum_phase(filt_coeffs)
 print(f"samples: {len(filt_coeffs)}")
-filt_coeffs = filt_coeffs[:1024]
+filt_coeffs = filt_coeffs[:512]
 print(f'Max coeff: {max(filt_coeffs)}')
 with open("downsampler_filter_coeffs.txt", "w") as f:
     for coeff in filt_coeffs:

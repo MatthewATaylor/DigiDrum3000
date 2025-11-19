@@ -6,7 +6,9 @@ module resampler
         input wire clk,
         input wire rst,
 
-        input  wire  [13:0] sample_period,
+        input  wire  [13:0] sample_period_in,
+        input  wire  [13:0] sample_period_farrow_out,
+
         input  wire  [15:0] sample_in,
         input  wire         sample_in_valid,
 
@@ -20,7 +22,8 @@ module resampler
         .clk(clk),
         .rst(rst),
 
-        .sample_period({2'b0, sample_period}),
+        .sample_period_in({2'b0, sample_period_in}),
+        .sample_period_out({2'b0, sample_period_farrow_out}),
         
         .sample_in(sample_in),
         .sample_in_valid(sample_in_valid),

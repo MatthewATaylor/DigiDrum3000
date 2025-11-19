@@ -2,14 +2,12 @@
 `default_nettype none
 
 module farrow_upsampler
-    #(
-        parameter SAMPLE_PERIOD_OUT = 2272/4
-    )
     (
         input wire clk,
         input wire rst,
 
-        input  wire  [15:0] sample_period,
+        input  wire  [15:0] sample_period_in,
+        input  wire  [15:0] sample_period_out,
 
         input  wire  [15:0] sample_in,
         input  wire         sample_in_valid,
@@ -27,10 +25,10 @@ module farrow_upsampler
     localparam SAMPLE_PERIOD_WIDTH = 16;
     localparam FARROW_DIVISOR = 6 * (1<<DELAY_SCALE)**3;
 
-    logic [$clog2(SAMPLE_PERIOD_OUT)-1:0] sample_out_counter;
-    logic [SAMPLE_PERIOD_WIDTH-1:0]       sample_delay_counter; 
-    logic                                 compute_trigger;
-    assign compute_trigger = sample_out_counter == SAMPLE_PERIOD_OUT-1;
+    logic [SAMPLE_PERIOD_WIDTH-1:0] sample_out_counter;
+    logic [SAMPLE_PERIOD_WIDTH-1:0] sample_delay_counter; 
+    logic                           compute_trigger;
+    assign compute_trigger = sample_out_counter >= sample_period_out - 1;
 
     // delay manager
     logic [SAMPLE_PERIOD_WIDTH+DELAY_SCALE-1:0] div_delay_quotient;
@@ -76,7 +74,7 @@ module farrow_upsampler
                 x_buf[1] <= x_buf[0];
                 x_buf[0] <= sample_ext;
 
-                sample_period_hold <= sample_period;
+                sample_period_hold <= sample_period_in;
 
                 if (compute_trigger) begin
                     x[3] <= x_buf[2];
@@ -270,7 +268,7 @@ module farrow_upsampler
         if (rst) begin
             sample_out_counter <= 0;
         end else begin
-            if (sample_out_counter == SAMPLE_PERIOD_OUT-1) begin
+            if (sample_out_counter >= sample_period_out - 1) begin
                 sample_out_counter <= 0;
             end else begin
                 sample_out_counter <= sample_out_counter + 1;

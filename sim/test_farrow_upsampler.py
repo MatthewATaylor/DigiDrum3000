@@ -15,7 +15,7 @@ import numpy as np
 test_file = os.path.basename(__file__).replace(".py","")
 
 
-SAMPLE_PERIOD_OUT = 2272/4
+SAMPLE_PERIOD_OUT = int(2272/4)
 SAMPLE_MAX = 2**15*0.2
 DELAY_SCALE = 4
 M = 2**DELAY_SCALE
@@ -45,7 +45,8 @@ async def test_static_d(dut):
     CYCLES = 2
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
-    dut.sample_period.value = SAMPLE_PERIOD_IN
+    dut.sample_period_in.value = SAMPLE_PERIOD_IN
+    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
@@ -117,12 +118,85 @@ async def test_static_d(dut):
 
 
 @cocotb.test()
+async def test_sample_period_out_sweep_static_f(dut):
+    F = 1000
+
+    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    dut.delay_debug_valid.value = 0
+    sample_period_in = 2272
+    dut.sample_period_in.value = sample_period_in
+    dut.rst.value = 1
+    await ClockCycles(dut.clk, 2)
+    dut.rst.value = 0
+
+    fig, ax = plt.subplots()
+
+    n_in = []
+    x = []
+    n_out = []
+    y = []
+
+    sample_period_start = 2272/16
+    sample_period_stop = 2272/16
+    clock_cycles = 79123
+    setup_cycles = int(clock_cycles/2)
+    sample_period_step = (sample_period_stop-sample_period_start) / clock_cycles
+    sample_period_float = sample_period_start
+    last_sample_cycle = 0
+    for i in range(2*clock_cycles+setup_cycles):
+        sample_period_out = int(sample_period_float)
+        dut.sample_period_out.value = sample_period_out
+        seconds_per_sample = sample_period_in * 10.0e-9
+        samples_per_cycle = 1/F / seconds_per_sample
+
+        if i - last_sample_cycle >= sample_period_in:
+            last_sample_cycle = i
+            n = i / sample_period_in
+            t = n * seconds_per_sample
+            sample = int(SAMPLE_MAX * math.sin(2 * math.pi * F * t))
+            dut.sample_in.value = sample
+            dut.sample_in_valid.value = 1
+
+            n_in.append(i)
+            x.append(sample)
+        else:
+            dut.sample_in_valid.value = 0
+
+        if dut.sample_out_valid.value == 1:
+            sample = dut.sample_out.value.signed_integer
+
+            n_out.append(i)
+            y.append(sample)
+
+            print(f'Received sample: {sample}, cycle={i}')
+
+        await ClockCycles(dut.clk, 1)
+
+        if i >= setup_cycles:
+            if i >= setup_cycles+clock_cycles:
+                sample_period_float -= sample_period_step
+            else:
+                sample_period_float += sample_period_step
+
+    ax.scatter(n_in, x, color='black', label='Input')
+    ax.plot(n_out, y, marker='.', label='Output')
+
+    ax.set_xlabel('Cycle Count')
+    ax.set_ylabel('Sample')
+    ax.legend()
+    fig.suptitle(f'Input Sample Rate Sweep ({F} Hz Signal)')
+    fig.tight_layout()
+    plt.show()
+
+
+@cocotb.test()
 async def test_sample_period_sweep_static_f(dut):
     return
     F = 1000
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.delay_debug_valid.value = 0
+    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
@@ -143,7 +217,7 @@ async def test_sample_period_sweep_static_f(dut):
     last_sample_cycle = 0
     for i in range(2*clock_cycles+setup_cycles):
         sample_period_in = int(sample_period_float)
-        dut.sample_period.value = sample_period_in
+        dut.sample_period_in.value = sample_period_in
         seconds_per_sample = sample_period_in * 10.0e-9
         samples_per_cycle = 1/F / seconds_per_sample
 
@@ -194,6 +268,7 @@ async def test_sample_period_sweep_dynamic_f(dut):
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.delay_debug_valid.value = 0
+    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
@@ -215,7 +290,7 @@ async def test_sample_period_sweep_dynamic_f(dut):
     for i in range(2*clock_cycles+setup_cycles):
         sample_period_in = int(sample_period_float)
         f = F * 2272 / sample_period_in
-        dut.sample_period.value = sample_period_in
+        dut.sample_period_in.value = sample_period_in
         seconds_per_sample = sample_period_in * 10.0e-9
 
         if i - last_sample_cycle >= sample_period_in:
@@ -260,6 +335,7 @@ async def test_sample_period_sweep_dynamic_f(dut):
 
 @cocotb.test()
 async def test_sample_period_sweep_wav(dut):
+    return
     samples = None
     with wave.open('../media/resampled/sq.wav', mode='rb') as wav:
         nframes = wav.getnframes()
@@ -268,6 +344,7 @@ async def test_sample_period_sweep_wav(dut):
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.delay_debug_valid.value = 0
+    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
@@ -289,7 +366,7 @@ async def test_sample_period_sweep_wav(dut):
     last_sample_received_cycle = None
     for i in range(clock_cycles):
         sample_period_in = int(9088 / 2**(pitch_float/256))
-        dut.sample_period.value = sample_period_in
+        dut.sample_period_in.value = sample_period_in
         seconds_per_sample = sample_period_in * 10.0e-9
 
         if i - last_sample_cycle >= sample_period_in:
@@ -341,6 +418,7 @@ async def test_variable_d(dut):
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.delay_debug_valid.value = 0
+    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
@@ -360,7 +438,7 @@ async def test_variable_d(dut):
         )
 
         sample_period_in = int(sample_period_in)
-        dut.sample_period.value = sample_period_in
+        dut.sample_period_in.value = sample_period_in
         seconds_per_sample = sample_period_in * 10e-9
         samples_per_cycle = 1/F / seconds_per_sample
 
@@ -410,7 +488,8 @@ async def test_variable_f(dut):
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.delay_debug_valid.value = 0
-    dut.sample_period.value = SAMPLE_PERIOD_IN
+    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
+    dut.sample_period_in.value = SAMPLE_PERIOD_IN
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
@@ -478,7 +557,7 @@ def is_runner():
     sources = [proj_path / "hdl" / "farrow_upsampler.sv"]
     sources += [proj_path / "hdl" / "divider.sv"]
     build_test_args = ["-Wall"]
-    parameters = {'SAMPLE_PERIOD_OUT': SAMPLE_PERIOD_OUT}
+    parameters = {}
     hdl_toplevel = "farrow_upsampler"
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)

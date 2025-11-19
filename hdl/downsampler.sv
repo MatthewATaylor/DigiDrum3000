@@ -18,7 +18,7 @@ module downsampler
         output logic        sample_out_valid
     );
 
-    localparam TAPS = 1024;
+    localparam TAPS = 512;
     localparam BANKS = TAPS/4;
     localparam BUFFER_DEPTH = TAPS;
     
