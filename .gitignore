@@ -4,6 +4,8 @@ obj
 sim_build
 vivado*
 clockInfo.txt
+tight_setup_hold_pins.txt
+ip/*/ip
 __pycache__
 
 # Kicad recommended

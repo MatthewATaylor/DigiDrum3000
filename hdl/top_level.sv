@@ -569,7 +569,10 @@ module top_level
         .clk_pixel(clk_pixel),
         .rst(rst),
 
-        .instrument_samples(current_instrument_samples),
+        //.instrument_samples(current_instrument_samples),
+        .midi_key(instr_trig_debug[0] ? 7'd36 : instr_trig_debug[1] ? 7'd38 : 7'd46),
+        .midi_valid(|instr_trig_debug),
+        .midi_velocity(7'h7F),
         .volume_on_clk(volume[0]),
         .pitch_on_clk(pitch[0]),
         .delay_wet_on_clk(delay_wet[0]),
@@ -582,6 +585,13 @@ module top_level
         .filter_cutoff_on_clk(filter_cutoff[0]),
         .distortion_drive_on_clk(distortion_drive[0]),
         .crush_pressure_on_clk(crush_pressure[0]),
+
+        .output_src_on_clk(output_src[0]),
+        .crush_src_on_clk(crush_src[0]),
+        .distortion_src_on_clk(distortion_src[0]),
+        .filter_src_on_clk(filter_src[0]),
+        .reverb_src_on_clk(reverb_src[0]),
+        .delay_src_on_clk(delay_src[0]),
 
         .pixel_to_hdmi(pixel_to_display_24),
         .active_draw_to_hdmi(active_draw_to_hdmi),
