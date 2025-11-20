@@ -27,7 +27,7 @@ module audio_delay
     logic        delay_line_out_valid;
 
     logic [15:0] bram_dout;
-    logic [17:0] bram_din;
+    logic [15:0] bram_din;
 
     // sample_period: [2272/4, 2272*4] = [46.5 ms, 744 ms]
     // resampler_delay_in:
@@ -72,7 +72,7 @@ module audio_delay
                 sample_in_buf <= resampled_in;
                 bram_din <=
                     ($signed(resampled_in) >>> 1) +
-                    ($signed(bram_dout[15:0]) >>> 1);
+                    ($signed(bram_dout) >>> 1);
                 bram_wr_addr <= bram_wr_addr + 1;
             end
 
@@ -80,7 +80,7 @@ module audio_delay
                 delay_line_out_valid <= 1;
                 delay_line_out <=
                     ($signed(sample_in_buf) >>> 1) +
-                    ($signed(bram_dout[15:0]) >>> 1);
+                    ($signed(bram_dout) >>> 1);
             end
 
             sample_in_valid_buf <= {sample_in_valid_buf[0], resampled_in_valid};
@@ -123,7 +123,7 @@ module audio_delay
     // Port A: read
     // Port B: write
     xilinx_true_dual_port_read_first_2_clock_ram #(
-        .RAM_WIDTH(18),
+        .RAM_WIDTH(16),
         .RAM_DEPTH(DELAY_DEPTH),
         .RAM_PERFORMANCE("HIGH_PERFORMANCE"),
         .INIT_FILE("")
@@ -131,7 +131,7 @@ module audio_delay
         .addra(bram_rd_addr),
         .addrb(bram_wr_addr),
         .dina(),
-        .dinb({2'b0, bram_din}),
+        .dinb(bram_din),
         .clka(clk),
         .clkb(clk),
         .wea(1'b0),

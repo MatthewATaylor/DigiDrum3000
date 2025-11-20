@@ -37,36 +37,10 @@ module downsampler
 
     logic [1:0]               coeff_counter;
     logic [$clog2(BANKS)-1:0] bank_counter;
-    logic [$clog2(BANKS)-1:0] bank_counter_buf [1:0];
+    logic [$clog2(BANKS)-1:0] bank_counter_buf [2:0];
 
 
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            sample_in_counter <= 0;
-            buf_we <= 0;
-            buf_din <= 0;
-            buf_addr <= 0;
-            buf_start <= 0;
-
-            `ifndef SYNTHESIS
-                for (int i=0; i<TAPS; i++) begin
-                    sample_buffer.data[i] <= 0;
-                end
-            `endif
-        end else begin
-            if (sample_in_valid) begin
-                sample_in_counter <= sample_in_counter + 1;
-                buf_we <= 1;
-                buf_din <= sample_in;
-                buf_addr <= buf_start;
-                buf_start <= buf_start - 1;
-            end else begin
-                buf_we <= 0;
-                buf_addr <= buf_start + ({2'b0, bank_counter_buf[0]} << 2);
-            end
-        end
-    end
-
+    // Filter computation
 
     logic is_computing;
     
@@ -80,7 +54,7 @@ module downsampler
             sample_out_valid <= 0;
         end else begin
             if (!is_computing) begin
-                if (bank_counter_buf[1] == 0) begin
+                if (bank_counter_buf[2] == 0) begin
                     is_computing <= 1;
                     if (sample_in_counter == 1) begin
                         accum <= $signed(product);
@@ -89,7 +63,7 @@ module downsampler
                     end
                 end
             end else begin
-                if (bank_counter_buf[1] == BANKS-1) begin
+                if (bank_counter_buf[2] == BANKS-1) begin
                     is_computing <= 0;
                     if (sample_in_counter == 0) begin
                         sample_out_valid <= 1;
@@ -105,35 +79,64 @@ module downsampler
     end
 
 
-    // Filter coefficient read requester
-    
+    // BRAM interfacing
+   
+    logic sample_in_valid_buf;
+
     logic [1:0] coeff_counter_inc;
     assign coeff_counter_inc = coeff_counter + 1;
     
-    logic [7:0] bank_counter_inc;
-    assign bank_counter_inc = bank_counter + 1;
+    logic [9:0] bank_counter_x4;
+    assign bank_counter_x4 = {2'b0, bank_counter} << 2;
     
     always_ff @ (posedge clk) begin
         if (rst) begin
+            sample_in_valid_buf <= 0;
+
+            sample_in_counter <= 0;
+            buf_we <= 0;
+            buf_din <= 0;
+            buf_addr <= 0;
+            buf_start <= 0;
+
             coeff_counter <= 0;
             filter_index <= 0;
             bank_counter <= 0;
             bank_counter_buf[0] <= 0;
             bank_counter_buf[1] <= 0;
+            bank_counter_buf[2] <= 0;
         end else begin
             if (sample_in_valid) begin
+                sample_in_counter <= sample_in_counter + 1;
+
+                // Write new sample to buffer
+                buf_we <= 1;
+                buf_din <= sample_in;
+                buf_addr <= buf_start - 1;
+                buf_start <= buf_start - 1;
+
+                // Cycle to next coefficient in each filter bank
                 coeff_counter <= coeff_counter_inc;
                 filter_index <= coeff_counter_inc;
+
+                // Reset to first filter bank
                 bank_counter <= 0;
-            end else begin
+            end else if (!sample_in_valid_buf) begin  // Delay for buffer write
+                // Read next sample from buffer
+                buf_we <= 0;
+                buf_addr <= buf_start + bank_counter_x4;
+
                 if (bank_counter < BANKS-1) begin
-                    bank_counter <= bank_counter_inc;
+                    bank_counter <= bank_counter + 1;
                 end
-                filter_index <= ({2'b0, bank_counter_inc} << 2) + coeff_counter;
+                filter_index <= coeff_counter + bank_counter_x4;
             end
 
             bank_counter_buf[0] <= bank_counter;
             bank_counter_buf[1] <= bank_counter_buf[0];
+            bank_counter_buf[2] <= bank_counter_buf[1];
+
+            sample_in_valid_buf <= sample_in_valid;
         end
     end
 
@@ -150,15 +153,21 @@ module downsampler
     end
 
 
-    dist_ram #(
-        .WIDTH(16),
-        .DEPTH(TAPS)
-    ) sample_buffer (
-        .clk(clk),
-        .addr(buf_addr),
-        .we(buf_we),
-        .din(buf_din),
-        .dout(buf_dout)
+    // 2 cycle delay
+    xilinx_single_port_ram_read_first #(
+        .RAM_WIDTH(16),
+        .RAM_DEPTH(TAPS),
+        .RAM_PERFORMANCE("HIGH_PERFORMANCE"),
+        .INIT_FILE("")
+    ) sample_buffer_bram (
+        .addra(buf_addr),
+        .dina(buf_din),
+        .clka(clk),
+        .wea(buf_we),
+        .ena(1),
+        .rsta(rst),
+        .regcea(1),
+        .douta(buf_dout)
     );
 
 
