@@ -11,7 +11,7 @@ module midi_processor
         output logic [6:0] velocity
     );
 
-    localparam NOTE_ON_CH10 = 8'b10011010;
+    localparam NOTE_ON_CH10 = 8'b10011001;
 
     logic uart_dout_valid;
     logic [7:0] uart_dout;
