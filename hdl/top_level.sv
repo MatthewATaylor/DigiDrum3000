@@ -532,12 +532,24 @@ module top_level
         .sample_out_valid(delay_out_valid)
     );
 
+    logic [15:0] crush_out;
+    logic        crush_out_valid;
+    audio_crush crush (
+        .clk(clk),
+        .rst(rst),
+        .pot_crush(crush_pressure[0]),
+        .sample_in(delay_out),
+        .sample_in_valid(delay_out_valid),
+        .sample_out(crush_out),
+        .sample_out_valid(crush_out_valid)
+    );
+
     logic [15:0] sample_upsampled;
     upsampler upsampler_i (
         .clk(clk),
         .rst(rst),
-        .sample_in(delay_out),
-        .sample_in_valid(delay_out_valid),
+        .sample_in(crush_out),
+        .sample_in_valid(crush_out_valid),
         .sample_out(sample_upsampled)
     );
 
