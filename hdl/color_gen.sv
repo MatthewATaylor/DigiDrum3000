@@ -34,7 +34,7 @@ module color_gen (
   logic [ 7:0] C_mult;
 
   assign Y = 16'h4000 + (pitch << 5);
-  assign C_mult = 8'h5F - (pitch >> 4);
+  assign C_mult = 8'h3F + ((pitch[9] ? ~pitch[8:0] : pitch[8:0]) >> 4);
 
   logic [17:0] r_unscaled;
   logic [17:0] g_unscaled;

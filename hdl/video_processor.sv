@@ -220,7 +220,146 @@ module video_processor #(
   logic [10:0] h_count_base;
   logic [ 9:0] v_count_base;
   logic        active_draw_base;
-  logic [23:0] pixel_color_base;
+  logic [23:0] pixel_base;
+
+  logic [10:0] h_count_from_crush;
+  logic [ 9:0] v_count_from_crush;
+  logic        active_draw_from_crush;
+  logic [23:0] pixel_from_crush;
+
+  logic [10:0] h_count_from_distortion;
+  logic [ 9:0] v_count_from_distortion;
+  logic        active_draw_from_distortion;
+  logic [23:0] pixel_from_distortion;
+
+  logic [10:0] h_count_from_filter;
+  logic [ 9:0] v_count_from_filter;
+  logic        active_draw_from_filter;
+  logic [23:0] pixel_from_filter;
+
+  logic [10:0] h_count_from_reverb;
+  logic [ 9:0] v_count_from_reverb;
+  logic        active_draw_from_reverb;
+  logic [23:0] pixel_from_reverb;
+
+  logic [10:0] h_count_to_crush;
+  logic [ 9:0] v_count_to_crush;
+  logic        active_draw_to_crush;
+  logic [23:0] pixel_to_crush;
+
+  logic [10:0] h_count_to_distortion;
+  logic [ 9:0] v_count_to_distortion;
+  logic        active_draw_to_distortion;
+  logic [23:0] pixel_to_distortion;
+
+  logic [10:0] h_count_to_filter;
+  logic [ 9:0] v_count_to_filter;
+  logic        active_draw_to_filter;
+  logic [23:0] pixel_to_filter;
+
+  logic [10:0] h_count_to_reverb;
+  logic [ 9:0] v_count_to_reverb;
+  logic        active_draw_to_reverb;
+  logic [23:0] pixel_to_reverb;
+
+  logic [10:0] h_count_output;
+  logic [ 9:0] v_count_output;
+  logic        active_draw_output;
+  logic [23:0] pixel_output;
+
+  video_multi_mux(
+      .clk(clk_pixel),
+      .rst(rst),
+
+      .delay_src(delay_src_on_pixel_clk),
+      .output_src(output_src_on_pixel_clk),
+      .crush_src(crush_src_on_pixel_clk),
+      .distortion_src(distortion_src_on_pixel_clk),
+      .filter_src(filter_src_on_pixel_clk),
+      .reverb_src(reverb_src_on_pixel_clk),
+
+      .h_count_from_base(h_count_base),
+      .v_count_from_base(v_count_base),
+      .active_draw_from_base(active_draw_base),
+      .pixel_from_base(pixel_base),
+
+      .h_count_from_crush(h_count_from_crush),
+      .v_count_from_crush(v_count_from_crush),
+      .active_draw_from_crush(active_draw_from_crush),
+      .pixel_from_crush(pixel_from_crush),
+
+      .h_count_from_distortion(h_count_from_distortion),
+      .v_count_from_distortion(v_count_from_distortion),
+      .active_draw_from_distortion(active_draw_from_distortion),
+      .pixel_from_distortion(pixel_from_distortion),
+
+      .h_count_from_filter(h_count_from_filter),
+      .v_count_from_filter(v_count_from_filter),
+      .active_draw_from_filter(active_draw_from_filter),
+      .pixel_from_filter(pixel_from_filter),
+
+      .h_count_from_reverb(h_count_from_reverb),
+      .v_count_from_reverb(v_count_from_reverb),
+      .active_draw_from_reverb(active_draw_from_reverb),
+      .pixel_from_reverb(pixel_from_reverb),
+
+      .h_count_to_crush(h_count_to_crush),
+      .v_count_to_crush(v_count_to_crush),
+      .active_draw_to_crush(active_draw_to_crush),
+      .pixel_to_crush(pixel_to_crush),
+
+      .h_count_to_distortion(h_count_to_distortion),
+      .v_count_to_distortion(v_count_to_distortion),
+      .active_draw_to_distortion(active_draw_to_distortion),
+      .pixel_to_distortion(pixel_to_distortion),
+
+      .h_count_to_filter(h_count_to_filter),
+      .v_count_to_filter(v_count_to_filter),
+      .active_draw_to_filter(active_draw_to_filter),
+      .pixel_to_filter(pixel_to_filter),
+
+      .h_count_to_reverb(h_count_to_reverb),
+      .v_count_to_reverb(v_count_to_reverb),
+      .active_draw_to_reverb(active_draw_to_reverb),
+      .pixel_to_reverb(pixel_to_reverb),
+
+      .h_count_to_output(h_count_output),
+      .v_count_to_output(v_count_output),
+      .active_draw_to_output(active_draw_output),
+      .pixel_to_output(pixel_output)
+  );
+
+  video_crush my_crush (
+      .clk(clk_pixel),
+      .rst(rst),
+
+      .h_count_in(h_count_to_crush),
+      .v_count_in(v_count_to_crush),
+      .active_draw_in(active_draw_to_crush),
+      .pixel_in(pixel_to_crush),
+      .pressure(crush_pressure_on_pixel_clk),
+
+      .h_count_out(h_count_from_crush),
+      .v_count_out(v_count_from_crush),
+      .active_draw_out(active_draw_from_crush),
+      .pixel_out(pixel_from_crush)
+  );
+
+  //temp:
+  assign h_count_from_reverb = h_count_to_reverb;
+  assign v_count_from_reverb = v_count_to_reverb;
+  assign active_draw_from_reverb = active_draw_to_reverb;
+  assign pixel_from_reverb = pixel_to_reverb;
+
+  assign h_count_from_distortion = h_count_to_distortion;
+  assign v_count_from_distortion = v_count_to_distortion;
+  assign active_draw_from_distortion = active_draw_to_distortion;
+  assign pixel_from_distortion = pixel_to_distortion;
+
+  assign h_count_from_filter = h_count_to_filter;
+  assign v_count_from_filter = v_count_to_filter;
+  assign active_draw_from_filter = active_draw_to_filter;
+  assign pixel_from_filter = pixel_to_filter;
 
   base_combiner my_combiner (
       .clk(clk_pixel),
@@ -235,16 +374,16 @@ module video_processor #(
       .h_count_out(h_count_base),
       .v_count_out(v_count_base),
       .active_draw_out(active_draw_base),
-      .pixel_color_out(pixel_color_base)
+      .pixel_color_out(pixel_base)
   );
 
   gui_render_and_overlay my_gui (
       .clk(clk_pixel),
       .rst(rst),
-      .h_count_in(h_count_base),
-      .v_count_in(v_count_base),
-      .pixel_in(pixel_color_base),
-      .active_draw_in(active_draw_base),
+      .h_count_in(h_count_output),
+      .v_count_in(v_count_output),
+      .pixel_in(pixel_output),
+      .active_draw_in(active_draw_output),
 
       .pixel_to_hdmi(pixel_to_hdmi),
       .h_sync_to_hdmi(h_sync_to_hdmi),
