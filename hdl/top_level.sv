@@ -529,6 +529,7 @@ module top_level
     audio_delay delay (
         .clk(clk),
         .rst(rst),
+        .sw_delay_fast(sw[0]),
         .pot_wet(10'b0),
         //.pot_rate(delay_lfo_out),
         .pot_rate(delay_rate[0]),

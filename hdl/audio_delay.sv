@@ -6,6 +6,7 @@ module audio_delay
         input wire clk,
         input wire rst,
 
+        input wire       sw_delay_fast,
         input wire [9:0] pot_wet,
         input wire [9:0] pot_rate,
         input wire [9:0] pot_feedback,
@@ -29,7 +30,9 @@ module audio_delay
     logic [15:0] bram_dout;
     logic [15:0] bram_din;
 
-    // sample_period: [2272/4, 2272*4] = [46.5 ms, 744 ms]
+    // sample_period: [2272/4, 2272*4]
+    //   sw_delay_fast: [2.91 ms, 46.5 ms]
+    //  !sw_delay_fast: [46.5 ms, 744 ms]
     // resampler_delay_in:
     //  farrow_upsampler in:   2272
     //  farrow_upsampler out: [2272/16, 2272]
@@ -48,7 +51,14 @@ module audio_delay
 
     logic [$clog2(DELAY_DEPTH)-1:0] bram_wr_addr;
     logic [$clog2(DELAY_DEPTH)-1:0] bram_rd_addr;
-    assign bram_rd_addr = bram_wr_addr + 1;
+
+    always_comb begin
+        if (sw_delay_fast) begin
+            bram_rd_addr = bram_wr_addr - 512;
+        end else begin
+            bram_rd_addr = bram_wr_addr + 1;
+        end
+    end
 
     logic [1:0]  sample_in_valid_buf;
     logic [15:0] sample_in_buf;
