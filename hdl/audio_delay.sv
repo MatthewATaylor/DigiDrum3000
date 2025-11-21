@@ -64,6 +64,36 @@ module audio_delay
     logic [15:0] sample_in_buf;
     logic [13:0] sample_period_buf;
 
+    logic [25:0] out_wet_mult;
+    assign       out_wet_mult = $signed(bram_dout) * $signed({1'b0, pot_wet});
+    logic [15:0] out_wet;
+    assign       out_wet = $signed(out_wet_mult) >>> 10;
+
+    logic [25:0] out_dry_mult;
+    assign       out_dry_mult = $signed(sample_in_buf) * $signed({1'b0, pot_wet});
+    logic [15:0] out_dry;
+    assign       out_dry = sample_in_buf - ($signed(out_dry_mult) >>> 10);
+
+    logic [25:0] out_fb_mult;
+    assign       out_fb_mult = $signed(bram_dout) * $signed({1'b0, pot_feedback});
+    logic [15:0] out_fb;
+    assign       out_fb = $signed(out_fb_mult) >>> 10;
+
+    logic [16:0] fb_plus_in;
+    assign       fb_plus_in = $signed(resampled_in) + $signed(out_fb);
+
+    // Input clip
+    logic [15:0] delay_line_in;
+    always_comb begin
+        if (fb_plus_in[16] && !fb_plus_in[15]) begin
+            delay_line_in = 16'h8000;
+        end else if (fb_plus_in[15] && !fb_plus_in[16]) begin
+            delay_line_in = 16'h7FFF;
+        end else begin
+            delay_line_in = fb_plus_in[15:0];
+        end
+    end
+
     always_ff @ (posedge clk) begin
         if (rst) begin
             bram_din <= 0;
@@ -80,17 +110,13 @@ module audio_delay
 
             if (resampled_in_valid) begin
                 sample_in_buf <= resampled_in;
-                bram_din <=
-                    ($signed(resampled_in) >>> 1) +
-                    ($signed(bram_dout) >>> 1);
+                bram_din <= delay_line_in;
                 bram_wr_addr <= bram_wr_addr + 1;
             end
 
             if (sample_in_valid_buf[1]) begin
                 delay_line_out_valid <= 1;
-                delay_line_out <=
-                    ($signed(sample_in_buf) >>> 1) +
-                    ($signed(bram_dout) >>> 1);
+                delay_line_out <= out_dry + out_wet;
             end
 
             sample_in_valid_buf <= {sample_in_valid_buf[0], resampled_in_valid};
