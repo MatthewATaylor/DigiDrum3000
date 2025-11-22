@@ -65,9 +65,9 @@ module video_distortion (
   always_comb begin
     naive_read_addr = h_count_in + read_offset;
     if ($signed(naive_read_addr) < $signed(0)) begin
-      read_addr = naive_read_addr + 11'd1280;
+      read_addr = 11'd1680;
     end else if (naive_read_addr >= 11'd1280) begin
-      read_addr = naive_read_addr - 11'd1280;
+      read_addr = 11'd1680;
     end else begin
       read_addr = naive_read_addr;
     end
@@ -86,6 +86,9 @@ module video_distortion (
         read_offset <= drive[9:8] == 0
         ? (noise_scrambled * $signed({8'h0, drive[8:1]})) >>>  10
         : (noise_scrambled * $signed({9'h1, drive[7:1]})) >>> (11 - drive[9:8]);
+      end
+      if (h_count_in == 11'd1281) begin
+        read_offset <= read_offset - 8'h1;
       end
       last_v_count <= v_count_in == 0 ? 10'd749 : v_count_in - 10'd1;
       last_h_count <= h_count_in;

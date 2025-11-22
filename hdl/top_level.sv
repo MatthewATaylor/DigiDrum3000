@@ -550,6 +550,7 @@ module top_level
         .rst(rst),
         .sample_in(crush_out),
         .sample_in_valid(crush_out_valid),
+        .volume(volume[0]),
         .sample_out(sample_upsampled)
     );
 

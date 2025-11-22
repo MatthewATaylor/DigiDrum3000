@@ -59,7 +59,7 @@ module delay_gen #(
       rate_actual <= 0;
     end else begin
       if (rate_fast) begin
-        period <= (sample_period >> 7) + (sample_period >> 9);
+        period <= (sample_period >> 7) + (sample_period >> 9) - (sample_period >> 11);
       end else begin
         // sample_period * 4 * (60 / (2272*4/0.744))->(~161/2^15)->(1>>8 + 1>>10 + 1>>15)
         period <= (sample_period >> 6) + (sample_period >> 8) + (sample_period >> 13);
