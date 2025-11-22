@@ -345,16 +345,27 @@ module video_processor #(
       .pixel_out(pixel_from_crush)
   );
 
+  video_distortion my_distortion (
+      .clk(clk_pixel),
+      .rst(rst),
+
+      .h_count_in(h_count_to_distortion),
+      .v_count_in(v_count_to_distortion),
+      .active_draw_in(active_draw_to_distortion),
+      .pixel_in(pixel_to_distortion),
+      .drive(distortion_drive_on_pixel_clk),
+
+      .h_count_out(h_count_from_distortion),
+      .v_count_out(v_count_from_distortion),
+      .active_draw_out(active_draw_from_distortion),
+      .pixel_out(pixel_from_distortion)
+  );
+
   //temp:
   assign h_count_from_reverb = h_count_to_reverb;
   assign v_count_from_reverb = v_count_to_reverb;
   assign active_draw_from_reverb = active_draw_to_reverb;
   assign pixel_from_reverb = pixel_to_reverb;
-
-  assign h_count_from_distortion = h_count_to_distortion;
-  assign v_count_from_distortion = v_count_to_distortion;
-  assign active_draw_from_distortion = active_draw_to_distortion;
-  assign pixel_from_distortion = pixel_to_distortion;
 
   assign h_count_from_filter = h_count_to_filter;
   assign v_count_from_filter = v_count_to_filter;
