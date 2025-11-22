@@ -34,6 +34,8 @@ module video_processor #(
     input wire [2:0] reverb_src_on_clk,
     input wire [2:0] delay_src_on_clk,
 
+    input wire delay_rate_fast_on_clk,
+
     // clk_pixel
     //input wire [15:0] dram_read_data,
     //output logic dram_read_active_draw,
@@ -68,6 +70,8 @@ module video_processor #(
   logic [ 2:0] reverb_src_on_pixel_clk;
   logic [ 2:0] delay_src_on_pixel_clk;
 
+  logic        delay_rate_fast_on_pixel_clk;
+
   logic [10:0] sig_gen_h_count;
   logic [ 9:0] sig_gen_v_count;
   logic        sig_gen_active_draw;
@@ -98,6 +102,8 @@ module video_processor #(
       .reverb_src_on_clk    (reverb_src_on_clk),
       .delay_src_on_clk     (delay_src_on_clk),
 
+      .delay_rate_fast_on_clk(delay_rate_fast_on_clk),
+
       .volume_on_pixel_clk          (volume_on_pixel_clk),
       .pitch_on_pixel_clk           (pitch_on_pixel_clk),
       .delay_wet_on_pixel_clk       (delay_wet_on_pixel_clk),
@@ -116,7 +122,9 @@ module video_processor #(
       .distortion_src_on_pixel_clk(distortion_src_on_pixel_clk),
       .filter_src_on_pixel_clk    (filter_src_on_pixel_clk),
       .reverb_src_on_pixel_clk    (reverb_src_on_pixel_clk),
-      .delay_src_on_pixel_clk     (delay_src_on_pixel_clk)
+      .delay_src_on_pixel_clk     (delay_src_on_pixel_clk),
+
+      .delay_rate_fast_on_pixel_clk(delay_rate_fast_on_pixel_clk)
   );
 
   video_sig_gen_basic my_sig_gen (
@@ -174,6 +182,7 @@ module video_processor #(
       .wet(delay_wet_on_pixel_clk),
       .rate(delay_rate_on_pixel_clk),
       .feedback(delay_feedback_on_pixel_clk),
+      .rate_fast(delay_rate_fast_on_pixel_clk),
 
       .intensity(delay_intensity)
   );

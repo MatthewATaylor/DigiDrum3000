@@ -16,6 +16,7 @@ module delay_gen #(
     input wire [9:0] feedback,
     input wire [9:0] rate,
     input wire [9:0] wet,
+    input wire       rate_fast,
 
     output logic [7:0] intensity
 );
@@ -28,11 +29,17 @@ module delay_gen #(
   logic [15:0] delay_time;
   logic [ 9:0] rate_actual;
 
-  // [1, 1024]
-  assign pot_time   = rate > 10'h3E0 ? 11'd1024 - 10'h3E0 : 11'd1024 - rate;
+  // sample_period: [2272/4, 2272*4]
+  //   sw_delay_fast: [2.91 ms, 46.5 ms]
+  //  !sw_delay_fast: [46.5 ms, 744 ms]
+  logic [13:0] sample_period;
 
-  // [64 - 1, 1024*64 - 1] = [1.4 ms, 1.5 s] @ sp=2272
-  assign delay_time = ({6'b0, pot_time} << 6) - 1;
+  pitch_to_sample_period p2sp_delay (
+      .clk(clk),
+      .rst(rst),
+      .pitch(rate),
+      .sample_period(sample_period)
+  );
 
   divider rate_div (
       .clk(clk),
@@ -51,8 +58,12 @@ module delay_gen #(
       period <= 0;
       rate_actual <= 0;
     end else begin
-      // delay_time * 4 * (60 * 2272 / 100000000)->(~357/2^18)->(1>>10 + 1>>12 + 1>>13 + 1>>16 + 1>>18)
-      period <= (delay_time >> 8) + (delay_time >> 10) + (delay_time >> 11) + (delay_time >> 14) + (delay_time >> 16);
+      if (rate_fast) begin
+        period <= (sample_period >> 7) + (sample_period >> 9);
+      end else begin
+        // sample_period * 4 * (60 / (2272*4/0.744))->(~161/2^15)->(1>>8 + 1>>10 + 1>>15)
+        period <= (sample_period >> 6) + (sample_period >> 8) + (sample_period >> 13);
+      end
       if (quotient_valid) begin
         rate_actual <= quotient;
       end
@@ -102,7 +113,7 @@ module delay_gen #(
           .dout(sample_buffer_out[i])
       );
 
-      assign sample_buffer_in[i] = h_count == 0 ? (inst_intensity[i][7] ? inst_intensity[i][6:0] << 1 : 0) : feedbacked_sample[i];
+      assign sample_buffer_in[i]   = h_count == 0 ? (inst_intensity[i][7] ? {inst_intensity[i][6:0], 1'b0} : 0) : feedbacked_sample[i];
       assign sample_buffer_addr[i] = v_count == 721 ? h_count : request_address[i];
     end
   endgenerate
@@ -117,9 +128,13 @@ module delay_gen #(
       end
     end else if (h_count < 64 && v_count == 721) begin
       for (integer i = 0; i < INSTRUMENT_COUNT; i += 1) begin
-        feedbacked_sample[i] <= apply_feedback_decay ? (sample_buffer_out[i] * {8'h0, feedback[9:2]}) >> 8 : sample_buffer_out[i];
+        if (rate_fast && h_count != 0) begin
+          feedbacked_sample[i] <= apply_feedback_decay ? (feedbacked_sample[i] * {8'h0, feedback[9:2]}) >> 8 : feedbacked_sample[i];
+        end else begin
+          feedbacked_sample[i] <= apply_feedback_decay ? (sample_buffer_out[i] * {8'h0, feedback[9:2]}) >> 8 : sample_buffer_out[i];
+        end
         requested_sample[i] <= 8'hXX;
-        last_pos_valid[i] <= 8'hXX;
+        last_pos_valid[i]   <= 8'hXX;
       end
     end else begin
       for (integer i = 0; i < INSTRUMENT_COUNT; i += 1) begin
