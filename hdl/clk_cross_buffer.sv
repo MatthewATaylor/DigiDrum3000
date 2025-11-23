@@ -26,6 +26,8 @@ module clk_cross_buffer (
     input wire [2:0] reverb_src_on_clk,
     input wire [2:0] delay_src_on_clk,
 
+    input wire delay_rate_fast_on_clk,
+
     output logic [9:0] volume_on_pixel_clk,
     output logic [9:0] pitch_on_pixel_clk,
     output logic [9:0] delay_wet_on_pixel_clk,
@@ -44,29 +46,33 @@ module clk_cross_buffer (
     output logic [2:0] distortion_src_on_pixel_clk,
     output logic [2:0] filter_src_on_pixel_clk,
     output logic [2:0] reverb_src_on_pixel_clk,
-    output logic [2:0] delay_src_on_pixel_clk
+    output logic [2:0] delay_src_on_pixel_clk,
+
+    output logic delay_rate_fast_on_pixel_clk
 );
 
 
-  logic [9:0] volume_pipe[1:0];
-  logic [9:0] pitch_pipe[1:0];
-  logic [9:0] delay_wet_pipe[1:0];
-  logic [9:0] delay_rate_pipe[1:0];
-  logic [9:0] delay_feedback_pipe[1:0];
-  logic [9:0] reverb_wet_pipe[1:0];
-  logic [9:0] reverb_size_pipe[1:0];
-  logic [9:0] reverb_feedback_pipe[1:0];
-  logic [9:0] filter_quality_pipe[1:0];
-  logic [9:0] filter_cutoff_pipe[1:0];
+  logic [9:0] volume_pipe          [1:0];
+  logic [9:0] pitch_pipe           [1:0];
+  logic [9:0] delay_wet_pipe       [1:0];
+  logic [9:0] delay_rate_pipe      [1:0];
+  logic [9:0] delay_feedback_pipe  [1:0];
+  logic [9:0] reverb_wet_pipe      [1:0];
+  logic [9:0] reverb_size_pipe     [1:0];
+  logic [9:0] reverb_feedback_pipe [1:0];
+  logic [9:0] filter_quality_pipe  [1:0];
+  logic [9:0] filter_cutoff_pipe   [1:0];
   logic [9:0] distortion_drive_pipe[1:0];
-  logic [9:0] crush_pressure_pipe[1:0];
+  logic [9:0] crush_pressure_pipe  [1:0];
 
-  logic [2:0] output_src_pipe[1:0];
-  logic [2:0] crush_src_pipe[1:0];
-  logic [2:0] distortion_src_pipe[1:0];
-  logic [2:0] filter_src_pipe[1:0];
-  logic [2:0] reverb_src_pipe[1:0];
-  logic [2:0] delay_src_pipe[1:0];
+  logic [2:0] output_src_pipe      [1:0];
+  logic [2:0] crush_src_pipe       [1:0];
+  logic [2:0] distortion_src_pipe  [1:0];
+  logic [2:0] filter_src_pipe      [1:0];
+  logic [2:0] reverb_src_pipe      [1:0];
+  logic [2:0] delay_src_pipe       [1:0];
+
+  logic       delay_rate_fast_pipe [1:0];
 
   always_ff @(posedge clk_pixel) begin
     volume_pipe[0]           <= volume_on_clk;
@@ -89,6 +95,8 @@ module clk_cross_buffer (
     reverb_src_pipe[0]       <= reverb_src_on_clk;
     delay_src_pipe[0]        <= delay_src_on_clk;
 
+    delay_rate_fast_pipe[0]  <= delay_rate_fast_on_clk;
+
     volume_pipe[1]           <= volume_pipe[0];
     pitch_pipe[1]            <= pitch_pipe[0];
     delay_wet_pipe[1]        <= delay_wet_pipe[0];
@@ -108,6 +116,8 @@ module clk_cross_buffer (
     filter_src_pipe[1]       <= filter_src_pipe[0];
     reverb_src_pipe[1]       <= reverb_src_pipe[0];
     delay_src_pipe[1]        <= delay_src_pipe[0];
+
+    delay_rate_fast_pipe[1]  <= delay_rate_fast_pipe[0];
 
     if (new_frame) begin
       volume_on_pixel_clk           <= volume_pipe[1];
@@ -129,6 +139,8 @@ module clk_cross_buffer (
       filter_src_on_pixel_clk       <= filter_src_pipe[1];
       reverb_src_on_pixel_clk       <= reverb_src_pipe[1];
       delay_src_on_pixel_clk        <= delay_src_pipe[1];
+
+      delay_rate_fast_on_pixel_clk  <= delay_rate_fast_pipe[1];
     end
   end
 endmodule  // clk_cross_buffer

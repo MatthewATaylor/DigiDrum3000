@@ -16,6 +16,7 @@ module upsampler (
     input wire rst,
     input wire [15:0] sample_in,
     input wire sample_in_valid,  // expected to be pulsed high every 2272 cycles
+    input wire [9:0] volume,
     output logic [15:0] sample_out  // 16x upsampled, held output
 );
 
@@ -46,6 +47,16 @@ module upsampler (
   logic signed [47:0] accum;
   logic signed [47:0] accumulator_next;
 
+  logic        [15:0] volume_mult;
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      volume_mult <= 0;
+    end else begin
+      volume_mult <= (|volume[9:7] ? {9'h1, volume[6:0]} << volume[9:7] : {volume[6:0], 1'b0}) >> 1;
+    end
+  end
+
   always_comb begin
     if (sample_in_valid) begin
       sample_buffer_we   = 1'b1;
@@ -58,7 +69,13 @@ module upsampler (
     end
   end
 
-  assign accumulator_next = accum + (filter_data * $signed(sample_buffer_out));
+  always_comb begin
+    if (sample_timer <= 65) begin
+      accumulator_next = accum + (filter_data * $signed(sample_buffer_out));
+    end else begin
+      accumulator_next = $signed(accum[34:10]) * $signed({1'b0, volume_mult});
+    end
+  end
 
   logic next_upsample;
   assign next_upsample = sample_timer == 141;
@@ -84,19 +101,19 @@ module upsampler (
 
   logic [15:0] next_sample_out;
   always_comb begin
-    if ($signed(accum[47:32]) < -15'sd1) begin
+    if ($signed(accum[47:34]) < -14'sd1) begin
       next_sample_out = 16'h8000;
-    end else if ($signed(accum[47:32]) > 15'sd0) begin
+    end else if ($signed(accum[47:34]) > 14'sd0) begin
       next_sample_out = 16'h7FFF;
     end else begin
-      next_sample_out = accum[32:17];
+      next_sample_out = accum[34:19];
     end
   end
 
   always_ff @(posedge clk) begin
     if (rst) begin
       sample_out <= 0;
-    end else if (sample_timer == 66) begin
+    end else if (sample_timer == 67) begin
       sample_out <= next_sample_out;
     end
   end
@@ -117,11 +134,11 @@ module upsampler (
     if (rst) begin
       buffer_start   <= 0;
       upsample_index <= 0;
-      `ifndef SYNTHESIS
-          for (int i=0; i<64; i++) begin
-              sample_buffer_lutram.data[i] <= 0;
-          end
-      `endif
+`ifndef SYNTHESIS
+      for (int i = 0; i < 64; i++) begin
+        sample_buffer_lutram.data[i] <= 0;
+      end
+`endif
     end else begin
       if (sample_in_valid) begin
         upsample_index <= 0;

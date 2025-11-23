@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps  //
 `default_nettype none
 
-// 3 cycle delay
+// 2 cycle delay
 module video_crush (
     input wire clk,
     input wire rst,
@@ -33,6 +33,7 @@ module video_crush (
   logic [31:0] quotient;
   logic        quotient_valid;
   logic [ 9:0] period;
+  logic        scale_shft;
 
   divider rate_div (
       .clk(clk),
@@ -49,9 +50,19 @@ module video_crush (
   always_ff @(posedge clk) begin
     if (rst) begin
       scale_fact <= 0;
+      scale_shft <= 0;
       inverse_scale_fact <= 0;
     end else begin
-      scale_fact <= {1'b1, -pressure[7:0]} >> (3'h1 + pressure[9:8]);
+      if (|pressure[9:8]) begin
+        scale_fact <= {1'b1, ~pressure[7:0]} >> pressure[9:8];
+      end else if (pressure[7]) begin
+        scale_fact <= (~pressure[6:2]) + 8'd49;
+      end else if (pressure[6:0] > 7'd25) begin
+        scale_fact <= {~pressure[6:0], 1'b0} + 8'd49;
+      end else begin
+        scale_fact <= 8'd255;
+      end
+      scale_shft <= |pressure[9:8];
       if (quotient_valid) begin
         inverse_scale_fact <= quotient;
       end
@@ -70,7 +81,9 @@ module video_crush (
   logic [ 9:0] last_v_count_in;
   logic        last_active_draw_in;
 
-  assign pixel_out = {r_crushed[7:0], g_crushed[7:0], b_crushed[7:0]};
+  assign pixel_out = scale_shft ?
+    {r_crushed[7:0], g_crushed[7:0], b_crushed[7:0]} :
+    {r_crushed[11:4], g_crushed[11:4], b_crushed[11:4]};
 
   always_ff @(posedge clk) begin
     if (rst) begin
@@ -97,9 +110,9 @@ module video_crush (
       r_scaled <= pixel_in[23:16] * scale_fact;
       g_scaled <= pixel_in[15:8] * scale_fact;
       b_scaled <= pixel_in[7:0] * scale_fact;
-      r_crushed <= ((r_scaled[15:4] + dither) >> 8) * inverse_scale_fact;
-      g_crushed <= ((g_scaled[15:4] + dither) >> 8) * inverse_scale_fact;
-      b_crushed <= ((b_scaled[15:4] + dither) >> 8) * inverse_scale_fact;
+      r_crushed <= (((r_scaled >> (scale_shft ? 4 : 0)) + dither) >> 8) * inverse_scale_fact;
+      g_crushed <= (((g_scaled >> (scale_shft ? 4 : 0)) + dither) >> 8) * inverse_scale_fact;
+      b_crushed <= (((b_scaled >> (scale_shft ? 4 : 0)) + dither) >> 8) * inverse_scale_fact;
     end
   end
 endmodule  // video_crush

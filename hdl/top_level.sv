@@ -550,6 +550,7 @@ module top_level
         .rst(rst),
         .sample_in(crush_out),
         .sample_in_valid(crush_out_valid),
+        .volume(volume[0]),
         .sample_out(sample_upsampled)
     );
 
@@ -591,6 +592,7 @@ module top_level
         .filter_cutoff_on_clk(filter_cutoff[0]),
         .distortion_drive_on_clk(distortion_drive[0]),
         .crush_pressure_on_clk(crush_pressure[0]),
+        .delay_rate_fast_on_clk(sw[0]),
 
         .output_src_on_clk(output_src[0]),
         .crush_src_on_clk(crush_src[0]),

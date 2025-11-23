@@ -25,8 +25,8 @@ module note_tracker_midi #(
 );
 
   localparam [7:0] velocity_base_decay[INSTRUMENT_COUNT-1:0] = {
-    8'h06,  // hh_opened
-    8'h12,  // sd
+    8'h04,  // hh_opened
+    8'h10,  // sd
     8'h25  // bd
   };
 
