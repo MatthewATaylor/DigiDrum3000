@@ -155,6 +155,7 @@ module upsampler (
   always_ff @(posedge clk) begin
     if (rst) begin
       sample_buffer_out_reg <= 0;
+      filter_mult <= 0;
     end else begin
       sample_buffer_out_reg <= sample_buffer_out;
       filter_mult <= filter_data * $signed(sample_buffer_out_reg);
