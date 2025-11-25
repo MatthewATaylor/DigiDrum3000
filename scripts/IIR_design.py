@@ -70,8 +70,8 @@ for i in range(0, len(x)):
     g_x1024 = pot_cutoff
 
     S_x1024_4 = (
-        s[0] * (g_x1024)**3 +  # 16 + 33 bits
-        s[1] * (g_x1024)**2 +  # 26 + 22 bits
+        s[0] * (g_x1024)**3 +  # 16 + 31 bits
+        s[1] * (g_x1024)**2 +  # 26 + 21 bits
         s[2] * (g_x1024)    +  # 36 + 11 bits
         s[3]                   # 46      bits
     ) << 10

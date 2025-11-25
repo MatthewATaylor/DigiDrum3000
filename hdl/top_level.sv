@@ -544,12 +544,25 @@ module top_level
         .sample_out_valid(crush_out_valid)
     );
 
+    logic [15:0] lpf_out;
+    logic        lpf_out_valid;
+    audio_filter lpf (
+        .clk(clk),
+        .rst(rst),
+        .pot_cutoff(filter_cutoff[0]),
+        .pot_quality(filter_quality[0]),
+        .sample_in(crush_out),
+        .sample_in_valid(crush_out_valid),
+        .sample_out(lpf_out),
+        .sample_out_valid(lpf_out_valid)
+    );
+
     logic [15:0] sample_upsampled;
     upsampler upsampler_i (
         .clk(clk),
         .rst(rst),
-        .sample_in(crush_out),
-        .sample_in_valid(crush_out_valid),
+        .sample_in(lpf_out),
+        .sample_in_valid(lpf_out_valid),
         .volume(volume[0]),
         .sample_out(sample_upsampled)
     );

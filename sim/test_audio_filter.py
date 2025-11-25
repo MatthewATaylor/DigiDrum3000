@@ -33,7 +33,7 @@ async def test_variable_f(dut):
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.rst.value = 1
-    dut.pot_cutoff.value = 250
+    dut.pot_cutoff.value = 400
     dut.pot_quality.value = 1023
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0

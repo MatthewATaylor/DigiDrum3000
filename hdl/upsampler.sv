@@ -22,6 +22,7 @@ module upsampler (
 
   //logic [15:0] sample_buffer  [63:0];
   logic [15:0] sample_buffer_out;
+  logic [15:0] sample_buffer_out_reg;
   logic [15:0] sample_buffer_in;
   logic sample_buffer_we;
   logic [5:0] sample_buffer_addr;
@@ -44,6 +45,7 @@ module upsampler (
   assign filter_index = {sample_index, upsample_index};
 
   logic signed [17:0] filter_data;
+  logic signed [33:0] filter_mult;
   logic signed [47:0] accum;
   logic signed [47:0] accumulator_next;
 
@@ -70,8 +72,8 @@ module upsampler (
   end
 
   always_comb begin
-    if (sample_timer <= 65) begin
-      accumulator_next = accum + (filter_data * $signed(sample_buffer_out));
+    if (sample_timer <= 67) begin
+      accumulator_next = accum + filter_mult;
     end else begin
       accumulator_next = $signed(accum[34:10]) * $signed({1'b0, volume_mult});
     end
@@ -113,7 +115,7 @@ module upsampler (
   always_ff @(posedge clk) begin
     if (rst) begin
       sample_out <= 0;
-    end else if (sample_timer == 67) begin
+    end else if (sample_timer == 69) begin
       sample_out <= next_sample_out;
     end
   end
@@ -124,7 +126,7 @@ module upsampler (
       sample_timer <= 0;
 
     end else begin
-      accum <= sample_timer < 8'd2 ? accum : accumulator_next;
+      accum <= sample_timer < 8'd4 ? accum : accumulator_next;
       sample_timer <= sample_timer + 8'h1;
     end
 
@@ -147,6 +149,15 @@ module upsampler (
       end else if (next_upsample) begin
         upsample_index <= upsample_index + 4'h1;
       end
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      sample_buffer_out_reg <= 0;
+    end else begin
+      sample_buffer_out_reg <= sample_buffer_out;
+      filter_mult <= filter_data * $signed(sample_buffer_out_reg);
     end
   end
 endmodule
