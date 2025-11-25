@@ -27,19 +27,83 @@ stream = pa.open(
 
 x = np.array(sq, dtype=np.int16)
 y = np.zeros(len(x), dtype=np.int16)
-s = 0
+# s = 0
+# for i in range(0, len(x)):
+#     t = i * T
+#     wc = 2 * PI * 10000/DURATION * t
+# 
+#     # Prewarped gain
+#     g = math.tan(wc * T / 2)
+# 
+#     # LPF with transposed trapezoidal integrator
+#     G = g / (1 + g)
+#     v = G * (x[i] - s)
+#     y[i] = v + s
+#     s = y[i] + v
+
+
+# 4-pole VA transistor ladder filter
+# s = [0, 0, 0, 0]
+# k = 2
+# for i in range(0, len(x)):
+#     t = i * T
+#     wc = 2 * PI * 20000/DURATION * t
+#     g = math.tan(wc * T / 2)
+#     S = g**3 * s[0] + g**2 * s[1] + g * s[2] + s[3]
+#     G = g**4
+#     u = (x[i] - k*S) / (1 + k*G)
+# 
+#     for j in range(4):
+#         G = g / (1 + g)
+#         v = G * (u - s[j])
+#         u = v + s[j]
+#         s[j] = u + v
+# 
+#     y[i] = u
+
+
+# Ladder filter but fixed point
+s = [0, 0, 0, 0]
+k = 900
 for i in range(0, len(x)):
-    t = i * T
-    wc = 2 * PI * 10000/DURATION * t
+    pot_cutoff = int(1024 * i / len(x))
+    g_x1024 = pot_cutoff
 
-    # Prewarped gain
-    g = math.tan(wc * T / 2)
+    S_x1024_4 = (
+        s[0] * (g_x1024)**3 +  # 16 + 33 bits
+        s[1] * (g_x1024)**2 +  # 26 + 22 bits
+        s[2] * (g_x1024)    +  # 36 + 11 bits
+        s[3]                   # 46      bits
+    ) << 10
+    G_x1024_4 = (g_x1024)**4
 
-    # LPF with transposed trapezoidal integrator
-    G = g / (1 + g)
-    v = G * (x[i] - s)
-    y[i] = v + s
-    s = y[i] + v
+    # pot_quality / 256 = k
+    kS = (k * S_x1024_4) >> 8
+    kG = (k * G_x1024_4) >> 8
+
+    u = ((int(x[i])<<40) - kS) // \
+        ((1<<40)         + kG)
+
+    # u = int(2**11 * math.tanh(u/2**11))
+    if u > AMPLITUDE:
+        u = AMPLITUDE
+    elif u < -AMPLITUDE:
+        u = -AMPLITUDE
+
+    G_x1024 = (g_x1024<<10) // (1024 + g_x1024)
+
+    for j in range(4):
+        v = G_x1024 * (u - s[j])
+        u = v + (int(s[j])<<10)
+        s[j] = int(u + v) >> 10
+
+    out = int(u) >> 40
+    # if out > 2000:
+    #     out = 2000
+    # elif out < -2000:
+    #     out = -2000
+    y[i] = out
+
 
 stream.write(y.tobytes())
 stream.close()
