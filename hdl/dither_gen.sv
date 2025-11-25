@@ -8,7 +8,7 @@ module dither_gen #(
     input  wire  [  WIDTH-1:0] b,
     output logic [2*WIDTH-1:0] out
 );
-  logic [WIDTH-1:0] reverse_out;
+  logic [2*WIDTH-1:0] reverse_out;
 
   bit_interleave #(WIDTH) my_interleave (
       .a  (a ^ b),
