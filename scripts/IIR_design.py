@@ -5,7 +5,7 @@ import scipy.io
 
 CHUNK = 1024
 SAMPLE_RATE = 44100
-FREQ = 220
+FREQ = 1000
 SAMPLES_PER_CYCLE = SAMPLE_RATE / FREQ
 DURATION = 5
 MAX = 2**15
@@ -44,15 +44,19 @@ y = np.zeros(len(x), dtype=np.int16)
 
 # 4-pole VA transistor ladder filter
 # s = [0, 0, 0, 0]
-# k = 2
+# k = 950/256
 # for i in range(0, len(x)):
-#     t = i * T
-#     wc = 2 * PI * 20000/DURATION * t
-#     g = math.tan(wc * T / 2)
+#     # t = i * T
+#     # wc = 2 * PI * 20000/DURATION * t
+#     # g = math.tan(wc * T / 2)
+#     g = i/len(x)
 #     S = g**3 * s[0] + g**2 * s[1] + g * s[2] + s[3]
 #     G = g**4
 #     u = (x[i] - k*S) / (1 + k*G)
-# 
+#     if u > AMPLITUDE:
+#         u = AMPLITUDE
+#     elif u < -AMPLITUDE:
+#         u = -AMPLITUDE
 #     for j in range(4):
 #         G = g / (1 + g)
 #         v = G * (u - s[j])
@@ -64,9 +68,10 @@ y = np.zeros(len(x), dtype=np.int16)
 
 # Ladder filter but fixed point
 s = [0, 0, 0, 0]
-k = 900
+k = 850
 for i in range(0, len(x)):
-    pot_cutoff = int(1024 * i / len(x))
+    # pot_cutoff = int(1024 * i / len(x))
+    pot_cutoff = 1023
     g_x1024 = pot_cutoff
 
     S_x1024_4 = (
