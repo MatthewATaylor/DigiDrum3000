@@ -68,7 +68,7 @@ module audio_filter
 
   // Some bits are truncated for this calculation.
   // Assume width of next_u can be same as u
-  //  (in stable operation)
+  //  (clipped feedback)
   logic [SAMPLE_WIDTH + 4*POT_WIDTH - 1:0] next_u;
   assign next_u =
     $signed(v) +
@@ -79,7 +79,7 @@ module audio_filter
   
   // Some bits are truncated for this calculation.
   // Assume width of next_s can be same as s
-  //  (in stable operation)
+  //  (clipped feedback)
   logic [SAMPLE_WIDTH + 3*POT_WIDTH - 1:0] next_s;
   assign next_s = $signed(next_s_sum) >>> POT_WIDTH;
 

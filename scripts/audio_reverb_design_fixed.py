@@ -5,17 +5,38 @@ import scipy.io
 import wave
 
 
+# Adapted from Freeverb
+# https://github.com/sinshu/freeverb
+
+
 class AP:
     def __init__(self, delay_samples, fb):
         self.delay_samples = delay_samples
-        self.buf = np.zeros(delay_samples)
+        self.buf = np.zeros(delay_samples, dtype=np.int32)  # 18-bit
         self.buf_index = 0
         self.fb = fb
 
     def process(self, sample):
+        # Max gain of 5/3 w/o clipping
+
         buf_out = self.buf[self.buf_index]
-        out = -sample + buf_out
-        self.buf[self.buf_index] = sample + (buf_out * self.fb)
+        out = np.int16(0)
+
+        out_full = -np.int32(sample) + buf_out
+        if out_full > 2**16-1:
+            print('CLIP: AP out')
+            out = 2**16-1
+        elif out_full < -2**16:
+            print('CLIP: AP out')
+            out = -2**16
+        else:
+            out = out_full
+
+        buf_next = np.int32(sample) + (buf_out >> self.fb)
+        if buf_next > 2**17-1 or buf_next < -2**17:
+            raise Exception('AP buf_next overflow')
+        self.buf[self.buf_index] = buf_next
+
         self.buf_index += 1
         if self.buf_index >= self.delay_samples:
             self.buf_index = 0
@@ -25,25 +46,60 @@ class AP:
 class LBCF:
     def __init__(self, delay_samples, fb, damp):
         self.delay_samples = delay_samples
-        self.buf = np.zeros(delay_samples)
+        self.buf = np.zeros(delay_samples, dtype=np.int32)  # 18-bit
         self.buf_index = 0
         self.fb = fb
         self.damp = damp
-        self.lpf_out = 0
+        self.lpf_out = np.int32(0)  # 25-bit
 
     def process(self, sample):
+        # Max gain of 1 / (1-fb/1024) w/o clipping
+
         out = self.buf[self.buf_index]
-        self.lpf_out = out * (1-self.damp) + self.lpf_out * self.damp
-        self.buf[self.buf_index] = sample + self.lpf_out * self.fb
+
+        lpf_next = (
+            (out<<10) +
+            (self.lpf_out-out) * self.damp
+        ) >> 10
+        if lpf_next > 2**24-1:
+            print('CLIP: LBCF lpf_out')
+            self.lpf_out = 2**24-1
+        elif lpf_next < -2**24:
+            print('CLIP: LBCF lpf_out')
+            self.lpf_out = -2**24
+        else:
+            self.lpf_out = lpf_next
+
+        buf_next = (
+            (np.int64(sample)<<13) +
+            (np.int64(self.lpf_out) * (self.fb + (895<<3)))
+        ) >> 13
+        if buf_next > 2**17-1:
+            print('CLIP: LBCF buf')
+            self.buf[self.buf_index] = 2**17-1
+        elif buf_next < -2**17:
+            print('CLIP: LBCF buf')
+            self.buf[self.buf_index] = -2**17
+        else:
+            self.buf[self.buf_index] = buf_next
+
         self.buf_index += 1
         if self.buf_index >= self.delay_samples:
             self.buf_index = 0
         return out
 
 
-SPREAD = 23
+# User controls
+POT_ROOM_SIZE = 700
+POT_FEEDBACK = 500
+POT_WET = 500
+STEREO = True  # True if reverb is last in effects chain
 
-FB_AP = 0.5
+SPREAD = 23
+FB_AP = 1
+DAMP = 1023-POT_FEEDBACK+1
+FB_LBCF = POT_ROOM_SIZE
+
 ap_delays = [
     556,
     441,
@@ -54,8 +110,6 @@ aps_l = [AP(delay       , FB_AP) for delay in ap_delays]
 aps_r = [AP(delay+SPREAD, FB_AP) for delay in ap_delays]
 aps = [aps_l, aps_r]
 
-DAMP = 0.5
-FB_LBCF = 0.99
 lbcf_delays = [
     1116,
     1188,
@@ -74,21 +128,23 @@ lbcfs = [lbcfs_l, lbcfs_r]
 def process(sample):
     # Process sample in separate L/R channels
 
-    outs = [0,0]
-
+    outs_lbcf = np.zeros(2, dtype=np.int32)  # 21-bit
     for i in range(len(lbcfs)):
         for lbcf in lbcfs[i]:
-            outs[i] += lbcf.process(sample)
+            outs_lbcf[i] += lbcf.process(sample)
 
+    outs_ap = np.zeros(2, dtype=np.int32)  # 17-bit
     for i in range(len(aps)):
+        outs_ap[i] = outs_lbcf[i] >> 4
         for ap in aps[i]:
-            outs[i] = ap.process(outs[i])
+            outs_ap[i] = ap.process(outs_ap[i])
+        outs_ap[i] = outs_ap[i] >> 1
 
-    return outs
+    return outs_ap  # 16-bit
 
 
 SAMPLE_RATE = 44100
-with wave.open('./media/resampled/hh_opened.wav') as wav_file:
+with wave.open('./media/resampled/sd.wav') as wav_file:
     assert wav_file.getframerate() == SAMPLE_RATE
     nframes = wav_file.getnframes()
     frames = wav_file.readframes(nframes)
@@ -108,21 +164,22 @@ y = np.zeros(8*len(x), dtype=np.int16)
 for i in range(4*len(x)):
     xi = x[i%len(x)]
     if i < 2*len(x):
-        y[2*i]   = xi*0.5
-        y[2*i+1] = xi*0.5
+        y[2*i]   = xi
+        y[2*i+1] = xi
     else:
-        outs = process(xi * 0.015)
-        out_l = outs[0]
-        out_r = outs[1]
-        wet = 0.5
-        mono = False
-        if mono:
-            mono_out = wet * (out_l + out_r) + (1-wet) * xi
+        outs = process(xi)
+        out_l = np.int32(outs[0])
+        out_r = np.int32(outs[1])
+        xi = np.int32(xi)
+        if STEREO:
+            y_l = (POT_WET * (out_l-xi) + (xi<<10)) >> 10
+            y_r = (POT_WET * (out_r-xi) + (xi<<10)) >> 10
+            y[2*i]   = y_l
+            y[2*i+1] = y_r
+        else:
+            mono_out = (POT_WET * (((out_l + out_r)>>1)-xi) + (xi<<10)) >> 10
             y[2*i]   = mono_out
             y[2*i+1] = mono_out
-        else:
-            y[2*i]   = wet * 2*out_l + (1-wet) * xi
-            y[2*i+1] = wet * 2*out_r + (1-wet) * xi
 
 
 stream.write(y.tobytes())
