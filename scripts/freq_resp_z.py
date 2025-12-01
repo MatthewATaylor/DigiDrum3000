@@ -43,7 +43,7 @@ print(f'LPF Min: {min(freq_resp_LPF)}')
 
 def H_LBCF(z):
     # Low-pass feedback comb filter
-    N = 1000
+    N = 100
     FB = 0.75
     LPF_MAX = 1
     return z**(-N) / (1 - FB*LPF_MAX * z**(-N))

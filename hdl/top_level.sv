@@ -557,24 +557,55 @@ module top_level
         .sample_out_valid(lpf_out_valid)
     );
 
-    logic [15:0] sample_upsampled;
-    upsampler upsampler_i (
+    logic [15:0] reverb_out_l;
+    logic [15:0] reverb_out_r;
+    logic        reverb_out_valid;
+    audio_reverb_stereo audio_reverb (
         .clk(clk),
         .rst(rst),
+        .pot_wet(reverb_wet[0]),
+        .pot_size(reverb_size[0]),
+        .pot_feedback(reverb_feedback[0]),
+        .is_stereo(1'b1),
         .sample_in(lpf_out),
         .sample_in_valid(lpf_out_valid),
-        .volume(volume[0]),
-        .sample_out(sample_upsampled)
+        .sample_out_l(reverb_out_l),
+        .sample_out_r(reverb_out_r),
+        .sample_out_valid(reverb_out_valid)
     );
 
-    logic dac_out;
-    assign spkl = dac_out;
-    assign spkr = dac_out;
-    dlt_sig_dac_2nd_order dlt_sig (
+    logic [15:0] upsample_l;
+    upsampler upsampler_l (
         .clk(clk),
         .rst(rst),
-        .current_sample(sample_upsampled),
-        .audio_out(dac_out)
+        .sample_in(reverb_out_l),
+        .sample_in_valid(reverb_out_valid),
+        .volume(volume[0]),
+        .sample_out(upsample_l)
+    );
+
+    logic [15:0] upsample_r;
+    upsampler upsampler_r (
+        .clk(clk),
+        .rst(rst),
+        .sample_in(reverb_out_r),
+        .sample_in_valid(reverb_out_valid),
+        .volume(volume[0]),
+        .sample_out(upsample_r)
+    );
+
+    dlt_sig_dac_2nd_order dlt_sig_l (
+        .clk(clk),
+        .rst(rst),
+        .current_sample(upsample_l),
+        .audio_out(spkl)
+    );
+
+    dlt_sig_dac_2nd_order dlt_sig_r (
+        .clk(clk),
+        .rst(rst),
+        .current_sample(upsample_r),
+        .audio_out(spkr)
     );
 
     logic [23:0] pixel_to_display_24;

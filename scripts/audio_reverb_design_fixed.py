@@ -18,6 +18,7 @@ class AP:
 
     def process(self, sample):
         # Max gain of 5/3 w/o clipping
+        # sample: 17-bit
 
         buf_out = self.buf[self.buf_index]
         out = np.int16(0)
@@ -50,29 +51,23 @@ class LBCF:
         self.buf_index = 0
         self.fb = fb
         self.damp = damp
-        self.lpf_out = np.int32(0)  # 25-bit
+        self.lpf_out = np.int32(0)  # 24-bit
 
     def process(self, sample):
         # Max gain of 1 / (1-fb/1024) w/o clipping
+        # sample: 16-bit
 
         out = self.buf[self.buf_index]
 
         lpf_next = (
             (out<<10) +
-            (self.lpf_out-out) * self.damp
+            (self.lpf_out-out) * self.damp  # 25x10 bit mult
         ) >> 10
-        if lpf_next > 2**24-1:
-            print('CLIP: LBCF lpf_out')
-            self.lpf_out = 2**24-1
-        elif lpf_next < -2**24:
-            print('CLIP: LBCF lpf_out')
-            self.lpf_out = -2**24
-        else:
-            self.lpf_out = lpf_next
+        self.lpf_out = lpf_next
 
         buf_next = (
             (np.int64(sample)<<13) +
-            (np.int64(self.lpf_out) * (self.fb + (895<<3)))
+            (np.int64(self.lpf_out) * (self.fb + (895<<3)))  # 24x14 bit mult
         ) >> 13
         if buf_next > 2**17-1:
             print('CLIP: LBCF buf')
@@ -90,8 +85,8 @@ class LBCF:
 
 
 # User controls
-POT_ROOM_SIZE = 700
-POT_FEEDBACK = 500
+POT_ROOM_SIZE = 900
+POT_FEEDBACK = 700
 POT_WET = 500
 STEREO = True  # True if reverb is last in effects chain
 
@@ -124,6 +119,12 @@ lbcfs_l = [LBCF(delay       , FB_LBCF, DAMP) for delay in lbcf_delays]
 lbcfs_r = [LBCF(delay+SPREAD, FB_LBCF, DAMP) for delay in lbcf_delays]
 lbcfs = [lbcfs_l, lbcfs_r]
 
+addr_offset = 0
+for delay in lbcf_delays + ap_delays:
+    print(f"BRAM_ADDR_WIDTH'('d{addr_offset}),")
+    addr_offset += delay+SPREAD
+print(f"BRAM_ADDR_WIDTH'('d{addr_offset})")
+exit()
 
 def process(sample):
     # Process sample in separate L/R channels
@@ -171,13 +172,13 @@ for i in range(4*len(x)):
         out_l = np.int32(outs[0])
         out_r = np.int32(outs[1])
         xi = np.int32(xi)
+        y_l = (POT_WET * (out_l-xi) + (xi<<10)) >> 10
+        y_r = (POT_WET * (out_r-xi) + (xi<<10)) >> 10
         if STEREO:
-            y_l = (POT_WET * (out_l-xi) + (xi<<10)) >> 10
-            y_r = (POT_WET * (out_r-xi) + (xi<<10)) >> 10
             y[2*i]   = y_l
             y[2*i+1] = y_r
         else:
-            mono_out = (POT_WET * (((out_l + out_r)>>1)-xi) + (xi<<10)) >> 10
+            mono_out = (y_l+y_r) >> 1
             y[2*i]   = mono_out
             y[2*i+1] = mono_out
 
