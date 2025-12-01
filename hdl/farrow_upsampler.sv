@@ -101,96 +101,142 @@ module farrow_upsampler
     // See Vesa Valimaki dissertation chapter 3.3, 1995
     // "Discrete-Time Modeling of Acoustic Tubes Using Fractional Delay Filters"
     // Note: The block diagram on p102 has the wrong sign on one of the adders
-    
-    logic [SAMPLE_WIDTH-1:0]               left_sum;
 
-    logic [SAMPLE_WIDTH-1:0]               x1mx2;
-    assign                                 x1mx2 = x[1] - x[2];
-    logic [SAMPLE_WIDTH-1:0]               d3_factor; 
+    enum {
+        IDLE,
 
-    logic [SAMPLE_WIDTH-1:0]               x0px2;
-    assign                                 x0px2 = x[0] + x[2];
-    logic [SAMPLE_WIDTH-1:0]               d2_factor_pre;
+        MULT_1_PRE,
+        MULT_1,
+        MULT_1_POST,
 
-    logic [SAMPLE_WIDTH-1:0]               farrow_out_addend;
+        MULT_2_PRE,
+        MULT_2,
+        MULT_2_POST,
+
+        MULT_3_PRE,
+        MULT_3,
+        MULT_3_POST,
+
+        OUT
+    } farrow_state;
+
+    logic [SAMPLE_WIDTH-1:0] left_sum;
+    logic [SAMPLE_WIDTH-1:0] left_sum_shift;
+
+    logic [SAMPLE_WIDTH-1:0] x1mx2;
+    assign                   x1mx2 = x[1] - x[2];
+    logic [SAMPLE_WIDTH-1:0] d3_factor; 
+
+    logic [SAMPLE_WIDTH-1:0] x0px2;
+    assign                   x0px2 = x[0] + x[2];
+    logic [SAMPLE_WIDTH-1:0] d2_factor_pre;
+
+    logic [SAMPLE_WIDTH-1:0] farrow_out_addend;
 
     logic [SAMPLE_WIDTH+DELAY_WIDTH+1-1:0] top_sum_2;
-    logic [SAMPLE_WIDTH+DELAY_WIDTH*2:0]   top_sum;
+    logic [SAMPLE_WIDTH+DELAY_WIDTH*2  :0] top_sum;
     logic [SAMPLE_WIDTH+DELAY_WIDTH*3+1:0] farrow_out;
+    logic                                  farrow_out_valid;
 
-    logic [1:0] farrow_counter;
-    logic [3:0] farrow_out_valid_buf;
-    logic       farrow_out_valid;
-    assign      farrow_out_valid = farrow_out_valid_buf[3];
+    logic [SAMPLE_WIDTH+DELAY_WIDTH*2  :0] mult_a;
+    logic              [DELAY_WIDTH  -1:0] mult_b;
+    logic [SAMPLE_WIDTH+DELAY_WIDTH*3+1:0] mult_out;
+    assign mult_out = $signed(mult_a) * $signed(mult_b);
+
     always_ff @ (posedge clk) begin
         if (rst) begin
             left_sum <= 0;
+            left_sum_shift <= 0;
             d3_factor <= 0;
             d2_factor_pre <= 0;
             farrow_out_addend <= 0;
-            
+
             top_sum_2 <= 0;
             top_sum <= 0;
             farrow_out <= 0;
 
-            farrow_counter <= 0;
-            farrow_out_valid_buf <= 0;
-        end else begin
-            farrow_out_valid_buf <= {
-                farrow_out_valid_buf[2:0],
-                prev_div_delay_out_valid
-            };
+            farrow_out_valid <= 0;
+            farrow_state <= IDLE;
 
-            if (prev_div_delay_out_valid || farrow_counter < 3) begin
-                if (prev_div_delay_out_valid) begin
-                    farrow_counter <= 0;
-                end else begin
-                    farrow_counter <= farrow_counter + 1;
+            mult_a <= 0;
+            mult_b <= 0;
+        end else begin
+            case (farrow_state)
+                IDLE: begin
+                    farrow_out_valid <= 0;
+                    if (prev_div_delay_out_valid) begin
+                        mult_b <= $signed(delay);
+                        d3_factor <= (x1mx2<<1) + x1mx2 + (x[3] - x[0]);
+                        farrow_state <= MULT_1_PRE;
+                    end
                 end
 
-                // Cycle 1
-                d3_factor <= (x1mx2<<1) + x1mx2 + (x[3] - x[0]);
-                d2_factor_pre <=
-                    (
-                        ((x0px2<<1) + x0px2) -
-                        ((x[1]<<2) + (x[1]<<1))
-                    ) <<< DELAY_SCALE;
-                left_sum <= x[3] - (
-                    (x[0]<<2) + (x[0]<<1) - (
-                        (x[1]<<1) + x[1] + (x[0]<<1)
-                    )
-                );
-                farrow_out_addend <= 
-                    (((x[1])<<2) + (x[1]<<1)) <<
-                    ((DELAY_SCALE<<1) + DELAY_SCALE);
+                MULT_1_PRE: begin
+                    mult_a <= $signed(d3_factor);
+                    d2_factor_pre <= 
+                        (
+                            ((x0px2<<1) + x0px2) -
+                            ((x[1]<<2) + (x[1]<<1))
+                        ) <<< DELAY_SCALE;
+                    left_sum <=
+                        (x[0]<<2) + (x[0]<<1) - x[3] - (
+                            (x[1]<<1) + x[1] + (x[0]<<1)
+                        );
+                    farrow_out_addend <= 
+                        (((x[1])<<2) + (x[1]<<1)) <<
+                        ((DELAY_SCALE<<1) + DELAY_SCALE);
+                    farrow_state <= MULT_1;
+                end
+                MULT_1: begin
+                    top_sum_2 <= mult_out;
+                    left_sum_shift <= left_sum <<< (DELAY_SCALE<<1);
+                    farrow_state <= MULT_1_POST;
+                end
+                MULT_1_POST: begin
+                    top_sum_2 <= $signed(top_sum_2) + $signed(d2_factor_pre);
+                    farrow_state <= MULT_2_PRE;
+                end
 
-                // Cycle 2
-                top_sum_2 <=
-                    $signed(delay) * $signed(d3_factor) +
-                    $signed(d2_factor_pre);
+                MULT_2_PRE: begin
+                    mult_a <= $signed(top_sum_2);
+                    farrow_state <= MULT_2;
+                end
+                MULT_2: begin
+                    top_sum <= mult_out;
+                    farrow_state <= MULT_2_POST;
+                end
+                MULT_2_POST: begin
+                    top_sum <= $signed(top_sum) + $signed(left_sum_shift);
+                    farrow_state <= MULT_3_PRE;
+                end
 
-                // Cycle 3
-                top_sum <=
-                    $signed(delay) * $signed(top_sum_2) -
-                    $signed(left_sum <<< (DELAY_SCALE<<1));
+                MULT_3_PRE: begin
+                    mult_a <= $signed(top_sum);
+                    farrow_state <= MULT_3;
+                end
+                MULT_3: begin
+                    farrow_out <= mult_out;
+                    farrow_state <= MULT_3_POST;
+                end
+                MULT_3_POST: begin
+                    farrow_out <= $signed(farrow_out) + $signed(farrow_out_addend);
+                    farrow_state <= OUT;
+                end
 
-                // Cycle 4
-                farrow_out <=
-                    $signed(delay) * $signed(top_sum) +
-                    $signed(farrow_out_addend);
-            end
+                OUT: begin
+                    // Take absolute value of farrow_out.
+                    if (farrow_out[SAMPLE_WIDTH+DELAY_WIDTH*3-1]) begin
+                        div_farrow_dividend <= ~farrow_out + 1;
+                    end else begin
+                        div_farrow_dividend <= farrow_out;
+                    end
+                    farrow_out_valid <= 1;
+                    farrow_state <= IDLE;
+                end
+            endcase
         end
     end
 
-    // Take absolute value of farrow_out.
-    always_comb begin
-        if (farrow_out[SAMPLE_WIDTH+DELAY_WIDTH*3-1]) begin
-            div_farrow_dividend = ~farrow_out + 1;
-        end else begin
-            div_farrow_dividend = farrow_out;
-        end
-    end
-    
     // Save sign of farrow_out to apply after div_farrow operation.
     logic div_farrow_sign;
     always_ff @ (posedge clk) begin

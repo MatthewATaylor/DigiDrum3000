@@ -37,6 +37,8 @@ def square(theta):
 
 @cocotb.test()
 async def test_static_d(dut):
+    # Test that the HDL result matches the Python result
+
     return
     SAMPLE_PERIOD_IN = SAMPLE_PERIOD_OUT
     SECONDS_PER_SAMPLE = SAMPLE_PERIOD_IN*10e-9
@@ -57,13 +59,6 @@ async def test_static_d(dut):
 
     d_range = range(0, M, int(M/4))
     for d in d_range:
-        print(
-            f'\n' + \
-            f'############################################\n' + \
-            f'Delay = {d}                                 \n' + \
-            f'############################################\n'
-        )
-
         n_in = []
         x = []
         n_out = []
@@ -119,6 +114,8 @@ async def test_static_d(dut):
 
 @cocotb.test()
 async def test_sample_period_out_sweep_static_f(dut):
+    # Sweep sample_period_out
+
     return
     F = 1000
 
@@ -192,6 +189,8 @@ async def test_sample_period_out_sweep_static_f(dut):
 
 @cocotb.test()
 async def test_sample_period_sweep_static_f(dut):
+    # Sweep sample_period_in
+
     return
     F = 1000
 
@@ -264,6 +263,10 @@ async def test_sample_period_sweep_static_f(dut):
 
 @cocotb.test()
 async def test_pitch_sweep_lut(dut):
+    # Sweep pitch (exponentially related to sample_period_in)
+    # Store sin in a lookup table to simulate pitch shift
+    # Optionally load samples from wav file
+
     sin_f = 1000
     sin_sample_rate = 44100
     sin_cycles = 8
@@ -305,10 +308,6 @@ async def test_pitch_sweep_lut(dut):
         if i - last_sample_cycle >= sample_period_in:
             last_sample_cycle = i
             sample = int(samples[sample_index])
-            # if sample_index >= 10:
-            #     sample = int(samples[sample_index-10])
-            # else:
-            #     sample = 0
             dut.sample_in.value = sample
             dut.sample_in_valid.value = 1
             sample_index += 1
@@ -338,226 +337,10 @@ async def test_pitch_sweep_lut(dut):
 
 
 @cocotb.test()
-async def test_sample_period_sweep_dynamic_f(dut):
-    return
-    F = 100
-
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
-    dut.delay_debug_valid.value = 0
-    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
-    dut.rst.value = 1
-    await ClockCycles(dut.clk, 2)
-    dut.rst.value = 0
-
-    fig, ax = plt.subplots()
-
-    n_in = []
-    x = []
-    n_out = []
-    y = []
-
-    sample_period_start = 2272*4
-    sample_period_stop = 2272/4
-    clock_cycles = 79123*4
-    setup_cycles = int(clock_cycles/2)
-    sample_period_step = (sample_period_stop-sample_period_start) / clock_cycles
-    sample_period_float = sample_period_start
-    last_sample_cycle = 0
-    for i in range(2*clock_cycles+setup_cycles):
-        sample_period_in = int(sample_period_float)
-        f = F * 2272 / sample_period_in
-        dut.sample_period_in.value = sample_period_in
-        seconds_per_sample = sample_period_in * 10.0e-9
-
-        if i - last_sample_cycle >= sample_period_in:
-            last_sample_cycle = i
-            n = i / sample_period_in
-            t = n * seconds_per_sample
-            sample = int(SAMPLE_MAX * math.sin(2 * math.pi * f * t))
-            dut.sample_in.value = sample
-            dut.sample_in_valid.value = 1
-
-            n_in.append(i)
-            x.append(sample)
-        else:
-            dut.sample_in_valid.value = 0
-
-        if dut.sample_out_valid.value == 1:
-            sample = dut.sample_out.value.signed_integer
-
-            n_out.append(i)
-            y.append(sample)
-
-            print(f'Received sample: {sample}, cycle={i}, sample_period={sample_period_in}')
-
-        await ClockCycles(dut.clk, 1)
-
-        if i >= setup_cycles:
-            if i >= setup_cycles+clock_cycles:
-                sample_period_float -= sample_period_step
-            else:
-                sample_period_float += sample_period_step
-
-    ax.scatter(n_in, x, color='black', label='Input')
-    ax.plot(n_out, y, marker='.', label='Output')
-
-    ax.set_xlabel('Cycle Count')
-    ax.set_ylabel('Sample')
-    ax.legend()
-    fig.suptitle(f'Input Sample Rate Sweep ({F} Hz Signal)')
-    fig.tight_layout()
-    plt.show()
-
-
-@cocotb.test()
-async def test_sample_period_sweep_wav(dut):
-    return
-    samples = None
-    with wave.open('../media/resampled/sq.wav', mode='rb') as wav:
-        nframes = wav.getnframes()
-        frames = wav.readframes(nframes)
-        samples = np.frombuffer(frames, dtype='<h')
-
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
-    dut.delay_debug_valid.value = 0
-    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
-    dut.rst.value = 1
-    await ClockCycles(dut.clk, 2)
-    dut.rst.value = 0
-
-    fig, ax = plt.subplots()
-
-    n_in = []
-    x = []
-    n_out = []
-    y = []
-
-    pitch_start = 0
-    pitch_stop = 1024
-    clock_cycles = 79123*40
-    pitch_step = (pitch_stop-pitch_start) / clock_cycles
-    pitch_float = pitch_start
-    last_sample_cycle = 0
-    sample_index = 0
-    last_sample_received_cycle = None
-    for i in range(clock_cycles):
-        sample_period_in = int(9088 / 2**(pitch_float/256))
-        dut.sample_period_in.value = sample_period_in
-        seconds_per_sample = sample_period_in * 10.0e-9
-
-        if i - last_sample_cycle >= sample_period_in:
-            last_sample_cycle = i
-            if sample_index >= 10:
-                sample = int(samples[sample_index-10])
-            else:
-                sample = 0
-            dut.sample_in.value = sample
-            dut.sample_in_valid.value = 1
-            sample_index += 1
-
-            n_in.append(i)
-            x.append(sample)
-        else:
-            dut.sample_in_valid.value = 0
-
-        if dut.sample_out_valid.value == 1:
-            if last_sample_received_cycle is not None:
-                assert i - last_sample_received_cycle == 2272/4
-            last_sample_received_cycle = i
-            sample = dut.sample_out.value.signed_integer
-
-            n_out.append(i)
-            y.append(sample)
-
-            print(f'Received sample: {sample}, cycle={i}')
-
-        await ClockCycles(dut.clk, 1)
-
-        pitch_float += pitch_step
-
-    ax.scatter(n_in, x, color='black', label='Input')
-    ax.plot(n_out, y, marker='.', label='Output')
-
-    ax.set_xlabel('Cycle Count')
-    ax.set_ylabel('Sample')
-    ax.legend()
-    fig.suptitle(f'Input Sample Rate Sweep (WAV File)')
-    fig.tight_layout()
-    plt.show()
-
-
-@cocotb.test()
-async def test_variable_d(dut):
-    return
-    F = 1000
-    CYCLES = 2
-
-    cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
-    dut.delay_debug_valid.value = 0
-    dut.sample_period_out.value = SAMPLE_PERIOD_OUT
-    dut.rst.value = 1
-    await ClockCycles(dut.clk, 2)
-    dut.rst.value = 0
-
-    fig, ax = plt.subplots()
-
-    # sample_periods = [2272*4, 2272*2.37, 2272, 2272/1.89, 2272/4]
-    # sample_periods = [2272*4, 2272*2.37, 2272, 2272/1.89, 2272/4]
-    sample_periods = [2272*3.14159]
-    for sample_period_in in sample_periods:
-        sample_rate_in = 1 / (sample_period_in * 10e-9)
-        print(
-            f'\n' + \
-            f'############################################\n' + \
-            f'Input Sample Rate = {int(sample_rate_in)} Hz\n' + \
-            f'############################################\n'
-        )
-
-        sample_period_in = int(sample_period_in)
-        dut.sample_period_in.value = sample_period_in
-        seconds_per_sample = sample_period_in * 10e-9
-        samples_per_cycle = 1/F / seconds_per_sample
-
-        n_in = []
-        x = []
-        n_out = []
-        y = []
-
-        for i in range(int(CYCLES*samples_per_cycle*sample_period_in)):
-            if i % sample_period_in == 0:
-                n = i / sample_period_in
-                t = n * seconds_per_sample
-                sample = int(SAMPLE_MAX * math.sin(2 * math.pi * F * t))
-                dut.sample_in.value = sample
-                dut.sample_in_valid.value = 1
-
-                n_in.append(i)
-                x.append(sample)
-            else:
-                dut.sample_in_valid.value = 0
-
-            if dut.sample_out_valid.value == 1:
-                sample = dut.sample_out.value.signed_integer
-
-                n_out.append(i)
-                y.append(sample)
-
-                print(f'Received sample: {sample}, cycle={i}')
-
-            await ClockCycles(dut.clk, 1)
-
-        ax.plot(n_out, y, marker='.', label=f'{int(sample_rate_in)} sps')
-
-    ax.set_xlabel('Cycle Count')
-    ax.set_ylabel('Sample')
-    ax.legend()
-    fig.suptitle(f'Variable Input Sample Rate ({F} Hz Signal)')
-    fig.tight_layout()
-    plt.show()
-
-
-@cocotb.test()
 async def test_variable_f(dut):
+    # Keep sample_period_in/out constant
+    # Test different input signal frequencies
+
     return
     SAMPLE_PERIOD_IN = int(2272/4)
     SECONDS_PER_SAMPLE = SAMPLE_PERIOD_IN * 10e-9
@@ -574,13 +357,6 @@ async def test_variable_f(dut):
     f_list = [800 * 2**f_power for f_power in f_powers]
     for f in f_list:
         fig, ax = plt.subplots()
-
-        print(
-            f'\n' + \
-            f'############################################\n' + \
-            f'Input Frequency = {f} Hz                    \n' + \
-            f'############################################\n'
-        )
 
         samples_per_cycle = 1/f / SECONDS_PER_SAMPLE
 

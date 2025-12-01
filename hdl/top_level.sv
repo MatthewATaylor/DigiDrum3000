@@ -560,7 +560,7 @@ module top_level
     logic [15:0] reverb_out_l;
     logic [15:0] reverb_out_r;
     logic        reverb_out_valid;
-    audio_reverb_stereo audio_reverb (
+    audio_reverb_stereo audio_reverb_stereo_i (
         .clk(clk),
         .rst(rst),
         .pot_wet(reverb_wet[0]),
