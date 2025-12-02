@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 from PIL import Image, ImageFilter
 import math
-from cocotb.runner import get_runner
+from vicoco.vivado_runner import get_runner
 
 from cocotb.clock import Clock
 from cocotb.triggers import (
@@ -98,25 +98,34 @@ async def test_filter(dut):
     dut.quality.value = 0
     dut.pixel_in.value = 0
     # use helper function to assert reset signal
-    await reset(dut.rst, dut.clk)
 
-    for j in range(10):
-        dut.v_count_in.value = j
-        for i in range(1650):
+    for j in range(0, 1024, 127):
+        dut.cutoff.value = j
+        await reset(dut.rst, dut.clk)
+        dut.v_count_in.value = 725
+        dut.active_draw_in.value = False
+        for i in range(1200, 1650, 1):
             await FallingEdge(dut.clk)
             dut.h_count_in.value = i
-            dut.active_draw_in.value = i < 1280
             dut.pixel_in.value = ((i % 16) == 0) * 0xFFFFFF
+        coeffs = []
+        for i in range(5):
+            coeffs.append((dut.gaussian_coeffs_view.value >> (i * 8)) & 0xFF)
+        print(f"cutoff: {dut.cutoff.value} coeffs:{coeffs}")
 
 
 def test_filter_runner():
     """Run the star_noise runner. Boilerplate code"""
     hdl_toplevel_lang = os.getenv("HDL_TOPLEVEL_LANG", "verilog")
-    sim = os.getenv("SIM", "icarus")
+    sim = os.getenv("SIM", "vivado")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
     sources = [
         proj_path / "hdl" / "xilinx_true_dual_port_read_first_1_clock_ram.v",
+        proj_path / "ip" / "cordic_sinhcosh_folded" / "cordic_sinhcosh_folded.xci",
+        proj_path / "hdl" / "cordic_sinhcosh_folded_wrapper.sv",
+        proj_path / "hdl" / "divider.sv",
+        proj_path / "hdl" / "exponent.sv",
         proj_path / "hdl" / "video_filter.sv",
         proj_path / "hdl" / "line_buffer.sv",
         proj_path / "hdl" / "dither_gen.sv",

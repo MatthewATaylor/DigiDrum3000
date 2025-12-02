@@ -13,11 +13,14 @@ module video_filter (
     input wire [9:0] cutoff,
     input wire [9:0] quality,
 
-    output logic [10:0] h_count_out,
-    output logic [ 9:0] v_count_out,
-    output logic        active_draw_out,
-    output logic [23:0] pixel_out
+    output logic [10:0]      h_count_out,
+    output logic [ 9:0]      v_count_out,
+    output logic             active_draw_out,
+    output logic [23:0]      pixel_out,
+    output logic [ 4:0][7:0] gaussian_coeffs_view  // for vicoco access
 );
+  assign gaussian_coeffs_view = gaussian_coeffs;
+
   logic [1:0] dither;
   dither_gen #(
       .WIDTH(1)
@@ -110,12 +113,11 @@ module video_filter (
   logic [15:0]       g_horizontal_gaussian_sum;
   logic [15:0]       b_horizontal_gaussian_sum;
 
-  //temp
-  assign gaussian_coeffs[0] = 8'h01;
-  assign gaussian_coeffs[1] = 8'h08;
-  assign gaussian_coeffs[2] = 8'h1B;
-  assign gaussian_coeffs[3] = 8'h38;
-  assign gaussian_coeffs[4] = 8'h48;
+  //assign gaussian_coeffs[0] = 8'h48;
+  //assign gaussian_coeffs[1] = 8'h38;
+  //assign gaussian_coeffs[2] = 8'h1B;
+  //assign gaussian_coeffs[3] = 8'h08;
+  //assign gaussian_coeffs[4] = 8'h01;
 
   always_comb begin
     r_vertical_gaussian_sum   = 0;
@@ -166,7 +168,7 @@ module video_filter (
   always_ff @(posedge clk) begin
     integer coeff_i;
     for (integer i = 0; i < 9; i += 1) begin
-      coeff_i = i < 5 ? i : 8 - i;
+      coeff_i = i < 5 ? 4 - i : i - 4;
       tmp = line_buffer_out[i];
       r_vertical_gaussian_products[i]   <= tmp[17:12] * gaussian_coeffs[coeff_i];
       g_vertical_gaussian_products[i]   <= tmp[11:6] * gaussian_coeffs[coeff_i];
@@ -201,6 +203,106 @@ module video_filter (
     end
   end
 
+  enum {
+    USING_COEFFS,
+    CALCULATING_EXPONENTS,
+    SCALING_COEFFS
+  } state;
+
+  logic [11:0] sum;
+  logic [2:0] coeff_pos;
+  logic [10:0] exponent_mult;
+
+  logic exp_in_valid;
+  logic [12:0] exp_in_value;
+  logic exp_out_valid;
+  logic [7:0] exp_out_value;
+
+  exponent my_exp (
+      .clk(clk),
+      .rst(rst),
+      .in_valid(exp_in_valid),
+      .in_value(exp_in_value),
+      .out_valid(exp_out_valid),
+      .out_value(exp_out_value)
+  );
+
+  logic [15:0] dividend;
+  logic        div_in_valid;
+  logic [15:0] quotient;
+  logic        div_out_valid;
+  logic        div_busy;
+
+  divider #(
+      .WIDTH(16)
+  ) my_div (
+      .clk(clk),
+      .rst(rst),
+      .dividend(dividend),
+      .divisor({4'h0, sum}),
+      .data_in_valid(div_in_valid),
+      .quotient(quotient),
+      .remainder(),
+      .data_out_valid(div_out_valid),
+      .busy(div_busy)
+  );
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      state <= USING_COEFFS;
+    end else if (state == USING_COEFFS && h_count_out == 1280 && v_count_out == 720) begin
+      state <= CALCULATING_EXPONENTS;
+    end else if (state == CALCULATING_EXPONENTS && exp_out_valid && coeff_pos[2]) begin
+      state <= SCALING_COEFFS;
+    end else if (state == SCALING_COEFFS && div_out_valid && coeff_pos[2]) begin
+      state <= USING_COEFFS;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    exponent_mult <= 11'h080 + (cutoff >> 1);
+    unique case (state)
+      USING_COEFFS: begin
+        if (h_count_out == 1280 && v_count_out == 720) begin
+          coeff_pos <= 3'b001;
+          gaussian_coeffs[0] <= 8'hFF;
+          sum <= 12'h100;
+          exp_in_valid <= 1'b1;
+          exp_in_value <= exponent_mult;
+        end else begin
+          exp_in_valid <= 0;
+        end
+      end
+      CALCULATING_EXPONENTS: begin
+        if (exp_out_valid) begin
+          sum <= sum + (exp_out_value << 1);
+          gaussian_coeffs[coeff_pos] <= exp_out_value;
+          if (coeff_pos[2]) begin
+            coeff_pos <= 3'b000;
+          end else begin
+            coeff_pos <= coeff_pos + 1;
+            exp_in_valid <= 1'b1;
+            exp_in_value <= ({4'h0, exponent_mult} * (coeff_pos + 1));
+          end
+        end else begin
+          exp_in_valid <= 0;
+        end
+
+      end
+      SCALING_COEFFS: begin
+        if (div_out_valid) begin
+          gaussian_coeffs[coeff_pos] <= quotient;
+          coeff_pos <= coeff_pos + 1;
+          div_in_valid <= 0;
+        end else if (!div_busy && !div_in_valid) begin
+          dividend <= {gaussian_coeffs[coeff_pos], 8'h00};
+          div_in_valid <= 1'b1;
+        end else begin
+          div_in_valid <= 0;
+        end
+      end
+    endcase
+  end
 endmodule  // video_filter
 
 `default_nettype wire

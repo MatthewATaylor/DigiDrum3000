@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 
 //  Xilinx True Dual Port RAM, Read First, Single Clock
 //  This code implements a parameterizable true dual port memory (both ports can read and write).
