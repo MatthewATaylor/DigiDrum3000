@@ -16,7 +16,7 @@ test_file = os.path.basename(__file__).replace(".py","")
 
 # Module parameters
 RATIO = 4
-VOLUME_EN = 0
+VOLUME_EN = 1
 if RATIO == 16:
     FILTER_FILE = '"DAC_filter_coeffs.mem"'
     FILTER_TAPS = 1024
@@ -50,6 +50,8 @@ async def test_a(dut):
 
     fig, ax = plt.subplots()
 
+    last_out_cycle = None
+
     for i in range(CLOCK_CYCLES):
         if i % SAMPLE_PERIOD_IN == 0:
             t = i * 10e-9
@@ -64,6 +66,12 @@ async def test_a(dut):
 
 
         if dut.sample_out_valid.value == 1:
+            if last_out_cycle is None:
+                last_out_cycle = i
+            else:
+                assert i - last_out_cycle == SAMPLE_PERIOD_IN/RATIO
+                last_out_cycle = i
+
             y = dut.sample_out.value.signed_integer
 
             i_out.append(i)
@@ -92,6 +100,7 @@ def is_runner():
     sys.path.append(str(proj_path / "sim" / "model"))
     sources = [proj_path / "hdl" / "upsampler.sv"]
     sources += [proj_path / "hdl" / "dist_ram.sv"]
+    sources += [proj_path / "hdl" / "clipper.sv"]
     sources += [proj_path / "hdl" / "xilinx_single_port_ram_read_first.v"]
     build_test_args = ["-Wall"]
     parameters = {

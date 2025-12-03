@@ -379,7 +379,8 @@ module audio_reverb
 
     clipper #(
         .WIDTH_FULL(BRAM_WIDTH+1),
-        .WIDTH_CLIP(BRAM_WIDTH-1)
+        .WIDTH_CLIP(BRAM_WIDTH-1),
+        .RIGHT_SHIFT(0)
     ) clipper_apf_out (
         .din(apf_out_full),
         .dout(apf_out_clip)
@@ -387,7 +388,8 @@ module audio_reverb
 
     clipper #(
         .WIDTH_FULL(MULT_OUT_WIDTH-13),
-        .WIDTH_CLIP(BRAM_WIDTH)
+        .WIDTH_CLIP(BRAM_WIDTH),
+        .RIGHT_SHIFT(0)
     ) clipper_lbcf_buf_next (
         .din(lbcf_buf_next_full),
         .dout(lbcf_buf_next_clip)

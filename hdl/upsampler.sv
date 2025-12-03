@@ -113,15 +113,14 @@ module upsampler #(
   );
 
   logic [15:0] next_sample_out;
-  always_comb begin
-    if ($signed(accum[47:OUTPUT_SHIFT+15]) < -2'sd1) begin
-      next_sample_out = 16'h8000;
-    end else if ($signed(accum[47:OUTPUT_SHIFT+15]) > 2'sd0) begin
-      next_sample_out = 16'h7FFF;
-    end else begin
-      next_sample_out = accum[OUTPUT_SHIFT+15:OUTPUT_SHIFT];
-    end
-  end
+  clipper #(
+    .WIDTH_FULL(48),
+    .WIDTH_CLIP(16),
+    .RIGHT_SHIFT(OUTPUT_SHIFT)
+  ) output_clipper (
+    .din(accum),
+    .dout(next_sample_out)
+  );
 
   always_ff @(posedge clk) begin
     if (rst) begin

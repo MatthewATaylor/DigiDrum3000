@@ -532,14 +532,26 @@ module top_level
         .sample_out_valid(delay_out_valid)
     );
 
+    logic [15:0] distortion_out;
+    logic        distortion_out_valid;
+    audio_distortion_oversampled distortion (
+        .clk(clk),
+        .rst(rst),
+        .pot_drive(distortion_drive[0]),
+        .sample_in(delay_out),
+        .sample_in_valid(delay_out_valid),
+        .sample_out(distortion_out),
+        .sample_out_valid(distortion_out_valid)
+    );
+
     logic [15:0] crush_out;
     logic        crush_out_valid;
     audio_crush crush (
         .clk(clk),
         .rst(rst),
         .pot_crush(crush_pressure[0]),
-        .sample_in(delay_out),
-        .sample_in_valid(delay_out_valid),
+        .sample_in(distortion_out),
+        .sample_in_valid(distortion_out_valid),
         .sample_out(crush_out),
         .sample_out_valid(crush_out_valid)
     );
@@ -575,23 +587,37 @@ module top_level
     );
 
     logic [15:0] upsample_l;
-    upsampler upsampler_l (
+    upsampler #(
+        .RATIO(16),
+        .VOLUME_EN(1),
+        .FILTER_FILE("DAC_filter_coeffs.mem"),
+        .FILTER_TAPS(1024),
+        .FILTER_SCALE(21)
+    ) upsampler_l (
         .clk(clk),
         .rst(rst),
         .sample_in(reverb_out_l),
         .sample_in_valid(reverb_out_valid),
         .volume(volume[0]),
-        .sample_out(upsample_l)
+        .sample_out(upsample_l),
+        .sample_out_valid()
     );
 
     logic [15:0] upsample_r;
-    upsampler upsampler_r (
+    upsampler #(
+        .RATIO(16),
+        .VOLUME_EN(1),
+        .FILTER_FILE("DAC_filter_coeffs.mem"),
+        .FILTER_TAPS(1024),
+        .FILTER_SCALE(21)
+    ) upsampler_r (
         .clk(clk),
         .rst(rst),
         .sample_in(reverb_out_r),
         .sample_in_valid(reverb_out_valid),
         .volume(volume[0]),
-        .sample_out(upsample_r)
+        .sample_out(upsample_r),
+        .sample_out_valid()
     );
 
     dlt_sig_dac_2nd_order dlt_sig_l (
