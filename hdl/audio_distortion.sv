@@ -53,7 +53,7 @@ module audio_distortion
     clipper #(
         .WIDTH_FULL(26),
         .WIDTH_CLIP(16),
-        .RIGHT_SHIFT(9)  // Max input gain of 2**(10-9) = 2
+        .RIGHT_SHIFT(7)  // Max input gain of 2**(10-7) = 8
     ) driven_input_clipper (
         .din(sample_scaled),
         .dout(sample_clipped)
