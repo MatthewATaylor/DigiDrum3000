@@ -1,3 +1,4 @@
+
 import cocotb
 import os
 import sys
@@ -13,9 +14,21 @@ import matplotlib.pyplot as plt
 test_file = os.path.basename(__file__).replace(".py","")
 
 
-SAMPLE_PERIOD_IN = 2272/4
-F = 10000
-SIG_CYCLES = 10
+# Module parameters
+RATIO = 4
+VOLUME_EN = 0
+if RATIO == 16:
+    FILTER_FILE = '"DAC_filter_coeffs.mem"'
+    FILTER_TAPS = 1024
+    FILTER_SCALE = 21
+elif RATIO == 4:
+    FILTER_FILE = '"x4_filter_coeffs.mem"'
+    FILTER_TAPS = 512
+    FILTER_SCALE = 19
+
+SAMPLE_PERIOD_IN = 2272
+F = 1000
+SIG_CYCLES = 2
 DURATION_S = 1/F * SIG_CYCLES
 CLOCK_CYCLES = int(DURATION_S / 10e-9)
 SAMPLE_MAX = 2**15 - 1
@@ -24,6 +37,7 @@ SAMPLE_MAX = 2**15 - 1
 @cocotb.test()
 async def test_a(dut):
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
+    dut.volume.value = 700
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
@@ -76,12 +90,18 @@ def is_runner():
     #sim = os.getenv("SIM","vivado")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
-    sources = [proj_path / "hdl" / "downsampler.sv"]
+    sources = [proj_path / "hdl" / "upsampler.sv"]
     sources += [proj_path / "hdl" / "dist_ram.sv"]
     sources += [proj_path / "hdl" / "xilinx_single_port_ram_read_first.v"]
     build_test_args = ["-Wall"]
-    parameters = {}
-    hdl_toplevel = "downsampler"
+    parameters = {
+        'RATIO': RATIO,
+        'VOLUME_EN': VOLUME_EN,
+        'FILTER_FILE': FILTER_FILE,
+        'FILTER_TAPS': FILTER_TAPS,
+        'FILTER_SCALE': FILTER_SCALE
+    }
+    hdl_toplevel = "upsampler"
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(

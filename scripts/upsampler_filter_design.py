@@ -7,6 +7,7 @@ import math
 
 over_rate = 16
 sample_rate = over_rate * 44100
+output_name = 'DAC_filter_coeffs'
 
 
 def find_nearest_index(frequencies, target_freq):
@@ -112,7 +113,7 @@ filt_coeffs = scipy.signal.minimum_phase(filt_coeffs)
 print(f"samples: {len(filt_coeffs)}")
 filt_coeffs = filt_coeffs[:1024]
 
-with open("DAC_filter_coeffs.txt", "w") as f:
+with open(f"{output_name}.txt", "w") as f:
     for coeff in filt_coeffs:
         if coeff < 0:
             f.write(f"{((int(abs(coeff) * 2**21) ^ 0x3FFFF) + 1) & 0x3FFFF:05x}\n")

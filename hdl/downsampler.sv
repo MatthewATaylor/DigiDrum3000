@@ -177,7 +177,7 @@ module downsampler
         .RAM_DEPTH(TAPS),
         .RAM_PERFORMANCE("HIGH_PERFORMANCE"),
         .INIT_FILE(
-            `FPATH(downsampler_filter_coeffs.mem)
+            `FPATH(x4_filter_coeffs.mem)
         )
     ) filter_bram (
         .addra(filter_index),
