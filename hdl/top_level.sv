@@ -503,147 +503,39 @@ module top_level
         .o_debug1()
     );
 
-    logic [15:0] resample;
-    logic        resample_valid;
-    resampler resampler_i (
+    audio_processor aud_pcr (
         .clk(clk),
         .rst(rst),
-        .sample_period_in(sample_period_dram_out),
-        .sample_period_farrow_out(14'd568),
-        .sample_in(sample_raw),
-        .sample_in_valid(sample_raw_valid),
-        .sample_out(resample),
-        .sample_out_valid(resample_valid)
-    );
 
-    logic [15:0] delay_out;
-    logic        delay_out_valid;
-    audio_delay delay (
-        .clk(clk),
-        .rst(rst),
-        .sw_delay_fast(sw[0]),
-        .pot_wet(delay_wet[0]),
-        .pot_rate(delay_rate[0]),
-        .pot_feedback(delay_feedback[0]),
-        .sample_in(resample),
-        .sample_in_valid(resample_valid),
-        .sample_out(delay_out),
-        .sample_out_valid(delay_out_valid)
-    );
+        .volume_on_clk(volume[0]),
+        .delay_wet_on_clk(delay_wet[0]),
+        .delay_rate_on_clk(delay_rate[0]),
+        .delay_feedback_on_clk(delay_feedback[0]),
+        .reverb_wet_on_clk(reverb_wet[0]),
+        .reverb_size_on_clk(reverb_size[0]),
+        .reverb_feedback_on_clk(reverb_feedback[0]),
+        .filter_quality_on_clk(filter_quality[0]),
+        .filter_cutoff_on_clk(filter_cutoff[0]),
+        .distortion_drive_on_clk(distortion_drive[0]),
+        .crush_pressure_on_clk(crush_pressure[0]),
 
-    logic [15:0] distortion_out;
-    logic        distortion_out_valid;
-    audio_distortion_oversampled distortion (
-        .clk(clk),
-        .rst(rst),
-        .pot_drive(distortion_drive[0]),
-        .sample_in(delay_out),
-        .sample_in_valid(delay_out_valid),
-        .sample_out(distortion_out),
-        .sample_out_valid(distortion_out_valid)
-    );
+        .output_src_on_clk(output_src[0]),
+        .crush_src_on_clk(crush_src[0]),
+        .distortion_src_on_clk(distortion_src[0]),
+        .filter_src_on_clk(filter_src[0]),
+        .reverb_src_on_clk(reverb_src[0]),
+        .delay_src_on_clk(delay_src[0]),
 
-    logic [15:0] crush_out;
-    logic        crush_out_valid;
-    audio_crush crush (
-        .clk(clk),
-        .rst(rst),
-        .pot_crush(crush_pressure[0]),
-        .sample_in(distortion_out),
-        .sample_in_valid(distortion_out_valid),
-        .sample_out(crush_out),
-        .sample_out_valid(crush_out_valid)
-    );
+        .delay_rate_fast_on_clk(sw[0]),
 
-    logic [15:0] lpf_out;
-    logic        lpf_out_valid;
-    audio_filter lpf (
-        .clk(clk),
-        .rst(rst),
-        .pot_cutoff(filter_cutoff[0]),
-        .pot_quality(filter_quality[0]),
-        .sample_in(crush_out),
-        .sample_in_valid(crush_out_valid),
-        .sample_out(lpf_out),
-        .sample_out_valid(lpf_out_valid)
-    );
+        .sample_period_dram_out(sample_period_dram_out),
 
-    logic [15:0] reverb_out_l;
-    logic [15:0] reverb_out_r;
-    logic        reverb_out_valid;
-    audio_reverb_stereo audio_reverb_stereo_i (
-        .clk(clk),
-        .rst(rst),
-        .pot_wet(reverb_wet[0]),
-        .pot_size(reverb_size[0]),
-        .pot_feedback(reverb_feedback[0]),
-        .is_stereo(1'b1),
-        .sample_in(lpf_out),
-        .sample_in_valid(lpf_out_valid),
-        .sample_out_l(reverb_out_l),
-        .sample_out_r(reverb_out_r),
-        .sample_out_valid(reverb_out_valid)
-    );
+        .sample_from_dram(sample_raw),
+        .valid_from_dram(sample_raw_valid),
 
-    logic [15:0] upsample_l;
-    upsampler #(
-        .RATIO(16),
-        .VOLUME_EN(1),
-        .FILTER_FILE("DAC_filter_coeffs.mem"),
-        .FILTER_TAPS(1024),
-        .FILTER_SCALE(21)
-    ) upsampler_l (
-        .clk(clk),
-        .rst(rst),
-        .sample_in(reverb_out_l),
-        .sample_in_valid(reverb_out_valid),
-        .volume(volume[0]),
-        .sample_out(upsample_l),
-        .sample_out_valid()
+        .spkl(spkl),
+        .spkr(spkr)
     );
-
-    logic [15:0] upsample_r;
-    upsampler #(
-        .RATIO(16),
-        .VOLUME_EN(1),
-        .FILTER_FILE("DAC_filter_coeffs.mem"),
-        .FILTER_TAPS(1024),
-        .FILTER_SCALE(21)
-    ) upsampler_r (
-        .clk(clk),
-        .rst(rst),
-        .sample_in(reverb_out_r),
-        .sample_in_valid(reverb_out_valid),
-        .volume(volume[0]),
-        .sample_out(upsample_r),
-        .sample_out_valid()
-    );
-
-    logic audio_out_l;
-    dlt_sig_dac_2nd_order dlt_sig_l (
-        .clk(clk),
-        .rst(rst),
-        .current_sample(upsample_l),
-        .audio_out(audio_out_l)
-    );
-
-    logic audio_out_r;
-    dlt_sig_dac_2nd_order dlt_sig_r (
-        .clk(clk),
-        .rst(rst),
-        .current_sample(upsample_r),
-        .audio_out(audio_out_r)
-    );
-
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            spkl <= 0;
-            spkr <= 0;
-        end else begin
-            spkl <= audio_out_l;
-            spkr <= audio_out_r;
-        end
-    end
 
     logic [23:0] pixel_to_display_24;
     logic active_draw_to_hdmi;
