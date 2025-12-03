@@ -211,10 +211,11 @@ module video_filter (
 
   logic [11:0] sum;
   logic [2:0] coeff_pos;
+  logic [4:0] coeff_pos_squared;
   logic [10:0] exponent_mult;
 
   logic exp_in_valid;
-  logic [12:0] exp_in_value;
+  logic [14:0] exp_in_value;
   logic exp_out_valid;
   logic [7:0] exp_out_value;
 
@@ -222,7 +223,7 @@ module video_filter (
       .clk(clk),
       .rst(rst),
       .in_valid(exp_in_valid),
-      .in_value(exp_in_value),
+      .in_value(|exp_in_value[14:12] ? 12'hFFF : exp_in_value[11:0]),
       .out_valid(exp_out_valid),
       .out_value(exp_out_value)
   );
@@ -260,11 +261,12 @@ module video_filter (
   end
 
   always_ff @(posedge clk) begin
-    exponent_mult <= 11'h080 + (cutoff >> 1);
+    exponent_mult <= {1'b1, cutoff[7:0]} >> (3 - cutoff[9:8]);
     unique case (state)
       USING_COEFFS: begin
         if (h_count_out == 1280 && v_count_out == 720) begin
           coeff_pos <= 3'b001;
+          coeff_pos_squared <= 5'd4;
           gaussian_coeffs[0] <= 8'hFF;
           sum <= 12'h100;
           exp_in_valid <= 1'b1;
@@ -277,12 +279,13 @@ module video_filter (
         if (exp_out_valid) begin
           sum <= sum + (exp_out_value << 1);
           gaussian_coeffs[coeff_pos] <= exp_out_value;
+          coeff_pos_squared <= coeff_pos_squared + {coeff_pos, 1'b0} + 3;
           if (coeff_pos[2]) begin
             coeff_pos <= 3'b000;
           end else begin
             coeff_pos <= coeff_pos + 1;
             exp_in_valid <= 1'b1;
-            exp_in_value <= ({4'h0, exponent_mult} * (coeff_pos + 1));
+            exp_in_value <= ({5'h0, exponent_mult} * coeff_pos_squared);
           end
         end else begin
           exp_in_valid <= 0;

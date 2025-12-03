@@ -5,7 +5,7 @@ module exponent (  // e to the power of negative input
     input wire clk,
     input wire rst,
     input wire in_valid,
-    input wire [12:0] in_value,  // unsigned fixed point: ____.________
+    input wire [11:0] in_value,  // unsigned fixed point: ____.________
     output logic out_valid,
     output logic [7:0] out_value  // unsigned fixed point: 0.________
 );
@@ -19,8 +19,8 @@ module exponent (  // e to the power of negative input
   ) my_div (
       .clk(clk),
       .rst(rst),
-      .dividend({in_value, 3'b0}),
-      .divisor(16'h058B),  // roughly ln(2)*2^12
+      .dividend({in_value, 4'b0}),
+      .divisor(16'h0B17),  // roughly ln(2)*2^12
       .data_in_valid(in_valid),
       .quotient(quotient),
       .remainder(remainder),
@@ -28,14 +28,14 @@ module exponent (  // e to the power of negative input
       .busy()
   );
 
-  logic [ 5:0] shft;
+  logic [ 4:0] shft;
   logic [11:0] cordic_input;  // signed fixed point ___._________
   logic        cordic_in_valid;
 
   always_ff @(posedge clk) begin
     if (div_out_valid) begin
-      shft <= quotient[5:0];
-      cordic_input <= {3'h0, remainder[10:2]};
+      shft <= quotient[4:0];
+      cordic_input <= {3'h0, remainder[11:3]};
       cordic_in_valid <= 1'b1;
     end else begin
       cordic_input <= 16'hXXXX;
@@ -65,7 +65,7 @@ module exponent (  // e to the power of negative input
   always_ff @(posedge clk) begin
     if (cordic_out_valid) begin
       out_valid <= 1'b1;
-      out_value <= |shft[5:3] ? 8'h0 : (cosh - sinh) >> (2 + shft[2:0]);
+      out_value <= |shft[4:3] ? 8'h0 : (cosh - sinh) >> (2 + shft[2:0]);
     end else begin
       out_valid <= 0;
     end
