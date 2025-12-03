@@ -1,6 +1,5 @@
 `timescale 1ns / 1ps
 `default_nettype none
-
 module top_level
     (
         input  wire         clk_100mhz,
@@ -620,19 +619,31 @@ module top_level
         .sample_out_valid()
     );
 
+    logic audio_out_l;
     dlt_sig_dac_2nd_order dlt_sig_l (
         .clk(clk),
         .rst(rst),
         .current_sample(upsample_l),
-        .audio_out(spkl)
+        .audio_out(audio_out_l)
     );
 
+    logic audio_out_r;
     dlt_sig_dac_2nd_order dlt_sig_r (
         .clk(clk),
         .rst(rst),
         .current_sample(upsample_r),
-        .audio_out(spkr)
+        .audio_out(audio_out_r)
     );
+
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            spkl <= 0;
+            spkr <= 0;
+        end else begin
+            spkl <= audio_out_l;
+            spkr <= audio_out_r;
+        end
+    end
 
     logic [23:0] pixel_to_display_24;
     logic active_draw_to_hdmi;
