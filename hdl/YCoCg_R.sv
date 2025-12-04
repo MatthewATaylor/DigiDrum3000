@@ -2,7 +2,7 @@
 `default_nettype none
 
 // lossless version of following:
-// Y =   r/2 + g/4 + b/2
+// Y =   r/4 + g/2 + b/4
 // Co =  r         - b
 // Cg = -r/2 + g   - b/2
 module RGB_to_YCoCg_R (
@@ -40,8 +40,11 @@ module RGB_to_YCoCg_R (
       Cg <= next_Cg;
     end
   end
-endmodule
+endmodule  // RGB_to_YCoCg_R
 
+// r = Y + Co/2 - Cg/2
+// g = Y        + Cg/2
+// b = Y - Co/2 - Cg/2
 module YCoCg_R_to_RGB (
     input wire clk,
     input wire rst,
@@ -53,13 +56,13 @@ module YCoCg_R_to_RGB (
     output logic [7:0] g,
     output logic [7:0] b
 );
-  logic signed [8:0] temp;
+  logic signed [9:0] temp;
   logic signed [9:0] r_unbounded;
   logic signed [9:0] g_unbounded;
   logic signed [9:0] b_unbounded;
 
   always_comb begin
-    temp = Y + $signed(Cg >>> 1);
+    temp = $signed({2'b00, Y}) - $signed(Cg >>> 1);
     g_unbounded = Cg + temp;
     b_unbounded = temp - $signed(Co >>> 1);
     r_unbounded = b_unbounded + Co;
@@ -77,6 +80,6 @@ module YCoCg_R_to_RGB (
       b <= b_unbounded[9] ? 0 : b_unbounded[8] ? 8'hFF : b_unbounded[7:0];
     end
   end
-endmodule
+endmodule  // YCoCg_R_to_RGB
 
 `default_nettype wire
