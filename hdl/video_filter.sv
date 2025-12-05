@@ -13,13 +13,13 @@ module video_filter (
     input wire [9:0] cutoff,
     input wire [9:0] quality,
 
-    output logic [10:0]      h_count_out,
-    output logic [ 9:0]      v_count_out,
-    output logic             active_draw_out,
-    output logic [23:0]      pixel_out,
-    output logic [ 4:0][7:0] gaussian_coeffs_view  // for vicoco access
+    //output logic [ 4:0][7:0] gaussian_coeffs_view,  // for vicoco access
+    output logic [10:0] h_count_out,
+    output logic [ 9:0] v_count_out,
+    output logic        active_draw_out,
+    output logic [23:0] pixel_out
 );
-  assign gaussian_coeffs_view = gaussian_coeffs;
+  //assign gaussian_coeffs_view = gaussian_coeffs;
 
   logic [1:0] dither;
   dither_gen #(

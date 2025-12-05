@@ -51,7 +51,7 @@ module YCoCg_422_encoder (
 
 endmodule  // YCoCg_422_encoder
 
-// 6 cycle delay
+// 4 cycle delay
 module YCoCg_422_decoder (
     input wire clk,
     input wire rst,
