@@ -40,7 +40,7 @@ module audio_filter_x4
   logic [29:0] g_pow;
   logic [40:0] S;
   logic [37:0] S_mult;
-  logic [18:0] kS;
+  logic [25:0] kS;
   logic [ 9:0] G;
   logic [26:0] v_lsh12;
   logic [28:0] u_lsh12;
@@ -52,7 +52,7 @@ module audio_filter_x4
   assign next_u = $signed(u_lsh12) >>> 12;
 
   logic [19:0] u_sub;
-  assign u_sub = $signed(x) - $signed(kS);
+  assign u_sub = $signed(x) - ($signed(kS) >>> 8);
   logic [15:0] u_clip;
   clipper #(
     .WIDTH_FULL(20),
@@ -184,8 +184,8 @@ module audio_filter_x4
 
         KS_MULT: begin
           // From S_MAC
-          mult_a <= pot_quality;
-          mult_b <= $signed(S[40:32]);
+          mult_a <= $signed(S[40:25]);
+          mult_b <= pot_quality;
           state <= TANH_DIV_INIT;
         end
 

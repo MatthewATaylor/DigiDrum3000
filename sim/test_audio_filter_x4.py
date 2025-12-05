@@ -45,7 +45,7 @@ def tanh_approx(x):
 
 
 def filter_step_float(x, s, pot_cutoff, pot_quality):
-    k = pot_quality/256
+    k = pot_quality/256/2
     g = pot_cutoff/1024/4
     S = g**3 * s[0] + g**2 * s[1] + g * s[2] + s[3]
     G = g**4
@@ -79,13 +79,13 @@ def filter_step(x, s, pot_cutoff, pot_quality):
         elif i == 3:
             S += (s[0]>>12) * g_lsh12**3
 
-    S_shift = np.int64(S>>32)  # 9 bits
+    S_shift = np.int64(S>>25)  # 16 bits
 
-    if S_shift > 2**8-1 or S_shift < -2**8:
+    if S_shift > 2**15-1 or S_shift < -2**15:
         raise Exception('OVERFLOW: S')
 
     # pot_quality / 256 = k
-    kS = k * S_shift  # 19 bits
+    kS = (k * S_shift) >> 8
     u = int(x) - kS
     if u > 2**15-1:
         u = 2**15-1
@@ -120,7 +120,7 @@ async def test_variable_f(dut):
     CYCLES = 2
 
     CUTOFF = 500
-    Q = 1023
+    Q = 600
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.rst.value = 1

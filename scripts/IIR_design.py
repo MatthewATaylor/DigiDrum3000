@@ -4,10 +4,11 @@ import math
 import scipy.io
 import samplerate
 import matplotlib.pyplot as plt
+import wave
 
 SOFT_CLIP = 1
 CHUNK = 1024
-SAMPLE_RATE = int(4/(2272*10e-9))
+SAMPLE_RATE = int(44100*4)#int(4/(2272*10e-9))
 FREQ = 440
 SAMPLES_PER_CYCLE = SAMPLE_RATE / FREQ
 DURATION = 5#1/FREQ * 3
@@ -15,8 +16,16 @@ HALF_CYCLE = int(SAMPLES_PER_CYCLE/2)
 PI = math.pi
 T = 1 / SAMPLE_RATE
 
-sq = [-2**15] * HALF_CYCLE + [2**15-1] * HALF_CYCLE
-sq *= int(DURATION / (1 / FREQ))
+# sq = [-2**15] * HALF_CYCLE + [2**15-1] * HALF_CYCLE
+# sq *= int(DURATION / (1 / FREQ))
+# x = np.array(sq, dtype=np.int16)
+
+with wave.open('./media/resampled/sd.wav') as wav_file:
+    nframes = wav_file.getnframes()
+    frames = wav_file.readframes(nframes)
+    x = np.frombuffer(frames, dtype='<i2')
+x = np.concatenate((x, x, x, x))
+x = samplerate.resample(x, 4)
 
 pa = pyaudio.PyAudio()
 stream = pa.open(
@@ -26,7 +35,6 @@ stream = pa.open(
     output=True
 )
 
-x = np.array(sq, dtype=np.int16)
 
 # s = 0
 # for i in range(0, len(x)):
@@ -275,17 +283,16 @@ def ladder_fixed_x4_opt(x, pot_cutoff, pot_quality):
 # Below: x4 functions modified for simulation
 
 def filter_step_float(x, s, pot_cutoff, pot_quality):
-    k = pot_quality/256
+    k = pot_quality/256/2
     g = pot_cutoff/1024/4
     S = g**3 * s[0] + g**2 * s[1] + g * s[2] + s[3]
     G = g**4
     u = (x - k*S) / (1 + k*G)
-    if not SOFT_CLIP:
-        if u > 2**15-1:
-            u = 2**15-1
-        elif u < -2**15:
-            u = -2**15
-    else:
+    if u > 2**15-1:
+        u = 2**15-1
+    elif u < -2**15:
+        u = -2**15
+    if SOFT_CLIP:
         u = 2**15*math.tanh(3*u/2**15)
     G = g / (1 + g)
     for j in range(4):
@@ -295,7 +302,7 @@ def filter_step_float(x, s, pot_cutoff, pot_quality):
     return u, s
 
 
-def filter_step(x, s, pot_cutoff, pot_quality):
+def filter_step_overoptimized(x, s, pot_cutoff, pot_quality):
     k = np.int64(pot_quality)
     g_lsh12 = np.int64(pot_cutoff)
 
@@ -317,12 +324,11 @@ def filter_step(x, s, pot_cutoff, pot_quality):
     # pot_quality / 256 = k
     kS = k * S_shift  # 19 bits
     u = int(x) - kS
-    if not SOFT_CLIP:
-        if u > 2**15-1:
-            u = 2**15-1
-        elif u < -2**15:
-            u = -2**15
-    else:
+    if u > 2**15-1:
+        u = 2**15-1
+    elif u < -2**15:
+        u = -2**15
+    if SOFT_CLIP:
         u = int(2**15 * math.tanh(3*u/2**15))
     u = np.int64(u)
     G_lsh12 = np.int64()
@@ -344,10 +350,60 @@ def filter_step(x, s, pot_cutoff, pot_quality):
     return u, s
 
 
+def filter_step(x, s, pot_cutoff, pot_quality):
+    k = np.int64(pot_quality)
+    g_lsh12 = np.int64(pot_cutoff)
+
+    for i in range(4):
+        if i == 0:
+            S = np.int64(s[3]<<24)
+        elif i == 1:
+            S += (s[2]<<12) * g_lsh12
+        elif i == 2:
+            S += s[1] * g_lsh12**2
+        elif i == 3:
+            S += (s[0]>>12) * g_lsh12**3
+
+    S_shift = np.int64(S>>25)  # 16 bits
+
+    if S_shift > 2**15-1 or S_shift < -2**15:
+        raise Exception('OVERFLOW: S')
+
+    # pot_quality / 256 = k
+    kS = (k * S_shift) >> 8
+    u = int(x) - kS
+    if u > 2**15-1:
+        u = 2**15-1
+    elif u < -2**15:
+        u = -2**15
+    if SOFT_CLIP:
+        u = int(2**15 * math.tanh(3*u/2**15))
+    u = np.int64(u)
+    G_lsh12 = np.int64()
+    G_lsh12 = (g_lsh12<<12) // (np.int64(1<<12) + g_lsh12)
+
+    for j in range(4):
+        v_lsh12 = G_lsh12 * (u - s[j])
+        u_lsh12 = v_lsh12 + (int(s[j])<<12)
+
+        s[j] = (u_lsh12 + v_lsh12) >> 12
+        if s[j] > 2**15-1 or s[j] < -2**15:
+            raise Exception('OVERFLOW: s[j]')
+        s[j] = np.int64(s[j])
+
+        u = u_lsh12 >> 12
+        if u > 2**15-1 or u < -2**15:
+            raise Exception('OVERFLOW: u')
+
+    return u, s
+
+
+
+
 PLOT = False
-POT_CUTOFF = 500
-POT_QUALITY = 1023
-x = np.array(x, dtype=np.int16)
+POT_CUTOFF = 400
+POT_QUALITY = 600
+x = np.array(x*1, dtype=np.int16)
 n = np.linspace(0, len(x)-1, len(x))
 
 s = [0,0,0,0]
@@ -357,7 +413,7 @@ y_float = np.zeros(len(x), dtype=np.int16)
 
 
 for i, sample in enumerate(x):
-    pot_cutoff = int(1024 * i/len(x))
+    pot_cutoff = POT_CUTOFF #int(1024 * i/len(x))
     y_float[i], s_float = filter_step_float(sample, s_float, pot_cutoff, POT_QUALITY)
     y_fixed[i], s = filter_step(sample, s, pot_cutoff, POT_QUALITY)
 
@@ -372,8 +428,8 @@ if PLOT:
     fig.tight_layout()
     plt.show()
 else:
-    y = samplerate.resample(y_float, 1/4)
-    y = np.array(y*0.1, dtype=np.int16)  # Save our ears
+    y = samplerate.resample(y_fixed, 1/4)
+    y = np.array(y*0.5, dtype=np.int16)
     stream.write(y.tobytes())
 stream.close()
 pa.terminate()
