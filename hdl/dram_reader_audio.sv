@@ -11,17 +11,20 @@ module dram_reader_audio
         input wire rst,
         input wire rst_dram_ctrl,
 
-        input  wire  [23:0]  addr_offsets [INSTRUMENT_COUNT:0],
+        input  wire   [23:0] addr_offsets         [INSTRUMENT_COUNT:0],
         input  wire          addr_offsets_valid,
-        output logic [15:0]  instrument_samples [INSTRUMENT_COUNT-1:0],
-        output logic [15:0]  sample,
+
+        input  wire   [ 6:0] velocity           [INSTRUMENT_COUNT-1:0],
+
+        output logic  [15:0] instrument_samples [INSTRUMENT_COUNT-1:0],
+        output logic  [15:0] sample,
         output logic         sample_valid,
 
         input  wire          fifo_sender_axis_tvalid,
         output logic         fifo_sender_axis_tready,
         input  wire  [167:0] fifo_sender_axis_tdata,
 
-        output logic [13:0]  sample_period
+        output logic  [13:0] sample_period
     );
 
     logic                        unstacker_chunk_axis_tvalid;
@@ -93,6 +96,7 @@ module dram_reader_audio
         .clk(clk),
         .rst(rst),
         .sample_period(sample_period),
+        .velocity(velocity),
         .din(sample_axis_tdata),
         .din_valid(sample_axis_tvalid),
         .din_ready(sample_axis_tready),

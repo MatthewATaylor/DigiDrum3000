@@ -22,11 +22,12 @@ module upsampler #(
     output logic [15:0] sample_out,     // upsampled by RATIO, held output
     output logic        sample_out_valid// unused by DAC
 );
-  localparam BUFFER_DEPTH  = FILTER_TAPS/RATIO;
-  localparam BUFFER_ADDR_W = $clog2(BUFFER_DEPTH);
-  localparam BUFFER_DELAY  = 4;
-  localparam OUTPUT_PERIOD = 2272/RATIO;
-  localparam OUTPUT_SHIFT  = FILTER_SCALE - $clog2(RATIO) + VOLUME_EN*2;
+  localparam BUFFER_DEPTH   = FILTER_TAPS/RATIO;
+  localparam BUFFER_ADDR_W  = $clog2(BUFFER_DEPTH);
+  localparam BUFFER_DELAY   = 4;
+  localparam OUTPUT_PERIOD  = 2272/RATIO;
+  localparam OUTPUT_SHIFT   = FILTER_SCALE - $clog2(RATIO) + VOLUME_EN*2;
+  localparam SAMPLE_TIMER_W = $clog2(OUTPUT_PERIOD);
 
   logic              [15:0] sample_buffer_out;
   logic              [15:0] sample_buffer_out_reg;
@@ -45,11 +46,11 @@ module upsampler #(
       .dout(sample_buffer_out)
   );
 
-  logic         [BUFFER_ADDR_W-1:0] buffer_start;
-  logic         [BUFFER_ADDR_W-1:0] sample_index;
-  logic [$clog2(        RATIO)-1:0] upsample_index;
-  logic [$clog2(  FILTER_TAPS)-1:0] filter_index;
-  logic [$clog2(OUTPUT_PERIOD)-1:0] sample_timer;
+  logic       [BUFFER_ADDR_W-1:0] buffer_start;
+  logic       [BUFFER_ADDR_W-1:0] sample_index;
+  logic [$clog2(      RATIO)-1:0] upsample_index;
+  logic [$clog2(FILTER_TAPS)-1:0] filter_index;
+  logic      [SAMPLE_TIMER_W-1:0] sample_timer;
 
   assign sample_index = sample_timer[BUFFER_ADDR_W-1:0];
   assign filter_index = {sample_index, upsample_index};
@@ -85,8 +86,12 @@ module upsampler #(
   always_comb begin
     if (sample_timer <= BUFFER_DEPTH+BUFFER_DELAY-1) begin
       accumulator_next = accum + filter_mult;
-    end else if (VOLUME_EN == 1) begin
-      accumulator_next = $signed(accum[34:10]) * $signed({1'b0, volume_mult});
+    end else begin
+      if (VOLUME_EN == 1) begin
+        accumulator_next = $signed(accum[34:10]) * $signed({1'b0, volume_mult});
+      end else begin
+        accumulator_next = accum;
+      end
     end
   end
 
@@ -137,10 +142,10 @@ module upsampler #(
   always_ff @(posedge clk) begin
     if (rst || sample_in_valid || next_upsample) begin
       accum <= 0;
-      sample_timer <= 0;
+      sample_timer <= SAMPLE_TIMER_W'('b0);
     end else begin
       accum <= sample_timer < BUFFER_DELAY ? accum : accumulator_next;
-      sample_timer <= sample_timer + 1;
+      sample_timer <= sample_timer + SAMPLE_TIMER_W'('b1);
     end
   end
 

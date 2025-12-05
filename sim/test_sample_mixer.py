@@ -13,7 +13,8 @@ test_file = os.path.basename(__file__).replace(".py","")
 
 
 INSTRUMENT_COUNT = 3
-SAMPLE_PERIOD = 20
+SAMPLE_PERIOD = 10
+VELOCITIES = [50, 100, 127]
 
 
 async def run_unstacker(dut, samples, instr_index):
@@ -36,6 +37,7 @@ async def test_a(dut):
     dut.sample_period.value = SAMPLE_PERIOD
     dut.din.value = [0] * INSTRUMENT_COUNT
     dut.din_valid.value = [0] * INSTRUMENT_COUNT
+    dut.velocity.value = VELOCITIES[::-1]
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.rst.value = 1
@@ -56,7 +58,12 @@ async def test_a(dut):
         [6e3, 2e4, -2e3, -2e4, 0],
         [7e3, 2e4, -3e3, -2e4, 0]
     ]
-    expected_douts = [sum(x) for x in zip(*sample_sets)]
+    expected_douts = [0,0,0,0,0]
+    for instr_index in range(len(sample_sets)):
+        for sample_index in range(len(sample_sets[instr_index])):
+            sample = sample_sets[instr_index][sample_index]
+            sample_scaled = (sample * VELOCITIES[instr_index]) // 128
+            expected_douts[sample_index] += sample_scaled
     for i, dout in enumerate(expected_douts):
         if dout > 2**15 - 1:
             expected_douts[i] = 2**15 - 1
@@ -70,6 +77,8 @@ async def test_a(dut):
     await ClockCycles(dut.clk, 1)
     for test_index in range(len(sample_sets[0])):
         for i in range(SAMPLE_PERIOD):
+            if i != 0:
+                assert dut.dout_valid.value == 0
             await ClockCycles(dut.clk, 1)
 
         print(f'Reading result from sample set number: {test_index}')
@@ -87,6 +96,7 @@ def is_runner():
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
     sources = [proj_path / "hdl" / "sample_mixer.sv"]
+    sources += [proj_path / "hdl" / "clipper.sv"]
     build_test_args = ["-Wall"]
     parameters = {
         'INSTRUMENT_COUNT': INSTRUMENT_COUNT

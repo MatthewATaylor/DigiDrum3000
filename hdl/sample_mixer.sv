@@ -9,6 +9,7 @@ module sample_mixer
         input wire          clk,
         input wire          rst,
         input wire   [13:0] sample_period,
+        input wire   [ 6:0] velocity  [INSTRUMENT_COUNT-1:0],
         input wire   [15:0] din       [INSTRUMENT_COUNT-1:0],
         input wire          din_valid [INSTRUMENT_COUNT-1:0],
         output logic        din_ready [INSTRUMENT_COUNT-1:0],
@@ -19,21 +20,50 @@ module sample_mixer
     logic prev_rst;  // Assert din_ready when ~rst & prev_rst
     logic [13:0] sample_counter;
 
+    // Index a particular instrument each clock cycle.
+    // Look ahead one cycle for the multiplier.
+    logic [$clog2(INSTRUMENT_COUNT)-1:0] instr_counter_next;
     logic [$clog2(INSTRUMENT_COUNT)-1:0] instr_counter;
     always_ff @ (posedge clk) begin
         if (rst) begin
-            instr_counter <= 0;
+            instr_counter_next <= 0;
+            instr_counter <= INSTRUMENT_COUNT-1;
         end else begin
-            if (instr_counter == INSTRUMENT_COUNT-1) begin
-                instr_counter <= 0;
+            if (instr_counter_next == INSTRUMENT_COUNT-1) begin
+                instr_counter_next <= 0;
             end else begin
-                instr_counter <= instr_counter + 1;
+                instr_counter_next <= instr_counter_next + 1;
             end
+            instr_counter <= instr_counter_next;
         end
     end
 
-    logic [15:0] next_sum;
-    assign next_sum = dout + din[instr_counter];
+    logic [22:0] din_vel_mult;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            din_vel_mult <= 0;
+        end else begin
+            din_vel_mult <=
+                $signed(din[instr_counter_next]) *
+                $signed({1'b0, velocity[instr_counter_next]});
+        end
+    end
+
+    logic [15:0] din_vel_mult_shift;
+    assign din_vel_mult_shift = $signed(din_vel_mult) >>> 7;
+
+    logic [16:0] next_sum;
+    assign next_sum = $signed(dout) + $signed(din_vel_mult_shift);
+
+    logic [15:0] next_sum_clip;
+    clipper #(
+        .WIDTH_FULL(17),
+        .WIDTH_CLIP(16),
+        .RIGHT_SHIFT(0)
+    ) mix_clipper (
+        .din(next_sum),
+        .dout(next_sum_clip)
+    );
 
     logic handshake;
     assign handshake = din_valid[instr_counter] & din_ready[instr_counter];
@@ -70,21 +100,13 @@ module sample_mixer
 
             if (sample_counter == 0) begin
                 if (handshake) begin
-                    dout <= din[instr_counter];
+                    dout <= din_vel_mult_shift;
                 end else begin
                     dout <= 0;
                 end
             end else begin
                 if (handshake) begin
-                    if (~next_sum[15] & din[instr_counter][15] & dout[15]) begin
-                        // Underflow (negative + negative -> positive)
-                        dout <= 16'h8000;
-                    end else if (next_sum[15] & ~din[instr_counter][15] & ~dout[15]) begin
-                        // Overflow (positive + positive -> negative)
-                        dout <= 16'h7fff;
-                    end else begin
-                        dout <= next_sum;
-                    end
+                    dout <= next_sum_clip;
                 end
             end
 

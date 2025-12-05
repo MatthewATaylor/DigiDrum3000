@@ -60,6 +60,8 @@ module top_level
     );
 
     localparam INSTRUMENT_COUNT = 3;
+
+    // First three elements are also mapped to btn[3:1]
     localparam [6:0] MIDI_KEYS [0:INSTRUMENT_COUNT-1] = {
         7'd36,  // bd
         7'd38,  // sd
@@ -120,10 +122,10 @@ module top_level
     logic sample_load_complete_pixel;
     assign sample_load_complete_pixel = sample_load_complete_buf[0];
 
-    logic [2:0] instr_debug_btn_buf [1:0];
-    logic [2:0] instr_debug_btn;
+    logic [INSTRUMENT_COUNT-1:0] instr_debug_btn_buf [1:0];
+    logic [INSTRUMENT_COUNT-1:0] instr_debug_btn;
     assign instr_debug_btn = instr_debug_btn_buf[0];
-    logic [2:0] instr_trig_debug;
+    logic [INSTRUMENT_COUNT-1:0] instr_trig_debug;
 
     assign led[1] = sample_load_complete;
     assign led[15:4] = 0;
@@ -208,6 +210,12 @@ module top_level
             );
         end
     endgenerate
+
+    always_comb begin
+        for (int i=3; i<INSTRUMENT_COUNT; i++) begin
+            instr_trig_debug[i] = 1'b0;
+        end
+    end
 
     cw_dram cw_dram_i (
         .clk_controller(clk_dram_ctrl),
@@ -322,6 +330,8 @@ module top_level
     logic         read_addr_axis_valid;
     logic         read_addr_axis_ready;
 
+    logic [ 6:0]  velocity_map [INSTRUMENT_COUNT-1:0];
+
     dram_read_requester #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT),
         .MIDI_KEYS(MIDI_KEYS)
@@ -340,6 +350,8 @@ module top_level
         .fifo_receiver_axis_tready(read_addr_axis_ready),
         .fifo_receiver_axis_tdata(read_addr_axis_data),
         .fifo_receiver_axis_tlast(read_addr_axis_tlast),
+
+        .velocity(velocity_map),
 
         .instr_trig_debug(instr_trig_debug)
     );
@@ -364,9 +376,11 @@ module top_level
 
         .addr_offsets(addr_offsets),
         .addr_offsets_valid(addr_offsets_valid),
+        .velocity(velocity_map),
+
+        .instrument_samples(current_instrument_samples),
         .sample(sample_raw),
         .sample_valid(sample_raw_valid),
-        .instrument_samples(current_instrument_samples),
 
         .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
         .fifo_sender_axis_tready(read_data_audio_axis_ready),
