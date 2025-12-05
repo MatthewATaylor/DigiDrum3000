@@ -37,13 +37,14 @@ module video_processor #(
     input wire delay_rate_fast_on_clk,
 
     // clk_pixel
-    //input wire [15:0] dram_read_data,
-    //output logic dram_read_active_draw,
-    //output logic [10:0] dram_read_h_count,
-    //output logic [9:0] dram_read_v_count,
-    //output logic draw_write_valid,
-    //output logic [15:0] dram_write_data,
-    //output logic dram_write_last,
+    input  wire  [15:0] dram_read_data,
+    output logic        dram_read_active_draw,
+    output logic [10:0] dram_read_h_count,
+    output logic [ 9:0] dram_read_v_count,
+
+    output logic [15:0] dram_write_data,
+    output logic        dram_write_valid,
+    output logic        dram_write_last,
 
     output logic [23:0] pixel_to_hdmi,
     output logic        active_draw_to_hdmi,
@@ -388,11 +389,33 @@ module video_processor #(
       .pixel_out(pixel_from_filter)
   );
 
-  //temp:
-  assign h_count_from_reverb = h_count_to_reverb;
-  assign v_count_from_reverb = v_count_to_reverb;
-  assign active_draw_from_reverb = active_draw_to_reverb;
-  assign pixel_from_reverb = pixel_to_reverb;
+  video_reverb my_reverb (
+      .clk(clk_pixel),
+      .rst(rst),
+
+      .h_count_in(h_count_to_reverb),
+      .v_count_in(v_count_to_reverb),
+      .active_draw_in(active_draw_to_reverb),
+      .pixel_in(pixel_to_reverb),
+
+      .wet(reverb_wet_on_pixel_clk),
+      .feedback(reverb_feedback_on_pixel_clk),
+      .size(reverb_size_on_pixel_clk),
+
+      .h_count_out(h_count_from_reverb),
+      .v_count_out(v_count_from_reverb),
+      .active_draw_out(active_draw_from_reverb),
+      .pixel_out(pixel_from_reverb),
+
+      .dram_read_data(dram_read_data),
+      .dram_read_h_count(dram_read_h_count),
+      .dram_read_v_count(dram_read_v_count),
+      .dram_read_active_draw(dram_read_active_draw),
+
+      .dram_write_data (dram_write_data),
+      .dram_write_valid(dram_write_valid),
+      .dram_write_tlast(dram_write_last)
+  );
 
   base_combiner my_combiner (
       .clk(clk_pixel),

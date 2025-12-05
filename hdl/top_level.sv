@@ -234,64 +234,29 @@ module top_level
         .sysclk(clk)
     );
 
-    logic [10:0] h_count_hdmi;
-    logic [9:0]  v_count_hdmi;
-    logic        v_sync_hdmi;
-    logic        h_sync_hdmi;
-    logic        active_draw_hdmi;
-    logic        new_frame_hdmi;
-    logic [5:0]  frame_count_hdmi;
+    logic [10:0] dram_read_h_count;
+    logic [9:0]  dram_read_v_count;
+    logic        dram_read_active_draw;
+    logic [15:0] dram_read_video_data;
 
-    logic pixel_last;
-    assign pixel_last = (h_count_hdmi == 1279) && (v_count_hdmi == 719);
+    logic        dram_write_video_valid;
+    logic        dram_write_video_last;
+    logic [15:0] dram_write_video_data;
 
     // rst_video causes video_sig_gen to be disabled during sample loading.
     // Do this in order to start up video in a well defined state.
     // Put rst_video through a register to delay one cycle.
     //  (aligns with reset signal for dram_writer stacker)
-    logic rst_video;
-    assign rst_video = ~sample_load_complete_pixel | ~addr_offsets_valid_pixel;
-    logic rst_video_buf;
-    always_ff @ (posedge clk_pixel) begin
-        if (rst_pixel) begin
-            rst_video_buf <= 1;
-        end else begin
-            rst_video_buf <= rst_video;
-        end
-    end
-
-    video_sig_gen video_sig_gen_i (
-        .pixel_clk(clk_pixel),
-        .rst(rst_pixel | rst_video_buf),
-
-        .h_count(h_count_hdmi),
-        .v_count(v_count_hdmi),
-        .v_sync(v_sync_hdmi),
-        .h_sync(h_sync_hdmi),
-        .active_draw(active_draw_hdmi),
-        .new_frame(new_frame_hdmi),
-        .frame_count(frame_count_hdmi)
-    );
-
-    logic [7:0]  pixel_to_write_r;
-    logic [7:0]  pixel_to_write_g;
-    logic [7:0]  pixel_to_write_b;
-
-    logic [15:0] pixel_to_write;
-    assign pixel_to_write = {
-        pixel_to_write_r[7:3],
-        pixel_to_write_g[7:2],
-        pixel_to_write_b[7:3]
-    };
-
-    test_pattern_generator video_test (
-        .pattern_select(sw[1:0]),
-        .h_count(h_count_hdmi),
-        .v_count(v_count_hdmi),
-        .pixel_red(pixel_to_write_r),
-        .pixel_green(pixel_to_write_g),
-        .pixel_blue(pixel_to_write_b)
-    );
+    //logic rst_video;
+    //assign rst_video = ~sample_load_complete_pixel | ~addr_offsets_valid_pixel;
+    //logic rst_video_buf;
+    //always_ff @ (posedge clk_pixel) begin
+    //    if (rst_pixel) begin
+    //        rst_video_buf <= 1;
+    //    end else begin
+    //        rst_video_buf <= rst_video;
+    //    end
+    //end
 
     logic [127:0] write_axis_data;
     logic         write_axis_tlast;
@@ -315,9 +280,9 @@ module top_level
         .addr_offsets_valid(addr_offsets_valid),
         .addr_offsets_valid_pixel(addr_offsets_valid_pixel),
     
-        .pixel_valid(active_draw_hdmi),
-        .pixel_data(pixel_to_write),
-        .pixel_last(pixel_last),
+        .pixel_valid(dram_write_video_valid),
+        .pixel_data(dram_write_video_data),
+        .pixel_last(dram_write_video_last),
 
         .fifo_receiver_axis_tvalid(write_axis_valid),
         .fifo_receiver_axis_tready(write_axis_ready),
@@ -395,19 +360,17 @@ module top_level
     logic         read_data_video_axis_tlast;
     logic         read_data_video_axis_af;
 
-    logic [15:0]  pixel_to_display;
-
     dram_reader_video drd_video (
         .clk_pixel(clk_pixel),
         .clk_dram_ctrl(clk_dram_ctrl),
         .rst_pixel(rst_pixel),
         .rst_dram_ctrl(rst_dram_ctrl),
 
-        .h_count_hdmi(h_count_hdmi),
-        .v_count_hdmi(v_count_hdmi),
-        .active_draw_hdmi(active_draw_hdmi),
+        .h_count_hdmi(dram_read_h_count),
+        .v_count_hdmi(dram_read_v_count),
+        .active_draw_hdmi(dram_read_active_draw),
 
-        .pixel(pixel_to_display),
+        .pixel(dram_read_video_data),
 
         .fifo_sender_axis_tvalid(read_data_video_axis_valid),
         .fifo_sender_axis_tready(read_data_video_axis_ready),
@@ -551,7 +514,7 @@ module top_level
         .spkr(spkr)
     );
 
-    logic [23:0] pixel_to_display_24;
+    logic [23:0] pixel_to_display;
     logic active_draw_to_hdmi;
     logic v_sync_to_hdmi;
     logic h_sync_to_hdmi;
@@ -588,7 +551,16 @@ module top_level
         .reverb_src_on_clk(reverb_src[0]),
         .delay_src_on_clk(delay_src[0]),
 
-        .pixel_to_hdmi(pixel_to_display_24),
+        .dram_read_data(dram_read_video_data),
+        .dram_read_active_draw(dram_read_active_draw),
+        .dram_read_h_count(dram_read_h_count),
+        .dram_read_v_count(dram_read_v_count),
+
+        .dram_write_data(dram_write_video_data),
+        .dram_write_valid(dram_write_video_valid),
+        .dram_write_last(dram_write_video_last),
+
+        .pixel_to_hdmi(pixel_to_display),
         .active_draw_to_hdmi(active_draw_to_hdmi),
         .v_sync_to_hdmi(v_sync_to_hdmi),
         .h_sync_to_hdmi(h_sync_to_hdmi)
@@ -600,7 +572,7 @@ module top_level
     tmds_encoder tmds_red (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data(pixel_to_display_24[23:16]),
+        .video_data(pixel_to_display[23:16]),
         .control(2'b0),
         .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[2])
@@ -608,7 +580,7 @@ module top_level
     tmds_encoder tmds_green (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data(pixel_to_display_24[15:8]),
+        .video_data(pixel_to_display[15:8]),
         .control(2'b0),
         .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[1])
@@ -616,7 +588,7 @@ module top_level
     tmds_encoder tmds_blue (
         .clk(clk_pixel),
         .rst(rst_pixel),
-        .video_data(pixel_to_display_24[7:0]),
+        .video_data(pixel_to_display[7:0]),
         .control({v_sync_to_hdmi, h_sync_to_hdmi}),
         .video_enable(active_draw_to_hdmi),
         .tmds(tmds_10b[0])
