@@ -36,7 +36,9 @@ module audio_filter_oversampled
 
     logic [15:0] lpf_out;
     logic        lpf_out_valid;
-    audio_filter lpf (
+    audio_filter_x4 #(
+        .SOFT_CLIP(1)
+    ) lpf (
         .clk(clk),
         .rst(rst),
         .pot_cutoff(pot_cutoff),

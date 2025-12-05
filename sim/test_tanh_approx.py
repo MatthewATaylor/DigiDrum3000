@@ -21,6 +21,17 @@ def tanh_approx_float(x):
     return n/d
 
 
+def tanh_approx(x):
+    x = np.int64(x)
+    n = (x<<30) + (x<<31) + x**3
+    d = (1<<30) + x**2 + ((x**2)<<1)
+    n_sign = n < 0
+    out = abs(n)//d
+    if n_sign:
+        out = -out
+    return out
+
+
 @cocotb.test()
 async def test_a(dut):
     samples = np.linspace(-2**15, 2**15-1, 100)
@@ -36,6 +47,8 @@ async def test_a(dut):
     dut.rst.value = 0
 
     for sample in samples:
+        sample = int(sample)
+
         dut.din_valid.value = 1
         dut.din.value = int(sample)
 
@@ -50,10 +63,11 @@ async def test_a(dut):
         dout_tanh = 2**15 * math.tanh(3 * sample / 2**15)
         y_tanh.append(dout_tanh)
 
-        dout_expected = tanh_approx_float(sample)
+        dout_expected = tanh_approx(sample)
         y_expected.append(dout_expected)
 
         print(f'Received: {dout}, Expected: {dout_expected}')
+        assert dout == dout_expected
 
     ax.plot(samples, y_expected, label='Expected')
     ax.plot(samples, y, label='Actual')

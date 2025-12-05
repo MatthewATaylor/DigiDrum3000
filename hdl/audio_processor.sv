@@ -98,7 +98,7 @@ module audio_processor
     logic        valid_to_filter;
     logic [15:0] sample_from_filter;
     logic        valid_from_filter;
-    audio_filter filter (
+    audio_filter_oversampled filter (
         .clk(clk),
         .rst(rst),
         .pot_cutoff(filter_cutoff_on_clk),
