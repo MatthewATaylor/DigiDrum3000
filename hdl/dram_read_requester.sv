@@ -24,7 +24,11 @@ module dram_read_requester
 
         output logic  [6:0] velocity [INSTRUMENT_COUNT-1:0],
         
-        input  wire   [INSTRUMENT_COUNT-1:0] instr_trig_debug
+        input  wire   [INSTRUMENT_COUNT-1:0] instr_trig_debug,
+
+        output logic [6:0] midi_key,
+        output logic [6:0] midi_vel,
+        output logic       midi_dout_valid
     );
 
     logic [13:0] sample_period_hold;
@@ -74,10 +78,6 @@ module dram_read_requester
         .receiver_axis_tlast(fifo_receiver_axis_tlast),
         .receiver_axis_prog_empty()
     );
-
-    logic midi_dout_valid;
-    logic [6:0] midi_key;
-    logic [6:0] midi_vel;
 
     midi_processor midi_proc (
         .clk(clk),

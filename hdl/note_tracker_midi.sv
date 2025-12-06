@@ -2,9 +2,16 @@
 `default_nettype none
 
 module note_tracker_midi #(
-    parameter INSTRUMENT_COUNT = 3,
+    parameter INSTRUMENT_COUNT = 10,
     parameter [6:0] MIDI_KEYS[INSTRUMENT_COUNT-1:0] = {
+      7'd51,  // rc
+      7'd49,  // cc
+      7'd44,  // hh_pedal
+      7'd42,  // hh_closed
       7'd46,  // hh_opened
+      7'd43,  // t3
+      7'd45,  // t2
+      7'd48,  // t1
       7'd38,  // sd
       7'd36  // bd
     }
@@ -25,9 +32,16 @@ module note_tracker_midi #(
 );
 
   localparam [7:0] velocity_base_decay[INSTRUMENT_COUNT-1:0] = {
-    8'h04,  // hh_opened
-    8'h10,  // sd
-    8'h25  // bd
+    7'd04,  // rc
+    7'd04,  // cc
+    7'd20,  // hh_pedal
+    7'd25,  // hh_closed
+    7'd04,  // hh_opened
+    7'd20,  // t3
+    7'd20,  // t2
+    7'd20,  // t1
+    7'd10,  // sd
+    7'd25  // bd
   };
 
   logic [15:0] velocity_decay[INSTRUMENT_COUNT-1:0];

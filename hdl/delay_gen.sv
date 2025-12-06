@@ -3,7 +3,7 @@
 
 // 7 cycle delay
 module delay_gen #(
-    parameter INSTRUMENT_COUNT = 3
+    parameter INSTRUMENT_COUNT = 10
 ) (
     input wire clk,
     input wire rst,
@@ -196,14 +196,49 @@ module delay_gen #(
 
   square_left #(
       .WIDTH   (192),
-      .CENTER_X(450),
-      .CENTER_Y(250)
+      .CENTER_X(400),
+      .CENTER_Y(550)
   ) sd_square (
       .clk(clk),
       .rst(rst),
       .h_count(h_count),
       .v_count(v_count),
       .half_x_dist(half_x_dist[1])
+  );
+
+  hex_right #(
+      .HEIGHT  (128),
+      .CENTER_X(960),
+      .CENTER_Y(450)
+  ) tom_1_hex (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .half_x_dist(half_x_dist[2])
+  );
+
+  hex_right #(
+      .HEIGHT  (128),
+      .CENTER_X(960),
+      .CENTER_Y(450)
+  ) tom_2_hex (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .half_x_dist(half_x_dist[3])
+  );
+  hex_right #(
+      .HEIGHT  (128),
+      .CENTER_X(800),
+      .CENTER_Y(530)
+  ) tom_3_hex (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .half_x_dist(half_x_dist[4])
   );
 
   star_right #(
@@ -215,8 +250,57 @@ module delay_gen #(
       .rst(rst),
       .h_count(h_count),
       .v_count(v_count),
-      .half_x_dist(half_x_dist[2])
+      .half_x_dist(half_x_dist[5])
   );
+
+  X_right #(
+      .WIDTH   (256),
+      .CENTER_X(960),
+      .CENTER_Y(120)
+  ) closed_hh_X (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .half_x_dist(half_x_dist[6])
+  );
+
+  X_left #(
+      .WIDTH   (256),
+      .CENTER_X(320),
+      .CENTER_Y(120)
+  ) pedal_hh_X (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .half_x_dist(half_x_dist[7])
+  );
+
+  star_left #(
+      .HEIGHT_POW($clog2(256)),
+      .CENTER_X  (400),
+      .CENTER_Y  (200)
+  ) cc_star (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .half_x_dist(half_x_dist[8])
+  );
+
+  slit_left_right #(
+      .WIDTH_POW($clog2(256)),
+      .CENTER_X (640),
+      .CENTER_Y (120)
+  ) rc_slit (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .half_x_dist(half_x_dist[9])
+  );
+
 endmodule  // delay_gen
 
 // 2 cycle delay

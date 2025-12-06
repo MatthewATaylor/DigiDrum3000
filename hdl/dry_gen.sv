@@ -3,7 +3,7 @@
 
 // 4 cycle delay
 module dry_gen #(
-    parameter INSTRUMENT_COUNT = 3
+    parameter INSTRUMENT_COUNT = 10
 ) (
     input wire clk,
     input wire rst,
@@ -75,8 +75,8 @@ module dry_gen #(
   // snare drum
   square_noise #(
       .WIDTH   (192),
-      .CENTER_X(450),
-      .CENTER_Y(250)
+      .CENTER_X(400),
+      .CENTER_Y(550)
   ) sd_square (
       .clk(clk),
       .rst(rst),
@@ -87,11 +87,56 @@ module dry_gen #(
       .intensity(shape_intensities[1])
   );
 
+  // tom 1
+  hex_hollow #(
+      .HEIGHT  (128),
+      .CENTER_X(800),
+      .CENTER_Y(370)
+  ) tom_1_hex (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[2]),
+      .intensity(shape_intensities[5])
+  );
+
+  // tom 2
+  hex_hollow #(
+      .HEIGHT  (128),
+      .CENTER_X(960),
+      .CENTER_Y(450)
+  ) tom_2_hex (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[3]),
+      .intensity(shape_intensities[3])
+  );
+
+  // tom 3
+  hex_hollow #(
+      .HEIGHT  (128),
+      .CENTER_X(800),
+      .CENTER_Y(530)
+  ) tom_3_hex (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[4]),
+      .intensity(shape_intensities[4])
+  );
+
   // open high hat
   star_noise #(
       .WIDTH_POW ($clog2(256)),
       .HEIGHT_POW($clog2(128)),
-      .CENTER_X  (800),
+      .CENTER_X  (880),
       .CENTER_Y  (200)
   ) open_hh_star (
       .clk(clk),
@@ -99,26 +144,71 @@ module dry_gen #(
       .h_count(h_count),
       .v_count(v_count),
       .noise_source(noise_scrambled),
-      .inst_intensity(inst_intensity[2]),
-      .intensity(shape_intensities[2])
+      .inst_intensity(inst_intensity[5]),
+      .intensity(shape_intensities[5])
   );
 
-  generate
-    genvar i;
-    for (i = 3; i < INSTRUMENT_COUNT; i = i + 1) begin
-      circle_hollow #(
-          .RADIUS  (64),
-          .CENTER_X(100 * i + 200),
-          .CENTER_Y(100)
-      ) gen_circ (
-          .clk(clk),
-          .rst(rst),
-          .h_count(h_count),
-          .v_count(v_count),
-          .intensity(shape_intensities[i])
-      );
-    end
-  endgenerate
+  // closed high hat
+  X_noise #(
+      .WIDTH   (256),
+      .CENTER_X(960),
+      .CENTER_Y(120)
+  ) closed_hh_X (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[6]),
+      .intensity(shape_intensities[6])
+  );
+
+  // pedal high hat
+  X_hollow #(
+      .WIDTH   (256),
+      .CENTER_X(320),
+      .CENTER_Y(120)
+  ) pedal_hh_X (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[7]),
+      .intensity(shape_intensities[7])
+  );
+
+  // cymbol crash
+  star_noise #(
+      .WIDTH_POW ($clog2(256)),
+      .HEIGHT_POW($clog2(256)),
+      .CENTER_X  (400),
+      .CENTER_Y  (200)
+  ) cc_star (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[8]),
+      .intensity(shape_intensities[8])
+  );
+
+  // ride crash
+  slit_noise #(
+      .WIDTH_POW($clog2(256)),
+      .CENTER_X (640),
+      .CENTER_Y (120)
+  ) rc_slit (
+      .clk(clk),
+      .rst(rst),
+      .h_count(h_count),
+      .v_count(v_count),
+      .noise_source(noise_scrambled),
+      .inst_intensity(inst_intensity[9]),
+      .intensity(shape_intensities[9])
+  );
+
 
 endmodule  // dry_gen
 

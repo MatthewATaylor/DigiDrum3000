@@ -59,20 +59,20 @@ module top_level
         output wire         ddr3_odt       //on-die termination (helps impedance match)
     );
 
-    localparam INSTRUMENT_COUNT = 3;
+    localparam INSTRUMENT_COUNT = 10;
 
     // First three elements are also mapped to btn[3:1]
     localparam [6:0] MIDI_KEYS [0:INSTRUMENT_COUNT-1] = {
         7'd36,  // bd
         7'd38,  // sd
-        //7'd48,  // t1
-        //7'd45,  // t2
-        //7'd43,  // t3
-        7'd46   // hh_opened
-        //7'd42,  // hh_closed
-        //7'd44,  // hh_pedal
-        //7'd49,  // cc
-        //7'd51   // rc
+        7'd48,  // t1
+        7'd45,  // t2
+        7'd43,  // t3
+        7'd46,  // hh_opened
+        7'd42,  // hh_closed
+        7'd44,  // hh_pedal
+        7'd49,  // cc
+        7'd51   // rc
     };
 
     logic clk;
@@ -297,6 +297,10 @@ module top_level
 
     logic [ 6:0]  velocity_map [INSTRUMENT_COUNT-1:0];
 
+    logic [6:0] midi_key;
+    logic [6:0] midi_vel;
+    logic       midi_msg_valid;
+
     dram_read_requester #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT),
         .MIDI_KEYS(MIDI_KEYS)
@@ -318,7 +322,11 @@ module top_level
 
         .velocity(velocity_map),
 
-        .instr_trig_debug(instr_trig_debug)
+        .instr_trig_debug(instr_trig_debug),
+
+        .midi_key(midi_key),
+        .midi_vel(midi_vel),
+        .midi_dout_valid(midi_msg_valid)
     );
 
     logic [15:0]  sample_raw;
@@ -527,9 +535,9 @@ module top_level
         .rst(rst),
 
         //.instrument_samples(current_instrument_samples),
-        .midi_key(instr_trig_debug[0] ? 7'd36 : instr_trig_debug[1] ? 7'd38 : 7'd46),
-        .midi_valid(|instr_trig_debug),
-        .midi_velocity(7'h7F),
+        .midi_key(midi_key),
+        .midi_valid(midi_msg_valid),
+        .midi_velocity(midi_vel),
         .volume_on_clk(volume[0]),
         .pitch_on_clk(pitch[0]),
         .delay_wet_on_clk(delay_wet[0]),
