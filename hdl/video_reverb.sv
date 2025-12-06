@@ -28,11 +28,14 @@ module video_reverb (
     output logic        dram_write_valid,
     output logic        dram_write_tlast
 );
-  assign dram_read_h_count = h_count_in;
-  assign dram_read_v_count = v_count_in;
-  assign dram_read_active_draw = active_draw_in;
+  localparam VSPEED = 2;
+  always_ff @(posedge clk) begin
+    dram_read_h_count <= h_count_in;
+    dram_read_v_count <= v_count_in >= (750 - VSPEED) ? v_count_in - (750 - VSPEED) : v_count_in + VSPEED;
+    dram_read_active_draw <= h_count_in < 1280 && (v_count_in < (720 - VSPEED) || v_count_in >= (750 - VSPEED));
+  end
 
-  localparam INPUT_LATENCY = 4;
+  localparam INPUT_LATENCY = 5;
 
   logic [10:0] h_count_in_pipe[INPUT_LATENCY-1:0];
   logic [9:0] v_count_in_pipe[INPUT_LATENCY-1:0];
@@ -84,20 +87,47 @@ module video_reverb (
       .pixel_to_feedback(pixel_to_feedback)
   );
 
+  localparam signed [2:0][2:0][7:0] GAUSS_COEFFS = {
+    {8'sd1, 8'sd2, 8'sd1}, {8'sd2, 8'sd4, 8'sd2}, {8'sd1, 8'sd2, 8'sd1}
+  };
+  localparam [7:0] GAUSS_SHFT = 8'd4;
+
+  logic [23:0] feedback_pixel_blurred;
+  logic [10:0] h_count_blurred;
+  logic [ 9:0] v_count_blurred;
+  logic        active_draw_blurred;
+
+  filter_3x3 my_filter_3x3 (
+      .clk(clk),
+      .rst(rst),
+      .coeffs(GAUSS_COEFFS),
+      .shift(GAUSS_SHFT),
+
+      .data_in_valid(active_draw_out),
+      .pixel_data_in(pixel_to_feedback),
+      .h_count_in(h_count_out),
+      .v_count_in(v_count_out),
+
+      .data_out_valid(active_draw_blurred),
+      .h_count_out(h_count_blurred),
+      .v_count_out(v_count_blurred),
+      .pixel_data_out(feedback_pixel_blurred)
+  );
+
   YCoCg_422_encoder my_encoder (
       .clk(clk),
       .rst(rst),
-      .h_count_lsb(h_count_out[0]),
-      .pixel_in(pixel_to_feedback),
+      .h_count_lsb(h_count_blurred[0]),
+      .pixel_in(feedback_pixel_blurred),
       .dram_write_data(dram_write_data)
   );
 
   reverb_dram_timer my_dram_timer (
       .clk(clk),
       .rst(rst),
-      .h_count_in(h_count_out),
-      .v_count_in(v_count_out),
-      .active_draw_in(active_draw_out),
+      .h_count_in(h_count_blurred),
+      .v_count_in(v_count_blurred),
+      .active_draw_in(active_draw_blurred),
       .dram_write_valid(dram_write_valid),
       .dram_write_tlast(dram_write_tlast)
   );
@@ -163,9 +193,9 @@ module video_reverb_combiner (
     wet_g <= {8'h00, wet[9:2]} * pixel_from_feedback[15:8];
     wet_b <= {8'h00, wet[9:2]} * pixel_from_feedback[7:0];
 
-    fed_r <= {8'h00, feedback[9:2]} * pixel_from_feedback[23:16];
-    fed_g <= {8'h00, feedback[9:2]} * pixel_from_feedback[15:8];
-    fed_b <= {8'h00, feedback[9:2]} * pixel_from_feedback[7:0];
+    fed_r <= {10'h003, feedback[9:4]} * pixel_from_feedback[23:16];
+    fed_g <= {10'h003, feedback[9:4]} * pixel_from_feedback[15:8];
+    fed_b <= {10'h003, feedback[9:4]} * pixel_from_feedback[7:0];
 
     out_r <= wet_r[15:8] > last_pixel_in[23:16] ? wet_r[15:8] : last_pixel_in[23:16];
     out_g <= wet_g[15:8] > last_pixel_in[15:8] ? wet_g[15:8] : last_pixel_in[15:8];
