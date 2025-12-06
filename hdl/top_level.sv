@@ -166,13 +166,11 @@ module top_level
 
         if (rst) begin
             for (int i=0; i<2; i++) begin
-                uart_rxd_buf[i] <= 0;
                 midi_din_buf[i] <= 0;
                 sample_load_complete_buf[i] <= 0;
                 instr_debug_btn_buf[i] <= 0;
             end
         end else begin
-            uart_rxd_buf <= {uart_rxd, uart_rxd_buf[1]};
             midi_din_buf <= {midi_pin, midi_din_buf[1]};
 
             // sample_load_complete CDC
@@ -190,11 +188,14 @@ module top_level
 
         if (rst_pixel) begin
             for (int i=0; i<2; i++) begin
+                uart_rxd_buf[i] <= 0;
                 sample_load_complete_pixel_buf[i] <= 0;
             end
         end else begin
-             // sample_load_complete CDC
-             // From 83.333 MHz to 74.25 MHz
+            uart_rxd_buf <= {uart_rxd, uart_rxd_buf[1]};
+
+            // sample_load_complete CDC
+            // From 83.333 MHz to 74.25 MHz
             sample_load_complete_pixel_buf <= {sample_load_complete_dram_ctrl, sample_load_complete_pixel_buf[1]};
         end
     end
@@ -747,7 +748,11 @@ module top_level
                 1'b0, crush_src[2],
                 1'b0, output_src[2]
             };
-            default: ss_val = {16'b0, memrequest_complete_counter[15:0]};
+            default: ss_val = {
+                dwr.sample_loader_i.instrument_counter,
+                4'b0,
+                tg.write_addr_last_valid ? tg.write_addr_last : memrequest_complete_counter
+            };
         endcase
     end
 

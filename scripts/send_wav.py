@@ -16,11 +16,10 @@ samples = [
     'hh_pedal',
     'cc',
     'rc',
-    'sq'
 ]
 
 SERIAL_PORTNAME = '/dev/ttyUSB1'
-BAUD = 115200
+BAUD = 1500000
 SAMPLE_RATE_IN = 48000
 SAMPLE_RATE_OUT = 44100
 SAMPLE_DIR = './media/'
@@ -93,7 +92,7 @@ def send_wav(ser=None):
     print(f'Total bits of sample data sent: {total_num_samples*16}')
 
 if __name__ == '__main__':
-    # ser = None
+    ser = None
     print(f'Opening serial port {SERIAL_PORTNAME}\n')
     ser = serial.Serial(SERIAL_PORTNAME, BAUD)
     send_wav(ser)

@@ -79,18 +79,12 @@ module traffic_generator
             write_address <= 0;
         end else begin
             if (write_axis_valid & write_axis_ready) begin
-                if (write_axis_tlast) begin
-                    if (!write_addr_last_valid) begin
-                        // This is the last write of audio samples.
-                        // Move write_address to start of frame buffer.
-                        write_address <= write_address + 1;
-                    end else begin
-                        write_address <= write_addr_last + 1;
-                    end
+                if (!write_addr_last_valid) begin
+                    // We are loading audio samples
+                    write_address <= write_address + 1;
                 end else begin
-                    if (write_address == write_addr_last + FRAME_BUFFER_DEPTH) begin
-                        // We're writing to larger addresses now.
-                        // write_addr_last should be valid.
+                    if (write_axis_tlast || write_address == write_addr_last + FRAME_BUFFER_DEPTH) begin
+                        // End of video frame
                         write_address <= write_addr_last + 1;
                     end else begin
                         write_address <= write_address + 1;

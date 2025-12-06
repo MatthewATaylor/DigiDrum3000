@@ -32,7 +32,8 @@ module sample_loader
 
     uart_receive #(
         .INPUT_CLOCK_FREQ(74250000),
-        .BAUD_RATE(115200)
+        //.BAUD_RATE(115200)
+        .BAUD_RATE(1500000)
     ) sample_load_uart (
         .clk(clk_pixel),
         .rst(rst_pixel),
