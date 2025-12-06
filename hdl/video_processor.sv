@@ -138,6 +138,28 @@ module video_processor #(
       .new_frame(sig_gen_new_frame)
   );
 
+  logic [10:0] sig_gen_h_count_comp;
+  logic [ 9:0] sig_gen_v_count_comp;
+  logic        sig_gen_active_draw_comp;
+
+  video_delay_compinsator(
+      .clk(clk_pixel),
+      .rst(rst),
+
+      .h_count_in(sig_gen_h_count),
+      .v_count_in(sig_gen_v_count),
+      .active_draw_in(sig_gen_active_draw),
+
+      .crush_src(crush_src_on_pixel_clk),
+      .distortion_src(distortion_src_on_pixel_clk),
+      .filter_src(filter_src_on_pixel_clk),
+      .reverb_src(reverb_src_on_pixel_clk),
+
+      .h_count_out(sig_gen_h_count_comp),
+      .v_count_out(sig_gen_v_count_comp),
+      .active_draw_out(sig_gen_active_draw_comp)
+  );
+
   logic [7:0] inst_intensity[INSTRUMENT_COUNT-1:0];
   note_tracker_midi #(
       .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
@@ -163,9 +185,9 @@ module video_processor #(
       .clk(clk_pixel),
       .rst(rst),
 
-      .active_draw(sig_gen_active_draw),
-      .h_count(sig_gen_h_count),
-      .v_count(sig_gen_v_count),
+      .active_draw(sig_gen_active_draw_comp),
+      .h_count(sig_gen_h_count_comp),
+      .v_count(sig_gen_v_count_comp),
       .inst_intensity(inst_intensity),
 
       .intensity(dry_intensity)
@@ -175,9 +197,9 @@ module video_processor #(
       .clk(clk_pixel),
       .rst(rst),
 
-      .active_draw(sig_gen_active_draw),
-      .h_count(sig_gen_h_count),
-      .v_count(sig_gen_v_count),
+      .active_draw(sig_gen_active_draw_comp),
+      .h_count(sig_gen_h_count_comp),
+      .v_count(sig_gen_v_count_comp),
       .inst_intensity(inst_intensity),
 
       .wet(delay_wet_on_pixel_clk),
@@ -194,8 +216,8 @@ module video_processor #(
       .clk(clk_pixel),
       .rst(rst),
 
-      .h_count(sig_gen_h_count),
-      .v_count(sig_gen_v_count),
+      .h_count(sig_gen_h_count_comp),
+      .v_count(sig_gen_v_count_comp),
       .pitch  (pitch_on_pixel_clk),
 
       .color(pixel_color_from_color_gen)
@@ -218,8 +240,8 @@ module video_processor #(
       dry_intensity_pipe[0] <= dry_intensity;
       dry_intensity_pipe[1] <= dry_intensity_pipe[0];
       dry_intensity_pipe[2] <= dry_intensity_pipe[1];
-      base_h_count_pipe[0]  <= sig_gen_h_count;
-      base_v_count_pipe[0]  <= sig_gen_v_count;
+      base_h_count_pipe[0]  <= sig_gen_h_count_comp;
+      base_v_count_pipe[0]  <= sig_gen_v_count_comp;
       for (integer i = 0; i < BASE_GEN_PIPE_LENGTH - 1; i += 1) begin
         base_h_count_pipe[i+1] <= base_h_count_pipe[i];
         base_v_count_pipe[i+1] <= base_v_count_pipe[i];
@@ -436,10 +458,10 @@ module video_processor #(
   gui_render_and_overlay my_gui (
       .clk(clk_pixel),
       .rst(rst),
-      .h_count_in(h_count_output),
-      .v_count_in(v_count_output),
+      .h_count_in(sig_gen_h_count),
+      .v_count_in(sig_gen_v_count),
       .pixel_in(pixel_output),
-      .active_draw_in(active_draw_output),
+      .active_draw_in(sig_gen_active_draw),
 
       .pixel_to_hdmi(pixel_to_hdmi),
       .h_sync_to_hdmi(h_sync_to_hdmi),
