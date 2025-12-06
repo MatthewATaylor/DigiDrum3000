@@ -76,7 +76,7 @@ module dry_gen #(
   square_noise #(
       .WIDTH   (192),
       .CENTER_X(400),
-      .CENTER_Y(550)
+      .CENTER_Y(450)
   ) sd_square (
       .clk(clk),
       .rst(rst),
@@ -89,7 +89,7 @@ module dry_gen #(
 
   // tom 1
   hex_hollow #(
-      .HEIGHT  (128),
+      .HEIGHT  (256),
       .CENTER_X(800),
       .CENTER_Y(370)
   ) tom_1_hex (
@@ -99,13 +99,13 @@ module dry_gen #(
       .v_count(v_count),
       .noise_source(noise_scrambled),
       .inst_intensity(inst_intensity[2]),
-      .intensity(shape_intensities[5])
+      .intensity(shape_intensities[2])
   );
 
   // tom 2
   hex_hollow #(
-      .HEIGHT  (128),
-      .CENTER_X(960),
+      .HEIGHT  (256),
+      .CENTER_X(940),
       .CENTER_Y(450)
   ) tom_2_hex (
       .clk(clk),
@@ -119,7 +119,7 @@ module dry_gen #(
 
   // tom 3
   hex_hollow #(
-      .HEIGHT  (128),
+      .HEIGHT  (256),
       .CENTER_X(800),
       .CENTER_Y(530)
   ) tom_3_hex (
@@ -165,7 +165,7 @@ module dry_gen #(
 
   // pedal high hat
   X_hollow #(
-      .WIDTH   (256),
+      .WIDTH   (512),
       .CENTER_X(320),
       .CENTER_Y(120)
   ) pedal_hh_X (
@@ -323,7 +323,7 @@ endmodule  // X_noise
 
 // 3 cycles of delay
 module X_hollow #(
-    parameter WIDTH = 128,
+    parameter WIDTH = 256,
     parameter CENTER_X = 400,
     parameter CENTER_Y = 400
 ) (
@@ -604,11 +604,10 @@ module hex_hollow #(
 
   always_ff @(posedge clk) begin
     if (rst) begin
-      ns_dist   <= 0;
-      ne_dist   <= 0;
-      se_dist   <= 0;
-      max_dist  <= 0;
-      intensity <= 0;
+      ns_dist  <= 0;
+      ne_dist  <= 0;
+      se_dist  <= 0;
+      max_dist <= 0;
     end else begin
       ns_dist <= 8 * y_dist;
       ne_dist <= 4 * y_dist + 7 * x_dist;

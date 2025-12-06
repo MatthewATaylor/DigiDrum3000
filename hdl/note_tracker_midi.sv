@@ -32,14 +32,14 @@ module note_tracker_midi #(
 );
 
   localparam [7:0] velocity_base_decay[INSTRUMENT_COUNT-1:0] = {
-    7'd04,  // rc
-    7'd04,  // cc
-    7'd20,  // hh_pedal
+    7'd02,  // rc
+    7'd02,  // cc
+    7'd55,  // hh_pedal
     7'd25,  // hh_closed
     7'd04,  // hh_opened
-    7'd20,  // t3
-    7'd20,  // t2
-    7'd20,  // t1
+    7'd06,  // t3
+    7'd08,  // t2
+    7'd10,  // t1
     7'd10,  // sd
     7'd25  // bd
   };
@@ -94,7 +94,7 @@ module note_tracker_midi #(
     end else if (midi_sig_valid_pixel) begin
       for (i = 0; i < INSTRUMENT_COUNT; i = i + 1) begin
         inst_intensity_high_res[i] <= midi_key_clk_cross_pipe[3] == MIDI_KEYS[i]
-          ? {midi_velocity_clk_cross_pipe[3], 9'b0}
+          ? {1'b1, midi_velocity_clk_cross_pipe[3], 8'b0}
           : inst_intensity_high_res[i];
       end
     end

@@ -113,7 +113,7 @@ module delay_gen #(
           .dout(sample_buffer_out[i])
       );
 
-      assign sample_buffer_in[i]   = h_count == 0 ? (inst_intensity[i][7] ? {inst_intensity[i][6:0], 1'b0} : 0) : feedbacked_sample[i];
+      assign sample_buffer_in[i]   = h_count == 0 ? inst_intensity[i][7:0] : feedbacked_sample[i];
       assign sample_buffer_addr[i] = v_count == 721 ? h_count : request_address[i];
     end
   endgenerate
@@ -162,7 +162,7 @@ module delay_gen #(
       intensity <= 0;
       unscaled_intensity <= 0;
     end else begin
-      intensity <= (unscaled_intensity * {8'h0, wet[9:2]}) >> 8;
+      intensity <= (unscaled_intensity * (wet[9] ? 16'hFF : {8'h0, wet[8:1]})) >> 8;
       unscaled_intensity <= intensity_sum;
     end
   end
@@ -197,7 +197,7 @@ module delay_gen #(
   square_left #(
       .WIDTH   (192),
       .CENTER_X(400),
-      .CENTER_Y(550)
+      .CENTER_Y(450)
   ) sd_square (
       .clk(clk),
       .rst(rst),
@@ -208,8 +208,8 @@ module delay_gen #(
 
   hex_right #(
       .HEIGHT  (128),
-      .CENTER_X(960),
-      .CENTER_Y(450)
+      .CENTER_X(800),
+      .CENTER_Y(370)
   ) tom_1_hex (
       .clk(clk),
       .rst(rst),
@@ -220,7 +220,7 @@ module delay_gen #(
 
   hex_right #(
       .HEIGHT  (128),
-      .CENTER_X(960),
+      .CENTER_X(940),
       .CENTER_Y(450)
   ) tom_2_hex (
       .clk(clk),
@@ -243,7 +243,7 @@ module delay_gen #(
 
   star_right #(
       .HEIGHT_POW(7),
-      .CENTER_X  (800),
+      .CENTER_X  (880),
       .CENTER_Y  (200)
   ) open_hh_star (
       .clk(clk),
@@ -531,7 +531,7 @@ module hex_right #(
       valid_pos <= 0;
     end else begin
       x_offset_from_y <= (HEIGHT * 4) / 7 - (y_dist >> 1) - (y_dist >> 4);  // -9|y|/16 (almost 4/7)
-      x_dist_naive <= h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
+      x_dist_naive <= h_count > CENTER_X ? h_count - CENTER_X : 0;
       valid_pos <= y_dist < Y_CUTOFF;
       half_x_dist <= (valid_pos && x_dist_naive > x_offset_from_y) ? (x_dist_naive - x_offset_from_y) >> 1 : 0;
     end
@@ -571,7 +571,9 @@ module slit_left_right #(
       x_offset_from_y <= WIDTH / 2 - (y_dist << 1) - (y_dist >> 1);  // -5|y|/2
       x_dist_naive <= h_count > CENTER_X ? h_count - CENTER_X : CENTER_X - h_count;
       valid_pos <= y_dist < Y_CUTOFF;
-      half_x_dist <= (valid_pos && x_dist_naive > x_offset_from_y) ? (x_dist_naive - x_offset_from_y) >> 1 : 0;
+      half_x_dist <=
+        (valid_pos && x_dist_naive > x_offset_from_y && x_dist_naive - x_offset_from_y < 10'h200)
+        ? (x_dist_naive - x_offset_from_y) >> 1 : 0;
     end
   end
 endmodule  // slit_left_right
