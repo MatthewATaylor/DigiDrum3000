@@ -105,6 +105,10 @@ module top_level
     logic rst_pixel;
     assign rst_pixel = rst_pixel_buf[0] | ~clk_locked;
 
+    logic uart_rxd_pixel_buf [1:0];
+    logic uart_din_pixel;
+    assign uart_din_pixel = uart_rxd_pixel_buf[0];
+
     logic uart_rxd_buf [1:0];
     logic uart_din;
     assign uart_din = uart_rxd_buf[0];
@@ -127,35 +131,119 @@ module top_level
     assign instr_debug_btn = instr_debug_btn_buf[0];
     logic [INSTRUMENT_COUNT-1:0] instr_trig_debug;
 
-    assign led[1] = sample_load_complete;
-    assign led[15:4] = 0;
-    assign rgb0 = 0;
-    assign rgb1 = 0;
-    assign uart_txd = 0;
-
     logic [23:0]  addr_offsets [INSTRUMENT_COUNT:0];
     logic         addr_offsets_valid;
     logic         addr_offsets_valid_pixel;
 
 
-    logic [9:0] volume[2:0];
-    logic [9:0] pitch [2:0];
-    logic [9:0] delay_wet[2:0];
-    logic [9:0] delay_rate[2:0];
-    logic [9:0] delay_feedback[2:0];
-    logic [9:0] reverb_wet[2:0];
-    logic [9:0] reverb_size[2:0];
-    logic [9:0] reverb_feedback[2:0];
-    logic [9:0] filter_quality[2:0];
-    logic [9:0] filter_cutoff[2:0];
-    logic [9:0] distortion_drive[2:0];
-    logic [9:0] crush_pressure[2:0];
+    logic [2:0] output_src;
+    logic [2:0] crush_src;
+    logic [2:0] distortion_src;
+    logic [2:0] filter_src;
+    logic [2:0] reverb_src;
+    logic [2:0] delay_src;
+
+
+    logic [9:0] volume;
+    logic [9:0] pitch;
+    logic [9:0] delay_wet;
+    logic [9:0] delay_rate;
+    logic [9:0] delay_feedback;
+    logic [9:0] reverb_wet;
+    logic [9:0] reverb_size;
+    logic [9:0] reverb_feedback;
+    logic [9:0] filter_quality;
+    logic [9:0] filter_cutoff;
+    logic [9:0] distortion_drive;
+    logic [9:0] crush_pressure;
+    logic       delay_rate_fast;
+
+    logic [9:0] volume_pcb;
+    logic [9:0] pitch_pcb;
+    logic [9:0] delay_wet_pcb;
+    logic [9:0] delay_rate_pcb;
+    logic [9:0] delay_feedback_pcb;
+    logic [9:0] reverb_wet_pcb;
+    logic [9:0] reverb_size_pcb;
+    logic [9:0] reverb_feedback_pcb;
+    logic [9:0] filter_quality_pcb;
+    logic [9:0] filter_cutoff_pcb;
+    logic [9:0] distortion_drive_pcb;
+    logic [9:0] crush_pressure_pcb;
+
+    logic [9:0] volume_uart;
+    logic [9:0] pitch_uart;
+    logic [9:0] delay_wet_uart;
+    logic [9:0] delay_rate_uart;
+    logic [9:0] delay_feedback_uart;
+    logic [9:0] reverb_wet_uart;
+    logic [9:0] reverb_size_uart;
+    logic [9:0] reverb_feedback_uart;
+    logic [9:0] filter_quality_uart;
+    logic [9:0] filter_cutoff_uart;
+    logic [9:0] distortion_drive_uart;
+    logic [9:0] crush_pressure_uart;
+    logic       delay_rate_fast_uart;
+    uart_param_controller uart_ctrl (
+        .clk(clk),
+        .rst(rst),
+
+        .en(sample_load_complete & addr_offsets_valid),
+        .uart_din(uart_din),
+        
+        .volume(volume_uart),
+        .pitch(pitch_uart),
+        .delay_wet(delay_wet_uart),
+        .delay_rate(delay_rate_uart),
+        .delay_feedback(delay_feedback_uart),
+        .reverb_wet(reverb_wet_uart),
+        .reverb_size(reverb_size_uart),
+        .reverb_feedback(reverb_feedback_uart),
+        .filter_quality(filter_quality_uart),
+        .filter_cutoff(filter_cutoff_uart),
+        .distortion_drive(distortion_drive_uart),
+        .crush_pressure(crush_pressure_uart),
+        .delay_rate_fast(delay_rate_fast_uart)
+    );
+
+    always_comb begin
+        if (sw[1]) begin
+            volume = volume_uart;
+            pitch = pitch_uart;
+            delay_wet = delay_wet_uart;
+            delay_rate = delay_rate_uart;
+            delay_feedback = delay_feedback_uart;
+            reverb_wet = reverb_wet_uart;
+            reverb_size = reverb_size_uart;
+            reverb_feedback = reverb_feedback_uart;
+            filter_quality = filter_quality_uart;
+            filter_cutoff = filter_cutoff_uart;
+            distortion_drive = distortion_drive_uart;
+            crush_pressure = crush_pressure_uart;
+            delay_rate_fast = delay_rate_fast_uart;
+        end else begin
+            volume = volume_pcb;
+            pitch = pitch_pcb;
+            delay_wet = delay_wet_pcb;
+            delay_rate = delay_rate_pcb;
+            delay_feedback = delay_feedback_pcb;
+            reverb_wet = reverb_wet_pcb;
+            reverb_size = reverb_size_pcb;
+            reverb_feedback = reverb_feedback_pcb;
+            filter_quality = filter_quality_pcb;
+            filter_cutoff = filter_cutoff_pcb;
+            distortion_drive = distortion_drive_pcb;
+            crush_pressure = crush_pressure_pcb;
+            delay_rate_fast = sw[0];
+        end
+    end
+
 
     logic [13:0] sample_period;
     pitch_to_sample_period p2sp (
         .clk(clk),
         .rst(rst),
-        .pitch(sw[5] ? pitch[0] : sw[15:6]),
+        .pitch(pitch),
         .sample_period(sample_period)
     );
 
@@ -166,11 +254,13 @@ module top_level
 
         if (rst) begin
             for (int i=0; i<2; i++) begin
+                uart_rxd_buf[i] <= 0;
                 midi_din_buf[i] <= 0;
                 sample_load_complete_buf[i] <= 0;
                 instr_debug_btn_buf[i] <= 0;
             end
         end else begin
+            uart_rxd_buf <= {uart_rxd, uart_rxd_buf[1]};
             midi_din_buf <= {midi_pin, midi_din_buf[1]};
 
             // sample_load_complete CDC
@@ -188,11 +278,11 @@ module top_level
 
         if (rst_pixel) begin
             for (int i=0; i<2; i++) begin
-                uart_rxd_buf[i] <= 0;
+                uart_rxd_pixel_buf[i] <= 0;
                 sample_load_complete_pixel_buf[i] <= 0;
             end
         end else begin
-            uart_rxd_buf <= {uart_rxd, uart_rxd_buf[1]};
+            uart_rxd_pixel_buf <= {uart_rxd, uart_rxd_pixel_buf[1]};
 
             // sample_load_complete CDC
             // From 83.333 MHz to 74.25 MHz
@@ -244,27 +334,10 @@ module top_level
     logic        dram_write_video_last;
     logic [15:0] dram_write_video_data;
 
-    // rst_video causes video_sig_gen to be disabled during sample loading.
-    // Do this in order to start up video in a well defined state.
-    // Put rst_video through a register to delay one cycle.
-    //  (aligns with reset signal for dram_writer stacker)
-    //logic rst_video;
-    //assign rst_video = ~sample_load_complete_pixel | ~addr_offsets_valid_pixel;
-    //logic rst_video_buf;
-    //always_ff @ (posedge clk_pixel) begin
-    //    if (rst_pixel) begin
-    //        rst_video_buf <= 1;
-    //    end else begin
-    //        rst_video_buf <= rst_video;
-    //    end
-    //end
-
     logic [127:0] write_axis_data;
     logic         write_axis_tlast;
     logic         write_axis_valid;
     logic         write_axis_ready;
-
-    assign led[2] = addr_offsets_valid;
 
     dram_writer #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
@@ -274,7 +347,7 @@ module top_level
         .clk_pixel(clk_pixel),
         .rst(rst),
         .rst_pixel(rst_pixel),
-        .uart_din(uart_din),
+        .uart_din(uart_din_pixel),
         
         .sample_load_complete(sample_load_complete_pixel),
         .addr_offsets(addr_offsets),
@@ -493,26 +566,26 @@ module top_level
         .clk(clk),
         .rst(rst),
 
-        .volume_on_clk(volume[0]),
-        .delay_wet_on_clk(delay_wet[0]),
-        .delay_rate_on_clk(delay_rate[0]),
-        .delay_feedback_on_clk(delay_feedback[0]),
-        .reverb_wet_on_clk(reverb_wet[0]),
-        .reverb_size_on_clk(reverb_size[0]),
-        .reverb_feedback_on_clk(reverb_feedback[0]),
-        .filter_quality_on_clk(filter_quality[0]),
-        .filter_cutoff_on_clk(filter_cutoff[0]),
-        .distortion_drive_on_clk(distortion_drive[0]),
-        .crush_pressure_on_clk(crush_pressure[0]),
+        .volume_on_clk(volume),
+        .delay_wet_on_clk(delay_wet),
+        .delay_rate_on_clk(delay_rate),
+        .delay_feedback_on_clk(delay_feedback),
+        .reverb_wet_on_clk(reverb_wet),
+        .reverb_size_on_clk(reverb_size),
+        .reverb_feedback_on_clk(reverb_feedback),
+        .filter_quality_on_clk(filter_quality),
+        .filter_cutoff_on_clk(filter_cutoff),
+        .distortion_drive_on_clk(distortion_drive),
+        .crush_pressure_on_clk(crush_pressure),
 
-        .output_src_on_clk(output_src[0]),
-        .crush_src_on_clk(crush_src[0]),
-        .distortion_src_on_clk(distortion_src[0]),
-        .filter_src_on_clk(filter_src[0]),
-        .reverb_src_on_clk(reverb_src[0]),
-        .delay_src_on_clk(delay_src[0]),
+        .output_src_on_clk(output_src),
+        .crush_src_on_clk(crush_src),
+        .distortion_src_on_clk(distortion_src),
+        .filter_src_on_clk(filter_src),
+        .reverb_src_on_clk(reverb_src),
+        .delay_src_on_clk(delay_src),
 
-        .delay_rate_fast_on_clk(sw[0]),
+        .delay_rate_fast_on_clk(delay_rate_fast),
 
         .sample_period_dram_out(sample_period_dram_out),
 
@@ -539,26 +612,26 @@ module top_level
         .midi_key(midi_key),
         .midi_valid(midi_msg_valid),
         .midi_velocity(midi_vel),
-        .volume_on_clk(volume[0]),
-        .pitch_on_clk(pitch[0]),
-        .delay_wet_on_clk(delay_wet[0]),
-        .delay_rate_on_clk(delay_rate[0]),
-        .delay_feedback_on_clk(delay_feedback[0]),
-        .reverb_wet_on_clk(reverb_wet[0]),
-        .reverb_size_on_clk(reverb_size[0]),
-        .reverb_feedback_on_clk(reverb_feedback[0]),
-        .filter_quality_on_clk(filter_quality[0]),
-        .filter_cutoff_on_clk(filter_cutoff[0]),
-        .distortion_drive_on_clk(distortion_drive[0]),
-        .crush_pressure_on_clk(crush_pressure[0]),
-        .delay_rate_fast_on_clk(sw[0]),
+        .volume_on_clk(volume),
+        .pitch_on_clk(pitch),
+        .delay_wet_on_clk(delay_wet),
+        .delay_rate_on_clk(delay_rate),
+        .delay_feedback_on_clk(delay_feedback),
+        .reverb_wet_on_clk(reverb_wet),
+        .reverb_size_on_clk(reverb_size),
+        .reverb_feedback_on_clk(reverb_feedback),
+        .filter_quality_on_clk(filter_quality),
+        .filter_cutoff_on_clk(filter_cutoff),
+        .distortion_drive_on_clk(distortion_drive),
+        .crush_pressure_on_clk(crush_pressure),
+        .delay_rate_fast_on_clk(delay_rate_fast),
 
-        .output_src_on_clk(output_src[0]),
-        .crush_src_on_clk(crush_src[0]),
-        .distortion_src_on_clk(distortion_src[0]),
-        .filter_src_on_clk(filter_src[0]),
-        .reverb_src_on_clk(reverb_src[0]),
-        .delay_src_on_clk(delay_src[0]),
+        .output_src_on_clk(output_src),
+        .crush_src_on_clk(crush_src),
+        .distortion_src_on_clk(distortion_src),
+        .filter_src_on_clk(filter_src),
+        .reverb_src_on_clk(reverb_src),
+        .delay_src_on_clk(delay_src),
 
         .dram_read_data(dram_read_video_data),
         .dram_read_active_draw(dram_read_active_draw),
@@ -630,29 +703,6 @@ module top_level
     OBUFDS OBUFDS_red  (.I(tmds_signal[2]), .O(hdmi_tx_p[2]), .OB(hdmi_tx_n[2]));
     OBUFDS OBUFDS_clock(.I(clk_pixel), .O(hdmi_clk_p), .OB(hdmi_clk_n));
 
-    logic [23:0]  memrequest_complete_counter;
-    logic [15:0]  read_data_valid_counter;
-    always_ff @ (posedge clk_dram_ctrl) begin
-        if (rst_dram_ctrl) begin
-            memrequest_complete_counter <= 0;
-            read_data_valid_counter <= 0;
-        end else begin
-            if (memrequest_complete) begin
-                memrequest_complete_counter <= memrequest_complete_counter + 1;
-            end
-            if (read_data_audio_axis_valid) begin
-                read_data_valid_counter <= read_data_valid_counter + 1;
-            end
-        end
-    end
-
-    logic [2:0] output_src[2:0];
-    logic [2:0] crush_src[2:0];
-    logic [2:0] distortion_src[2:0];
-    logic [2:0] filter_src[2:0];
-    logic [2:0] reverb_src[2:0];
-    logic [2:0] delay_src[2:0];
-
     pcb_interface pcb (
         .clk(clk),
         .rst(rst),
@@ -664,12 +714,12 @@ module top_level
         .distortion_pin(distortion_pin),
         .crush_pin(crush_pin),
 
-        .output_src(output_src[0]),
-        .crush_src(crush_src[0]),
-        .distortion_src(distortion_src[0]),
-        .filter_src(filter_src[0]),
-        .reverb_src(reverb_src[0]),
-        .delay_src(delay_src[0]),
+        .output_src(output_src),
+        .crush_src(crush_src),
+        .distortion_src(distortion_src),
+        .filter_src(filter_src),
+        .reverb_src(reverb_src),
+        .delay_src(delay_src),
 
         .cipo(cipo),
         .copi(copi),
@@ -677,84 +727,40 @@ module top_level
         .cs0(cs0),
         .cs1(cs1),
 
-        .volume(volume[0]),
-        .pitch(pitch[0]),
-        .delay_wet(delay_wet[0]),
-        .delay_rate(delay_rate[0]),
-        .delay_feedback(delay_feedback[0]),
-        .reverb_wet(reverb_wet[0]),
-        .reverb_size(reverb_size[0]),
-        .reverb_feedback(reverb_feedback[0]),
-        .filter_quality(filter_quality[0]),
-        .filter_cutoff(filter_cutoff[0]),
-        .distortion_drive(distortion_drive[0]),
-        .crush_pressure(crush_pressure[0])
+        .volume(volume_pcb),
+        .pitch(pitch_pcb),
+        .delay_wet(delay_wet_pcb),
+        .delay_rate(delay_rate_pcb),
+        .delay_feedback(delay_feedback_pcb),
+        .reverb_wet(reverb_wet_pcb),
+        .reverb_size(reverb_size_pcb),
+        .reverb_feedback(reverb_feedback_pcb),
+        .filter_quality(filter_quality_pcb),
+        .filter_cutoff(filter_cutoff_pcb),
+        .distortion_drive(distortion_drive_pcb),
+        .crush_pressure(crush_pressure_pcb)
     );
 
-    // clock boundry
-    always_ff @(posedge clk_dram_ctrl) begin
-        output_src[2] <= output_src[1];
-        output_src[1] <= output_src[0];
-        crush_src[2] <= crush_src[1];
-        crush_src[1] <= crush_src[0];
-        distortion_src[2] <= distortion_src[1];
-        distortion_src[1] <= distortion_src[0];
-        filter_src[2] <= filter_src[1];
-        filter_src[1] <= filter_src[0];
-        reverb_src[2] <= reverb_src[1];
-        reverb_src[1] <= reverb_src[0];
-        delay_src[2] <= delay_src[1];
-        delay_src[1] <= delay_src[0];
-        volume[2] <= volume[1];
-        volume[1] <= volume[0];
-        pitch[2] <= pitch[1];
-        pitch[1] <= pitch[0];
-        delay_wet[2] <= delay_wet[1];
-        delay_wet[1] <= delay_wet[0];
-        delay_rate[2] <= delay_rate[1];
-        delay_rate[1] <= delay_rate[0];
-        delay_feedback[2] <= delay_feedback[1];
-        delay_feedback[1] <= delay_feedback[0];
-        reverb_wet[2] <= reverb_wet[1];
-        reverb_wet[1] <= reverb_wet[0];
-        reverb_size[2] <= reverb_size[1];
-        reverb_size[1] <= reverb_size[0];
-        reverb_feedback[2] <= reverb_feedback[1];
-        reverb_feedback[1] <= reverb_feedback[0];
-        filter_quality[2] <= filter_quality[1];
-        filter_quality[1] <= filter_quality[0];
-        filter_cutoff[2] <= filter_cutoff[1];
-        filter_cutoff[1] <= filter_cutoff[0];
-        distortion_drive[2] <= distortion_drive[1];
-        distortion_drive[1] <= distortion_drive[0];
-        crush_pressure[2] <= crush_pressure[1];
-        crush_pressure[1] <= crush_pressure[0];
+
+    // Debug
+
+    logic [23:0]  memrequest_complete_counter;
+    always_ff @ (posedge clk_dram_ctrl) begin
+        if (rst_dram_ctrl) begin
+            memrequest_complete_counter <= 0;
+        end else begin
+            if (memrequest_complete) begin
+                memrequest_complete_counter <= memrequest_complete_counter + 1;
+            end
+        end
     end
 
     logic [31:0] ss_val;
-    always_comb begin
-        case (sw[4:2])
-            3'b001: ss_val = {6'h00, volume[2], 6'h00, pitch[2]};
-            3'b010: ss_val = {6'h00, delay_wet[2], 6'h00, delay_rate[2]};
-            3'b011: ss_val = {6'h00, delay_feedback[2], 6'h00, reverb_wet[2]};
-            3'b100: ss_val = {6'h00, reverb_size[2], 6'h00, reverb_feedback[2]};
-            3'b101: ss_val = {6'h00, filter_quality[2], 6'h00, filter_cutoff[2]};
-            3'b110: ss_val = {6'h00, distortion_drive[2], 6'h00, crush_pressure[2]};
-            3'b111: ss_val = {
-                7'h0, delay_src[2],
-                1'b0, reverb_src[2],
-                1'b0, filter_src[2],
-                1'b0, distortion_src[2],
-                1'b0, crush_src[2],
-                1'b0, output_src[2]
-            };
-            default: ss_val = {
-                dwr.sample_loader_i.instrument_counter,
-                4'b0,
-                tg.write_addr_last_valid ? tg.write_addr_last : memrequest_complete_counter
-            };
-        endcase
-    end
+    assign ss_val = {
+        dwr.sample_loader_i.instrument_counter,  // clk_pixel (i.e. async to ssc clock)
+        4'b0,
+        tg.write_addr_last_valid ? tg.write_addr_last : memrequest_complete_counter
+    };
 
     logic [6:0] ss_c;
     assign ss0_c = ss_c;
@@ -776,6 +782,12 @@ module top_level
             end
         end
     end
+    assign led[1] = sample_load_complete;
+    assign led[2] = addr_offsets_valid;
     assign led[3] = tg.write_addr_last_valid;
+    assign led[15:4] = 0;
+    assign rgb0 = 0;
+    assign rgb1 = 0;
+    assign uart_txd = 0;
 endmodule
 `default_nettype wire
