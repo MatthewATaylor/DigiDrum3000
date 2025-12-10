@@ -4,21 +4,27 @@ import math
 
 # Plot the frequency response of various Z-domain transfer functions
 
-w_in = np.linspace(0, np.pi, 10000)
+# SAMPLE_RATE = 1 / (2272 * 10e-9)
+SAMPLE_RATE = 4 / (2272 * 10e-9)
 
-def H_ladder(z):
-    POT_FC = 512
-    POT_Q = 750
+f_in = np.logspace(2, 4, 10000)
+w_in_unnormal = f_in * 2*np.pi
+w_in = f_in / (SAMPLE_RATE/2) * np.pi
 
-    G = POT_FC / 1024  # G = wc*T/2 -> cutoff: [0 Hz, 14 kHz]
-    G = math.tan(G)  # Cutoff prewarping
+
+def H_ladder_x4(z, pot_fc, pot_q):
+    wc = pot_fc / 1024 / 4 * SAMPLE_RATE*2
+    s = 2*SAMPLE_RATE * (z-1) / (z+1)  # Bilinear transform (trapezoidal integrator)
+    K = pot_q / 256 * 3/2  # HDL implementation scales tanh input by 3 and pot_q by 1/2
+    return 1 / (K + (1+s/wc)**4)
+
+
+def H_ladder(z, pot_fc, pot_q):
+    G = pot_fc / 1024  # G = wc*T/2 -> cutoff: [0 Hz, 14 kHz]
+    # G = math.tan(G)  # Cutoff prewarping
     s = 1/G * (z-1) / (z+1)  # Bilinear transform (trapezoidal integrator)
-    K = POT_Q / 256
+    K = pot_q / 256
     return 1 / (K + (1+s)**4)
-
-freq_resp_ladder = np.abs(H_ladder(np.exp(1j*w_in)))
-print(f'Ladder Max: {max(freq_resp_ladder)}')
-print(f'Ladder Min: {min(freq_resp_ladder)}')
 
 def H_LPF_BT(z):
     # Each 1-pole LPF used in the ladder filter
@@ -63,6 +69,26 @@ freq_resp_AP = np.abs(H_AP(np.exp(1j*w_in)))
 print(f'AP Max: {max(freq_resp_AP)}')
 print(f'AP Min: {min(freq_resp_AP)}')
 
+
 fig, ax = plt.subplots()
-ax.plot(w_in, freq_resp_LBCF)
+fc = 1000
+wc = 2*np.pi*fc
+pot_fc = wc * 1024 * 4 / SAMPLE_RATE / 2
+print(pot_fc)
+for pot_q in [0, 768]:
+    freq_resp_ladder = np.abs(
+        H_ladder_x4(
+            np.exp(1j*w_in_unnormal/SAMPLE_RATE),
+            pot_fc=pot_fc,
+            pot_q=pot_q
+        )
+    )
+    freq_resp_ladder_db = 20 * np.log10(freq_resp_ladder)
+    ax.plot(f_in, freq_resp_ladder_db, label=f'k={int(pot_q/256*3/2)}')
+ax.set_ylim([-60, 60])
+ax.set_xscale('log')
+ax.set_xlabel('Frequency [Hz]')
+ax.set_ylabel('Magnitude [dB]')
+ax.legend()
+fig.tight_layout()
 plt.show()

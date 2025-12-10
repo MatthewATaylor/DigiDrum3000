@@ -16,7 +16,15 @@ test_file = os.path.basename(__file__).replace(".py","")
 
 
 SAMPLE_PERIOD = 2272/4
-SOFT_CLIP = 1
+SAMPLE_RATE = 1 / (SAMPLE_PERIOD*10e-9)
+SOFT_CLIP = 0
+
+
+def H_ladder_x4(z, pot_fc, pot_q):
+    wc = pot_fc / 1024 / 4 * SAMPLE_RATE*2
+    s = 2*SAMPLE_RATE * (z-1) / (z+1)  # Bilinear transform (trapezoidal integrator)
+    K = pot_q / 256 * 1/2  # HDL implementation scales tanh input by 3 and pot_q by 1/2
+    return 1 / (K + (1+s/wc)**4)
 
 
 def square(theta):
@@ -41,7 +49,6 @@ def tanh_approx(x):
     if n_sign:
         out = -out
     return out
-
 
 
 def filter_step_float(x, s, pot_cutoff, pot_quality):
@@ -88,8 +95,10 @@ def filter_step(x, s, pot_cutoff, pot_quality):
     kS = (k * S_shift) >> 8
     u = int(x) - kS
     if u > 2**15-1:
+        raise Exception('CLIP')
         u = 2**15-1
     elif u < -2**15:
+        raise Exception('CLIP')
         u = -2**15
     if SOFT_CLIP:
         u = tanh_approx(u)
@@ -117,82 +126,120 @@ def filter_step(x, s, pot_cutoff, pot_quality):
 @cocotb.test()
 async def test_variable_f(dut):
     SECONDS_PER_SAMPLE = SAMPLE_PERIOD * 10e-9
-    CYCLES = 2
+    CYCLES = 6
+    AMPLITUDE = 2**13-1
 
-    CUTOFF = 500
-    Q = 600
+    fc = 5000
+    wc = 2*np.pi*fc
+    pot_fc = int(wc * 1024 * 4 / SAMPLE_RATE / 2)
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
-    dut.rst.value = 1
-    dut.pot_cutoff.value = CUTOFF
-    dut.pot_quality.value = Q
-    await ClockCycles(dut.clk, 2)
-    dut.rst.value = 0
 
-    f_list = [440]
-    for f in f_list:
-        fig, ax = plt.subplots()
+    f_list_fine = np.logspace(3, 4, 1000)
+    w_list_fine = f_list_fine * 2 * np.pi
 
-        samples_per_cycle = 1/f / SECONDS_PER_SAMPLE
+    fig, ax = plt.subplots()
+    q_list = [0, 512, 1023]
+    for q in q_list:
+        gains = []
+        f_list = np.logspace(3, 4, 10)
+        for f in f_list:
+            dut.rst.value = 1
+            dut.pot_cutoff.value = pot_fc
+            dut.pot_quality.value = q
+            await ClockCycles(dut.clk, 2)
+            dut.rst.value = 0
 
-        n_in = []
-        x = []
-        n_out = []
-        y = []
-        y_expected = []
-        y_expected_float = []
+            fig_inner, ax_inner = plt.subplots()
 
-        next_y_expected = None
-        next_y_expected_float = None
-        s = [0,0,0,0]
-        s_float = [0,0,0,0]
+            print(f'Simulating F={f}...')
+            samples_per_cycle = 1/f / SECONDS_PER_SAMPLE
 
-        last_in_cycle = 0
+            n_in = []
+            x = []
+            n_out = []
+            y = []
+            y_expected = []
+            y_expected_float = []
 
-        for i in range(int(CYCLES*samples_per_cycle*SAMPLE_PERIOD)):
-            if i % SAMPLE_PERIOD == 0:
-                n = i / SAMPLE_PERIOD
-                t = n * SECONDS_PER_SAMPLE
-                sample = int(square(2 * math.pi * f * t))
-                dut.sample_in.value = sample
-                dut.sample_in_valid.value = 1
+            next_y_expected = None
+            next_y_expected_float = None
+            s = [0,0,0,0]
+            s_float = [0,0,0,0]
 
-                n_in.append(i)
-                x.append(sample)
+            last_in_cycle = 0
+            max_out = 0
 
-                next_y_expected, s = \
-                    filter_step(sample, s, CUTOFF, Q)
-                next_y_expected_float, s_float = \
-                    filter_step_float(sample, s_float, CUTOFF, Q)
+            for i in range(int(CYCLES*samples_per_cycle*SAMPLE_PERIOD)):
+                if i % SAMPLE_PERIOD == 0:
+                    n = i / SAMPLE_PERIOD
+                    t = n * SECONDS_PER_SAMPLE
+                    sample = int(AMPLITUDE * math.sin(2 * math.pi * f * t))
+                    dut.sample_in.value = sample
+                    dut.sample_in_valid.value = 1
 
-                last_in_cycle = i
-            else:
-                dut.sample_in_valid.value = 0
+                    n_in.append(i)
+                    x.append(sample)
 
-            if dut.sample_out_valid.value == 1:
-                sample = dut.sample_out.value.signed_integer
+                    next_y_expected, s = \
+                        filter_step(sample, s, pot_fc, q)
+                    next_y_expected_float, s_float = \
+                        filter_step_float(sample, s_float, pot_fc, q)
 
-                n_out.append(i)
-                y.append(sample)
-                y_expected.append(next_y_expected)
-                y_expected_float.append(next_y_expected_float)
+                    last_in_cycle = i
+                else:
+                    dut.sample_in_valid.value = 0
 
-                print(f'Recieved: {sample}, Expected: {next_y_expected}, Float: {next_y_expected_float}, Latency: {i-last_in_cycle}')
-                assert sample == next_y_expected
+                if dut.sample_out_valid.value == 1:
+                    sample = dut.sample_out.value.signed_integer
 
-            await ClockCycles(dut.clk, 1)
+                    n_out.append(i)
+                    y.append(sample)
+                    y_expected.append(next_y_expected)
+                    y_expected_float.append(next_y_expected_float)
 
-        ax.scatter(n_in, x, color='black', label='Input')
-        ax.plot(n_out, y, marker='.', label='Output (HDL)')
-        ax.plot(n_out, y_expected, marker='.', label='Output (Python, Fixed Point)')
-        ax.plot(n_out, y_expected_float, marker='.', label='Output (Python, Floating Point)')
+                    if i > samples_per_cycle*SAMPLE_PERIOD*5:
+                        if abs(sample) > max_out:
+                            max_out = abs(sample)
 
-        ax.set_xlabel('Cycle Count')
-        ax.set_ylabel('Sample')
-        ax.legend()
-        fig.suptitle(f'Input Frequency = {f} Hz')
-        fig.tight_layout()
-        plt.show()
+                    # print(f'Recieved: {sample}, Expected: {next_y_expected}, Float: {next_y_expected_float}, Latency: {i-last_in_cycle}')
+                    assert sample == next_y_expected
+
+                await ClockCycles(dut.clk, 1)
+
+            gain = max_out / AMPLITUDE
+            print(f'gain={gain}')
+            gains.append(20 * np.log10(gain))
+
+            ax_inner.scatter(n_in, x, color='black', label='Input')
+            ax_inner.plot(n_out, y, marker='.', label='Output (HDL)')
+            ax_inner.plot(n_out, y_expected, marker='.', label='Output (Python, Fixed Point)')
+            ax_inner.plot(n_out, y_expected_float, marker='.', label='Output (Python, Floating Point)')
+
+            ax_inner.set_xlabel('Cycle Count')
+            ax_inner.set_ylabel('Sample')
+            ax_inner.legend()
+            fig_inner.suptitle(f'Input Frequency = {f} Hz')
+            fig_inner.tight_layout()
+
+        freq_resp_ladder = np.abs(
+            H_ladder_x4(
+                np.exp(1j*w_list_fine/SAMPLE_RATE),
+                pot_fc=pot_fc,
+                pot_q=q
+            )
+        )
+        freq_resp_ladder_db = 20 * np.log10(freq_resp_ladder)
+        lines = ax.plot(f_list_fine, freq_resp_ladder_db, label=f'k={int(round(q/256/2))}')
+        plot_color = lines[0].get_color()
+        ax.scatter(f_list, gains, color=plot_color)
+
+    ax.set_xscale('log')
+    ax.set_xlabel('Frequency [Hz]')
+    ax.set_ylabel('Magnitude [dB]')
+    ax.legend()
+    fig.tight_layout()
+    plt.show()
 
 
 def is_runner():

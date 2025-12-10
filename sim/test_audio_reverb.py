@@ -201,6 +201,7 @@ async def test_a(dut):
 
     next_y_expected = None
 
+    last_cycle_in = None
     for i in range(int(SAMPLES*SAMPLE_PERIOD)):
         if i % SAMPLE_PERIOD == 0:
             n = int(i / SAMPLE_PERIOD)
@@ -210,6 +211,7 @@ async def test_a(dut):
             n_in.append(i)
             x.append(sample)
             next_y_expected = process(sample)
+            last_cycle_in = i
         else:
             dut.sample_in_valid.value = 0
 
@@ -217,7 +219,7 @@ async def test_a(dut):
             sample_l = dut.sample_out_l.value.signed_integer
             sample_r = dut.sample_out_r.value.signed_integer
 
-            print(f'Sample #: {len(y)}, Recieved: {sample_l}, Expected: {next_y_expected}')
+            print(f'Sample #: {len(y)}, Recieved: {sample_l}, Expected: {next_y_expected}, Latency: {i-last_cycle_in}')
 
             n_out.append(i)
             y.append(sample_l)

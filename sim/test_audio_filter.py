@@ -126,6 +126,7 @@ async def test_variable_f(dut):
         s = [0,0,0,0]
         s_float = [0,0,0,0]
 
+        last_cycle_in = None
         for i in range(int(CYCLES*samples_per_cycle*SAMPLE_PERIOD)):
             if i % SAMPLE_PERIOD == 0:
                 n = i / SAMPLE_PERIOD
@@ -141,6 +142,8 @@ async def test_variable_f(dut):
                     filter_step(sample, s, CUTOFF, Q)
                 next_y_expected_float, s_float = \
                     filter_step_float(sample, s_float, CUTOFF, Q)
+
+                last_cycle_in = i
             else:
                 dut.sample_in_valid.value = 0
 
@@ -152,7 +155,7 @@ async def test_variable_f(dut):
                 y_expected.append(next_y_expected)
                 y_expected_float.append(next_y_expected_float)
 
-                print(f'Recieved: {sample}, Expected: {next_y_expected}, Float: {next_y_expected_float}')
+                print(f'Recieved: {sample}, Expected: {next_y_expected}, Float: {next_y_expected_float}, Latency: {i-last_cycle_in}')
                 assert sample == next_y_expected
 
             await ClockCycles(dut.clk, 1)

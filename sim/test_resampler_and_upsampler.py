@@ -30,20 +30,34 @@ def square(theta):
 
 @cocotb.test()
 async def test_sample_period_sweep_wav(dut):
-    samples = None
-    with wave.open('../media/resampled/sq.wav', mode='rb') as wav:
-        nframes = wav.getnframes()
-        frames = wav.readframes(nframes)
-        samples = np.frombuffer(frames, dtype='<h')
+    samples = []
+    # with wave.open('../media/resampled/sq.wav', mode='rb') as wav:
+    #     nframes = wav.getnframes()
+    #     frames = wav.readframes(nframes)
+    #     samples = np.frombuffer(frames, dtype='<h')
+    sin_f = 1000
+    sin_sample_rate = 44100
+    sin_cycles = 8
+    sin_samples_per_cycle = sin_sample_rate / sin_f
+    sin_samples = sin_samples_per_cycle * sin_cycles
+    for i in range(int(sin_samples)):
+        t = i / sin_sample_rate
+        samples.append(int(SAMPLE_MAX * math.sin(2 * math.pi * sin_f * t)))
 
     cocotb.start_soon(Clock(dut.clk, 10, units="ns").start())
     dut.rst.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst.value = 0
 
-    pitch_start = 0
-    pitch_stop = 1024
-    clock_cycles = 79123*32
+    fig, ax = plt.subplots()
+    i_in = []
+    x = []
+    i_out = []
+    y = []
+
+    pitch_start = 1023
+    pitch_stop = 1023
+    clock_cycles = int(2272/4*300)#79123*32
     pitch_step = (pitch_stop-pitch_start) / clock_cycles
     pitch_float = pitch_start
     last_sample_cycle = 0
@@ -54,11 +68,13 @@ async def test_sample_period_sweep_wav(dut):
         dut.pitch.value = int(pitch_float)
 
         if i - last_sample_cycle >= sample_period_in:
+            i_in.append(i)
             last_sample_cycle = i
             if sample_index >= 10:
                 sample = int(samples[sample_index-10])
             else:
                 sample = 0
+            x.append(sample)
             dut.sample_in.value = sample
             dut.sample_in_valid.value = 1
             sample_index += 1
@@ -69,11 +85,16 @@ async def test_sample_period_sweep_wav(dut):
             last_print_cycle = i
             sample = dut.sample_out.value.signed_integer
             print(f'Sample value: {sample}')
+            y.append(sample)
+            i_out.append(i)
 
         await ClockCycles(dut.clk, 1)
 
         pitch_float += pitch_step
 
+    ax.plot(i_in, x, marker='.')
+    ax.plot(i_out, y, marker='.')
+    plt.show()
 
 def is_runner():
     hdl_toplevel_lang = os.getenv("HDL_TOPLEVEL_LANG", "verilog")

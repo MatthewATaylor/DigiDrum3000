@@ -14,8 +14,8 @@ test_file = os.path.basename(__file__).replace(".py","")
 
 
 SAMPLE_PERIOD_IN = 2272/4
-F = 10000
-SIG_CYCLES = 10
+F = 1000
+SIG_CYCLES = 3
 DURATION_S = 1/F * SIG_CYCLES
 CLOCK_CYCLES = int(DURATION_S / 10e-9)
 SAMPLE_MAX = 2**15 - 1
