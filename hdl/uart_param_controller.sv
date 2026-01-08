@@ -9,6 +9,13 @@ module uart_param_controller
         input wire en,
         input wire uart_din,
 
+        output logic [2:0] output_src,
+        output logic [2:0] crush_src,
+        output logic [2:0] distortion_src,
+        output logic [2:0] filter_src,
+        output logic [2:0] reverb_src,
+        output logic [2:0] delay_src,
+
         output logic [9:0] volume,
         output logic [9:0] pitch,
         output logic [9:0] delay_wet,
@@ -49,22 +56,29 @@ module uart_param_controller
 
     always_ff @ (posedge clk) begin
         if (rst | ~en) begin
-            volume <= 10'd512;
-            pitch <= 10'd512;
-            delay_wet <= 10'd512;
-            delay_rate <= 10'd512;
-            delay_feedback <= 10'd512;
-            reverb_wet <= 10'd512;
-            reverb_size <= 10'd512;
-            reverb_feedback <= 10'd512;
-            filter_quality <= 10'd0;
-            filter_cutoff <= 10'd1023;
+            output_src     <= 3'b010;  // From reverb
+            crush_src      <= 3'b100;  // From distortion
+            distortion_src <= 3'b001;  // From delay
+            filter_src     <= 3'b101;  // From crush
+            reverb_src     <= 3'b011;  // From filter
+            delay_src      <= 3'b000;  // From base
+
+            volume           <= 10'd512;
+            pitch            <= 10'd512;
+            delay_wet        <= 10'd512;
+            delay_rate       <= 10'd512;
+            delay_feedback   <= 10'd512;
+            reverb_wet       <= 10'd512;
+            reverb_size      <= 10'd512;
+            reverb_feedback  <= 10'd512;
+            filter_quality   <= 10'd0;
+            filter_cutoff    <= 10'd1023;
             distortion_drive <= 10'd512;
-            crush_pressure <= 10'd0;
-            delay_rate_fast <= 1'b0;
+            crush_pressure   <= 10'd0;
+            delay_rate_fast  <= 1'b0;
        
             uart_dout_hold <= 8'b0;
-            uart_byte_num <= 1'b0;
+            uart_byte_num  <= 1'b0;
         end else begin
             if (uart_dout_valid) begin
                 uart_byte_num <= ~uart_byte_num;

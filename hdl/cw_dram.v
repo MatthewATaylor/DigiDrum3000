@@ -1,5 +1,3 @@
-
-// file: lab06_clk_wiz.v
 // (c) Copyright 2017-2018, 2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // This file contains confidential and proprietary information
@@ -44,52 +42,19 @@
 //
 // THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
 // PART OF THIS FILE AT ALL TIMES.
-//----------------------------------------------------------------------------
-// User entered comments
-//----------------------------------------------------------------------------
-// None
-//
-//----------------------------------------------------------------------------
-//  Output     Output      Phase    Duty Cycle   Pk-to-Pk     Phase
-//   Clock     Freq (MHz)  (degrees)    (%)     Jitter (ps)  Error (ps)
-//----------------------------------------------------------------------------
-// clk_controller__83.33333______0.000______50.0______135.981_____98.575
-// clk_ddr3__333.33333______0.000______50.0______104.542_____98.575
-// clk_ddr3_90__333.33333_____90.000______50.0______104.542_____98.575
-// clk_camera__200.00000______0.000______50.0______114.829_____98.575
-// __clk_xc__25.00000______0.000______50.0______175.402_____98.575
-// clk_passthrough__100.00000______0.000______50.0______130.958_____98.575
-//
-//----------------------------------------------------------------------------
-// Input Clock   Freq (MHz)    Input Jitter (UI)
-//----------------------------------------------------------------------------
-// __primary_________100.000____________0.010
 
 `timescale 1ps/1ps
 
 module cw_dram
 
- (// Clock in ports
-  // Clock out ports
-  output        clk_controller,
-  output        clk_ddr3,
-  output        clk_ddr3_90,
-  output        clk_ddr3_ref,
-  // Status and control signals
+ (
+  output        clk_dram_ref,  // 200 MHz
   input         reset,
   output        locked,
-  input         clk_in1
+  input         clk_in1        // 100 MHz
  );
-  // Input buffering
-  //------------------------------------
-wire clk_in1_clk_wiz_0;
-wire clk_in2_clk_wiz_0;
-assign clk_in1_clk_wiz_0 = clk_in1;
-  // TODO: Determine if it's ok to leave out the IBUF
-  // IBUF clkin1_ibufg
-  //  (.O (clk_in1_clk_wiz_0),
-  //   .I (clk_in1));
-
+  wire clk_in1_cw_dram;
+  assign clk_in1_cw_dram = clk_in1;
 
   // Clocking PRIMITIVE
   //------------------------------------
@@ -98,22 +63,21 @@ assign clk_in1_clk_wiz_0 = clk_in1;
   //    * Unused inputs are tied off
   //    * Unused outputs are labeled unused
 
-  wire        clk_controller_clk_wiz_0;
-  wire        clk_ddr3_clk_wiz_0;
-  wire        clk_ddr3_90_clk_wiz_0;
-  wire        clk_ddr3_ref_clk_wiz_0;
-  //wire        clk_passthrough_clk_wiz_0;
+  wire        clk_dram_ref_cw_dram;
 
   wire [15:0] do_unused;
   wire        drdy_unused;
   wire        psdone_unused;
   wire        locked_int;
-  wire        clkfbout_clk_wiz_0;
-  wire        clkfbout_buf_clk_wiz_0;
+  wire        clkfbout_cw_dram;
+  wire        clkfbout_buf_cw_dram;
   wire        clkfboutb_unused;
+  wire        clkout0_unused;
   wire        clkout0b_unused;
   wire        clkout1b_unused;
+  wire        clkout2_unused;
   wire        clkout2b_unused;
+  wire        clkout3_unused;
   wire        clkout3b_unused;
   wire        clkout4_unused;
   wire        clkout5_unused;
@@ -128,49 +92,33 @@ assign clk_in1_clk_wiz_0 = clk_in1;
     .COMPENSATION         ("ZHOLD"),
     .STARTUP_WAIT         ("FALSE"),
     .DIVCLK_DIVIDE        (1),
-    .CLKFBOUT_MULT_F      (10.000),
+    .CLKFBOUT_MULT_F      (8.000),
     .CLKFBOUT_PHASE       (0.000),
     .CLKFBOUT_USE_FINE_PS ("FALSE"),
-    .CLKOUT0_DIVIDE_F     (12.000),
-    .CLKOUT0_PHASE        (0.000),
-    .CLKOUT0_DUTY_CYCLE   (0.500),
-    .CLKOUT0_USE_FINE_PS  ("FALSE"),
-    .CLKOUT1_DIVIDE       (3),
+    .CLKOUT1_DIVIDE       (4),
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
-    .CLKOUT2_DIVIDE       (3),
-    .CLKOUT2_PHASE        (90.000),
-    .CLKOUT2_DUTY_CYCLE   (0.500),
-    .CLKOUT2_USE_FINE_PS  ("FALSE"),
-    .CLKOUT3_DIVIDE       (5),
-    .CLKOUT3_PHASE        (0.000),
-    .CLKOUT3_DUTY_CYCLE   (0.500),
-    .CLKOUT3_USE_FINE_PS  ("FALSE"),
-    //.CLKOUT5_DIVIDE       (10),
-    //.CLKOUT5_PHASE        (0.000),
-    //.CLKOUT5_DUTY_CYCLE   (0.500),
-    //.CLKOUT5_USE_FINE_PS  ("FALSE"),
     .CLKIN1_PERIOD        (10.000))
   mmcm_adv_inst
     // Output clocks
    (
-    .CLKFBOUT            (clkfbout_clk_wiz_0),
+    .CLKFBOUT            (clkfbout_cw_dram),
     .CLKFBOUTB           (clkfboutb_unused),
-    .CLKOUT0             (clk_controller_clk_wiz_0),
+    .CLKOUT0             (clkout0_unused),
     .CLKOUT0B            (clkout0b_unused),
-    .CLKOUT1             (clk_ddr3_clk_wiz_0),
+    .CLKOUT1             (clk_dram_ref_cw_dram),
     .CLKOUT1B            (clkout1b_unused),
-    .CLKOUT2             (clk_ddr3_90_clk_wiz_0),
+    .CLKOUT2             (clkout2_unused),
     .CLKOUT2B            (clkout2b_unused),
-    .CLKOUT3             (clk_ddr3_ref_clk_wiz_0),
+    .CLKOUT3             (clkout3_unused),
     .CLKOUT3B            (clkout3b_unused),
     .CLKOUT4             (clkout4_unused),
-    .CLKOUT5             (clkout5_unused),//(clk_passthrough_clk_wiz_0),
+    .CLKOUT5             (clkout5_unused),
     .CLKOUT6             (clkout6_unused),
      // Input clock control
-    .CLKFBIN             (clkfbout_buf_clk_wiz_0),
-    .CLKIN1              (clk_in1_clk_wiz_0),
+    .CLKFBIN             (clkfbout_buf_cw_dram),
+    .CLKIN1              (clk_in1_cw_dram),
     .CLKIN2              (1'b0),
      // Tied to always select the primary input clock
     .CLKINSEL            (1'b1),
@@ -202,28 +150,12 @@ assign clk_in1_clk_wiz_0 = clk_in1;
   //-----------------------------------
 
   BUFG clkf_buf
-   (.O (clkfbout_buf_clk_wiz_0),
-    .I (clkfbout_clk_wiz_0));
+   (.O (clkfbout_buf_cw_dram),
+    .I (clkfbout_cw_dram));
 
   BUFG clkout1_buf
-   (.O   (clk_controller),
-    .I   (clk_controller_clk_wiz_0));
-
-  BUFG clkout2_buf
-   (.O   (clk_ddr3),
-    .I   (clk_ddr3_clk_wiz_0));
-
-  BUFG clkout3_buf
-   (.O   (clk_ddr3_90),
-    .I   (clk_ddr3_90_clk_wiz_0));
-
-  BUFG clkout4_buf
-   (.O   (clk_ddr3_ref),
-    .I   (clk_ddr3_ref_clk_wiz_0));
-
-  //BUFG clkout6_buf
-  // (.O   (clk_passthrough),
-  //  .I   (clk_passthrough_clk_wiz_0));
+   (.O   (clk_dram_ref),
+    .I   (clk_dram_ref_cw_dram));
 
 endmodule
 

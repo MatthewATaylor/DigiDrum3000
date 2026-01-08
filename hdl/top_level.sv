@@ -5,63 +5,38 @@ module top_level
         input  wire         clk_100mhz,
         output logic [15:0] led,
         input  wire  [15:0] sw,
-        input  wire  [3:0]  btn,
-        output logic [2:0]  rgb0,
-        output logic [2:0]  rgb1,
-        input  wire         midi_pin,
-        output logic        spkl,
-        output logic        spkr,
+        input  wire   [4:0] btn,
+        output logic        spk,
+        output logic        aud_sd_n,
        
         // UART
-        input wire          uart_rxd,
+        input  wire         uart_rxd,
         output logic        uart_txd,
 
-        // SPI ADC
-        output logic        copi,
-        output logic        dclk,
-        output logic        cs0,
-        output logic        cs1,
-        input wire          cipo,
-
-        // Patch pins
-        inout wire          dry_pin,
-        inout wire          crush_pin,
-        inout wire          distortion_pin,
-        inout wire          filter_pin,
-        inout wire          reverb_pin,
-        inout wire          delay_pin,
-
         // Seven segment
-        output logic [3:0]  ss0_an,  //anode control for upper four digits of seven-seg display
-        output logic [3:0]  ss1_an,  //anode control for lower four digits of seven-seg display
-        output logic [6:0]  ss0_c,   //cathode controls for the segments of upper four digits
-        output logic [6:0]  ss1_c,   //cathode controls for the segments of lower four digits
-        
-        // // HDMI port
-        output logic [2:0]  hdmi_tx_p,  //hdmi output signals (positives) (blue, green, red)
-        output logic [2:0]  hdmi_tx_n,  //hdmi output signals (negatives) (blue, green, red)
-        output logic        hdmi_clk_p, hdmi_clk_n,  //differential hdmi clock
+        output logic  [7:0] ss_a,
+        output logic  [6:0] ss_c,
 
-        // SDRAM (DDR3) ports
-        inout wire   [15:0] ddr3_dq,       //data input/output
-        inout wire   [1:0]  ddr3_dqs_n,    //data input/output differential strobe (negative)
-        inout wire   [1:0]  ddr3_dqs_p,    //data input/output differential strobe (positive)
-        output wire  [13:0] ddr3_addr,     //address
-        output wire  [2:0]  ddr3_ba,       //bank address
-        output wire         ddr3_ras_n,    //row active strobe
-        output wire         ddr3_cas_n,    //column active strobe
-        output wire         ddr3_we_n,     //write enable
-        output wire         ddr3_reset_n,  //reset (active low!!!)
-        output wire         ddr3_clk_p,    //general differential clock (p)
-        output wire         ddr3_clk_n,    //general differential clock (n)
-        output wire         ddr3_clke,     //clock enable
-        output wire  [1:0]  ddr3_dm,       //data mask
-        output wire         ddr3_odt       //on-die termination (helps impedance match)
+        // SDRAM (DDR2) ports
+        inout  wire [15:0] ddr2_dq,
+        inout  wire  [1:0] ddr2_dqs_n,
+        inout  wire  [1:0] ddr2_dqs_p,
+        output wire [12:0] ddr2_addr,
+        output wire  [2:0] ddr2_ba,
+        output wire        ddr2_ras_n,
+        output wire        ddr2_cas_n,
+        output wire        ddr2_we_n,
+        output wire  [0:0] ddr2_ck_p,
+        output wire  [0:0] ddr2_ck_n,
+        output wire  [0:0] ddr2_cke,
+        output wire  [0:0] ddr2_odt,
+        output wire  [0:0] ddr2_cs_n,
+        output wire  [1:0] ddr2_dm
     );
 
     localparam INSTRUMENT_COUNT = 10;
 
-    // First three elements are also mapped to btn[3:1]
+    // First three elements are also mapped to btn[4:1]
     localparam [6:0] MIDI_KEYS [0:INSTRUMENT_COUNT-1] = {
         7'd36,  // bd
         7'd38,  // sd
@@ -75,65 +50,60 @@ module top_level
         7'd51   // rc
     };
 
-    logic clk;
+    // TODO: add MIDI pin
+    logic  midi_pin;
+    assign midi_pin = 1'b0;
+
+    assign aud_sd_n = 1'b1;  // Active low shutdown signal for audio output
+
+    logic  clk;
     assign clk = clk_100mhz;
+    
+    // MIG output
+    logic  clk_dram_ctrl;  // 150 MHz
+    logic  rst_dram_ctrl;
 
     // cw_dram
-    logic clk_dram_ctrl;
-    logic clk_ddr3;
-    logic clk_ddr3_90;
-    logic clk_ddr3_ref;
-    logic cw_dram_locked;
+    logic  clk_dram_ref;   // 200 MHz
+    logic  cw_dram_locked;
 
-    // cw_hdmi
-    logic clk_pixel;
-    logic clk_tmds;
-    logic cw_hdmi_locked;
+    logic  cw_dram_locked_dram_ref_buf [1:0];
+    logic  cw_dram_locked_dram_ref;
+    assign cw_dram_locked_dram_ref = cw_dram_locked_dram_ref_buf[0];
 
-    logic clk_locked;
-    assign clk_locked = cw_dram_locked & cw_hdmi_locked;
+    logic  init_calib_complete_dram_ctrl;
+    logic  init_calib_complete_buf [1:0];
+    logic  init_calib_complete;
+    assign init_calib_complete = init_calib_complete_buf[0];
 
-    logic rst_buf [1:0];
-    logic rst;
-    assign rst = rst_buf[0] | ~clk_locked;
-   
-    logic rst_dram_ctrl_buf [1:0];
-    logic rst_dram_ctrl;
-    assign rst_dram_ctrl = rst_dram_ctrl_buf[0] | ~clk_locked;
+    logic  rst_buf [1:0];
+    logic  rst;
+    assign rst = rst_buf[0] | ~cw_dram_locked | ~init_calib_complete;   
 
-    logic rst_pixel_buf [1:0];
-    logic rst_pixel;
-    assign rst_pixel = rst_pixel_buf[0] | ~clk_locked;
+    logic  rst_dram_ref_buf [1:0];
+    logic  rst_dram_ref;
+    assign rst_dram_ref = rst_dram_ref_buf[0] | ~cw_dram_locked_dram_ref;
 
-    logic uart_rxd_pixel_buf [1:0];
-    logic uart_din_pixel;
-    assign uart_din_pixel = uart_rxd_pixel_buf[0];
-
-    logic uart_rxd_buf [1:0];
-    logic uart_din;
+    logic  uart_rxd_buf [1:0];
+    logic  uart_din;
     assign uart_din = uart_rxd_buf[0];
 
-    logic midi_din_buf [1:0];
-    logic midi_din;
+    logic  midi_din_buf [1:0];
+    logic  midi_din;
     assign midi_din = midi_din_buf[0];
 
-    logic sample_load_complete_dram_ctrl;
-    logic sample_load_complete_buf [1:0];
-    logic sample_load_complete;
+    logic  sample_load_complete_dram_ctrl;
+    logic  sample_load_complete_buf [1:0];
+    logic  sample_load_complete;
     assign sample_load_complete = sample_load_complete_buf[0];
 
-    logic sample_load_complete_pixel_buf[1:0];
-    logic sample_load_complete_pixel;
-    assign sample_load_complete_pixel = sample_load_complete_buf[0];
-
-    logic [INSTRUMENT_COUNT-1:0] instr_debug_btn_buf [1:0];
-    logic [INSTRUMENT_COUNT-1:0] instr_debug_btn;
+    logic  [INSTRUMENT_COUNT-1:0] instr_debug_btn_buf [1:0];
+    logic  [INSTRUMENT_COUNT-1:0] instr_debug_btn;
     assign instr_debug_btn = instr_debug_btn_buf[0];
-    logic [INSTRUMENT_COUNT-1:0] instr_trig_debug;
+    logic  [INSTRUMENT_COUNT-1:0] instr_trig_debug;
 
-    logic [23:0]  addr_offsets [INSTRUMENT_COUNT:0];
-    logic         addr_offsets_valid;
-    logic         addr_offsets_valid_pixel;
+    logic [23:0] addr_offsets [INSTRUMENT_COUNT:0];
+    logic        addr_offsets_valid;
 
 
     logic [2:0] output_src;
@@ -142,7 +112,6 @@ module top_level
     logic [2:0] filter_src;
     logic [2:0] reverb_src;
     logic [2:0] delay_src;
-
 
     logic [9:0] volume;
     logic [9:0] pitch;
@@ -158,85 +127,34 @@ module top_level
     logic [9:0] crush_pressure;
     logic       delay_rate_fast;
 
-    logic [9:0] volume_pcb;
-    logic [9:0] pitch_pcb;
-    logic [9:0] delay_wet_pcb;
-    logic [9:0] delay_rate_pcb;
-    logic [9:0] delay_feedback_pcb;
-    logic [9:0] reverb_wet_pcb;
-    logic [9:0] reverb_size_pcb;
-    logic [9:0] reverb_feedback_pcb;
-    logic [9:0] filter_quality_pcb;
-    logic [9:0] filter_cutoff_pcb;
-    logic [9:0] distortion_drive_pcb;
-    logic [9:0] crush_pressure_pcb;
-
-    logic [9:0] volume_uart;
-    logic [9:0] pitch_uart;
-    logic [9:0] delay_wet_uart;
-    logic [9:0] delay_rate_uart;
-    logic [9:0] delay_feedback_uart;
-    logic [9:0] reverb_wet_uart;
-    logic [9:0] reverb_size_uart;
-    logic [9:0] reverb_feedback_uart;
-    logic [9:0] filter_quality_uart;
-    logic [9:0] filter_cutoff_uart;
-    logic [9:0] distortion_drive_uart;
-    logic [9:0] crush_pressure_uart;
-    logic       delay_rate_fast_uart;
     uart_param_controller uart_ctrl (
         .clk(clk),
         .rst(rst),
 
         .en(sample_load_complete & addr_offsets_valid),
         .uart_din(uart_din),
-        
-        .volume(volume_uart),
-        .pitch(pitch_uart),
-        .delay_wet(delay_wet_uart),
-        .delay_rate(delay_rate_uart),
-        .delay_feedback(delay_feedback_uart),
-        .reverb_wet(reverb_wet_uart),
-        .reverb_size(reverb_size_uart),
-        .reverb_feedback(reverb_feedback_uart),
-        .filter_quality(filter_quality_uart),
-        .filter_cutoff(filter_cutoff_uart),
-        .distortion_drive(distortion_drive_uart),
-        .crush_pressure(crush_pressure_uart),
-        .delay_rate_fast(delay_rate_fast_uart)
-    );
 
-    always_comb begin
-        if (sw[1]) begin
-            volume = volume_uart;
-            pitch = pitch_uart;
-            delay_wet = delay_wet_uart;
-            delay_rate = delay_rate_uart;
-            delay_feedback = delay_feedback_uart;
-            reverb_wet = reverb_wet_uart;
-            reverb_size = reverb_size_uart;
-            reverb_feedback = reverb_feedback_uart;
-            filter_quality = filter_quality_uart;
-            filter_cutoff = filter_cutoff_uart;
-            distortion_drive = distortion_drive_uart;
-            crush_pressure = crush_pressure_uart;
-            delay_rate_fast = delay_rate_fast_uart;
-        end else begin
-            volume = volume_pcb;
-            pitch = pitch_pcb;
-            delay_wet = delay_wet_pcb;
-            delay_rate = delay_rate_pcb;
-            delay_feedback = delay_feedback_pcb;
-            reverb_wet = reverb_wet_pcb;
-            reverb_size = reverb_size_pcb;
-            reverb_feedback = reverb_feedback_pcb;
-            filter_quality = filter_quality_pcb;
-            filter_cutoff = filter_cutoff_pcb;
-            distortion_drive = distortion_drive_pcb;
-            crush_pressure = crush_pressure_pcb;
-            delay_rate_fast = sw[0];
-        end
-    end
+        .output_src(output_src),
+        .crush_src(crush_src),
+        .distortion_src(distortion_src),
+        .filter_src(filter_src),
+        .reverb_src(reverb_src),
+        .delay_src(delay_src),
+        
+        .volume(volume),
+        .pitch(pitch),
+        .delay_wet(delay_wet),
+        .delay_rate(delay_rate),
+        .delay_feedback(delay_feedback),
+        .reverb_wet(reverb_wet),
+        .reverb_size(reverb_size),
+        .reverb_feedback(reverb_feedback),
+        .filter_quality(filter_quality),
+        .filter_cutoff(filter_cutoff),
+        .distortion_drive(distortion_drive),
+        .crush_pressure(crush_pressure),
+        .delay_rate_fast(delay_rate_fast)
+    );
 
 
     logic [13:0] sample_period;
@@ -251,6 +169,7 @@ module top_level
     // Synchronization
     always_ff @ (posedge clk) begin
         rst_buf <= {btn[0], rst_buf[1]};
+        init_calib_complete_buf <= {init_calib_complete_dram_ctrl, init_calib_complete_buf[1]};
 
         if (rst) begin
             for (int i=0; i<2; i++) begin
@@ -264,35 +183,25 @@ module top_level
             midi_din_buf <= {midi_pin, midi_din_buf[1]};
 
             // sample_load_complete CDC
-            // From 83.333 MHz to 100 MHz
+            // From 75 MHz to 100 MHz
             sample_load_complete_buf <= {sample_load_complete_dram_ctrl, sample_load_complete_buf[1]};
 
-            instr_debug_btn_buf <= {btn[3:1], instr_debug_btn_buf[1]};
+            instr_debug_btn_buf <= {btn[4:1], instr_debug_btn_buf[1]};
         end
     end
-    always_ff @ (posedge clk_dram_ctrl) begin
-        rst_dram_ctrl_buf <= {btn[0], rst_dram_ctrl_buf[1]};
-    end
-    always_ff @ (posedge clk_pixel) begin
-        rst_pixel_buf <= {btn[0], rst_pixel_buf[1]};
-
-        if (rst_pixel) begin
-            for (int i=0; i<2; i++) begin
-                uart_rxd_pixel_buf[i] <= 0;
-                sample_load_complete_pixel_buf[i] <= 0;
-            end
-        end else begin
-            uart_rxd_pixel_buf <= {uart_rxd, uart_rxd_pixel_buf[1]};
-
-            // sample_load_complete CDC
-            // From 83.333 MHz to 74.25 MHz
-            sample_load_complete_pixel_buf <= {sample_load_complete_dram_ctrl, sample_load_complete_pixel_buf[1]};
-        end
+    always_ff @ (posedge clk_dram_ref) begin
+        rst_dram_ref_buf <= {btn[0], rst_dram_ref_buf[1]};
+        cw_dram_locked_dram_ref_buf <= {
+            cw_dram_locked,
+            cw_dram_locked_dram_ref_buf[1]
+        };
     end
 
+
+    // Instrument trigger buttons
     genvar i;
     generate
-        for (i=0; i<3; i++) begin
+        for (i=0; i<4; i++) begin
             debouncer_trig db_instr_trig (
                 .clk(clk),
                 .rst(rst),
@@ -301,38 +210,21 @@ module top_level
             );
         end
     endgenerate
-
     always_comb begin
-        for (int i=3; i<INSTRUMENT_COUNT; i++) begin
+        for (int i=4; i<INSTRUMENT_COUNT; i++) begin
             instr_trig_debug[i] = 1'b0;
         end
     end
 
+
+    // Generate 200 MHz DRAM controller system clock
     cw_dram cw_dram_i (
-        .clk_controller(clk_dram_ctrl),
-        .clk_ddr3(clk_ddr3),
-        .clk_ddr3_90(clk_ddr3_90),
-        .clk_ddr3_ref(clk_ddr3_ref),
+        .clk_dram_ref(clk_dram_ref),
         .reset(btn[0]),
         .locked(cw_dram_locked),
         .clk_in1(clk)
     );
-    cw_hdmi cw_hdmi_i (
-        .clk_pixel(clk_pixel),
-        .clk_tmds(clk_tmds),
-        .reset(btn[0]),
-        .locked(cw_hdmi_locked),
-        .sysclk(clk)
-    );
 
-    logic [10:0] dram_read_h_count;
-    logic [9:0]  dram_read_v_count;
-    logic        dram_read_active_draw;
-    logic [15:0] dram_read_video_data;
-
-    logic        dram_write_video_valid;
-    logic        dram_write_video_last;
-    logic [15:0] dram_write_video_data;
 
     logic [127:0] write_axis_data;
     logic         write_axis_tlast;
@@ -344,20 +236,12 @@ module top_level
     ) dwr (
         .clk(clk),
         .clk_dram_ctrl(clk_dram_ctrl),
-        .clk_pixel(clk_pixel),
         .rst(rst),
-        .rst_pixel(rst_pixel),
-        .uart_din(uart_din_pixel),
+        .uart_din(uart_din),
         
-        .sample_load_complete(sample_load_complete_pixel),
         .addr_offsets(addr_offsets),
         .addr_offsets_valid(addr_offsets_valid),
-        .addr_offsets_valid_pixel(addr_offsets_valid_pixel),
     
-        .pixel_valid(dram_write_video_valid),
-        .pixel_data(dram_write_video_data),
-        .pixel_last(dram_write_video_last),
-
         .fifo_receiver_axis_tvalid(write_axis_valid),
         .fifo_receiver_axis_tready(write_axis_ready),
         .fifo_receiver_axis_tdata(write_axis_data),
@@ -436,38 +320,17 @@ module top_level
         .sample_period(sample_period_dram_out)
     );
 
-    logic         read_data_video_axis_valid;
-    logic         read_data_video_axis_ready;
-    logic [127:0] read_data_video_axis_data;
-    logic         read_data_video_axis_tlast;
-    logic         read_data_video_axis_af;
-
-    dram_reader_video drd_video (
-        .clk_pixel(clk_pixel),
-        .clk_dram_ctrl(clk_dram_ctrl),
-        .rst_pixel(rst_pixel),
-        .rst_dram_ctrl(rst_dram_ctrl),
-
-        .h_count_hdmi(dram_read_h_count),
-        .v_count_hdmi(dram_read_v_count),
-        .active_draw_hdmi(dram_read_active_draw),
-
-        .pixel(dram_read_video_data),
-
-        .fifo_sender_axis_tvalid(read_data_video_axis_valid),
-        .fifo_sender_axis_tready(read_data_video_axis_ready),
-        .fifo_sender_axis_tdata(read_data_video_axis_data),
-        .fifo_sender_axis_tlast(read_data_video_axis_tlast),
-        .fifo_sender_axis_af(read_data_video_axis_af)
-    );
-
     logic [23:0]  memrequest_addr;
     logic         memrequest_en;
     logic [127:0] memrequest_write_data;
     logic         memrequest_write_enable;
-    logic [127:0] memrequest_resp_data;
-    logic         memrequest_complete;
+    logic         memrequest_write_ready;
+    logic [127:0] memrequest_read_data;
+    logic         memrequest_read_valid;
+
+    logic         memrequest_ready;
     logic         memrequest_busy;
+    assign        memrequest_busy = ~memrequest_ready;
 
     traffic_generator tg (
         .clk_dram_ctrl(clk_dram_ctrl),
@@ -479,8 +342,9 @@ module top_level
         .memrequest_en(memrequest_en),
         .memrequest_write_data(memrequest_write_data),
         .memrequest_write_enable(memrequest_write_enable),
-        .memrequest_resp_data(memrequest_resp_data),
-        .memrequest_complete(memrequest_complete),
+        .memrequest_write_ready(memrequest_write_ready),
+        .memrequest_read_data(memrequest_read_data),
+        .memrequest_read_valid(memrequest_read_valid),
         .memrequest_busy(memrequest_busy),
 
         .write_axis_data(write_axis_data),
@@ -495,72 +359,55 @@ module top_level
 
         .read_data_audio_axis_valid(read_data_audio_axis_valid),
         .read_data_audio_axis_ready(read_data_audio_axis_ready),
-        .read_data_audio_axis_data(read_data_audio_axis_data),
-
-        .read_data_video_axis_valid(read_data_video_axis_valid),
-        .read_data_video_axis_ready(read_data_video_axis_ready),
-        .read_data_video_axis_data(read_data_video_axis_data),
-        .read_data_video_axis_tlast(read_data_video_axis_tlast),
-        .read_data_video_axis_af(read_data_video_axis_af)
+        .read_data_audio_axis_data(read_data_audio_axis_data)
     );
 
-    ddr3_top #(
-        .CONTROLLER_CLK_PERIOD(12_000), //ps, clock period of the controller interface
-        .DDR3_CLK_PERIOD(3_000), //ps, clock period of the DDR3 RAM device (must be 1/4 of the CONTROLLER_CLK_PERIOD)
-        .ROW_BITS(14), //width of row address
-        .COL_BITS(10), //width of column address
-        .BA_BITS(3), //width of bank address
-        .BYTE_LANES(2), //number of DDR3 modules to be controlled
-        .AUX_WIDTH(16), //width of aux line (must be >= 4)
-        .WB2_ADDR_BITS(32), //width of 2nd wishbone address bus
-        .WB2_DATA_BITS(32), //width of 2nd wishbone data bus
-        .MICRON_SIM(0), //enable faster simulation for micron ddr3 model (shorten POWER_ON_RESET_HIGH and INITIAL_CKE_LOW)
-        .ODELAY_SUPPORTED(0), //set to 1 when ODELAYE2 is supported
-        .SECOND_WISHBONE(0), //set to 1 if 2nd wishbone is needed
-        .ECC_ENABLE(0), // set to 1 or 2 to add ECC (1 = Side-band ECC per burst, 2 = Side-band ECC per 8 bursts , 3 = Inline ECC )
-        .WB_ERROR(0) // set to 1 to support Wishbone error (asserts at ECC double bit error)
-    ) ddr3_top (
-        // Clock and reset
-        .i_controller_clk(clk_dram_ctrl),
-        .i_ddr3_clk(clk_ddr3),
-        .i_ref_clk(clk_ddr3_ref),
-        .i_ddr3_clk_90(clk_ddr3_90),
-        .i_rst_n(!rst_dram_ctrl),
+    mig_nexys4ddr mig_nexys4ddr_i (
+        // Memory interface ports
+        .ddr2_addr           (ddr2_addr),
+        .ddr2_ba             (ddr2_ba),
+        .ddr2_cas_n          (ddr2_cas_n),
+        .ddr2_ck_n           (ddr2_ck_n),
+        .ddr2_ck_p           (ddr2_ck_p),
+        .ddr2_cke            (ddr2_cke),
+        .ddr2_ras_n          (ddr2_ras_n),
+        .ddr2_we_n           (ddr2_we_n),
+        .ddr2_dq             (ddr2_dq),
+        .ddr2_dqs_n          (ddr2_dqs_n),
+        .ddr2_dqs_p          (ddr2_dqs_p),
+        .ddr2_odt            (ddr2_odt),
+        .ddr2_cs_n           (ddr2_cs_n),
+        .ddr2_dm             (ddr2_dm),
 
-        // Inputs
-        .i_wb_cyc(1), //bus cycle active (1 = normal operation, 0 = all ongoing transaction are to be cancelled)
-        .i_wb_stb(memrequest_en), //request a transfer
-        .i_wb_we(memrequest_write_enable), //write-enable (1 = write, 0 = read)
-        .i_wb_addr(memrequest_addr), //burst-addressable {row,bank,col}
-        .i_wb_data(memrequest_write_data), //write data, for a 4:1 controller data width is 8 times the number of pins on the device
-        .i_wb_sel(16'hffff), //byte strobe for write (1 = write the byte)
-        .i_aux(memrequest_write_enable), //for AXI-interface compatibility (given upon strobe)
+        // Application interface ports
+        .app_addr            ({memrequest_addr, 3'b0}),
+        .app_cmd             ({2'b0, ~memrequest_write_enable}),
+        .app_en              (memrequest_en),
+        .app_rdy             (memrequest_ready),
+        .app_wdf_data        (memrequest_write_data),
+        .app_wdf_end         (memrequest_write_enable),
+        .app_wdf_wren        (memrequest_write_enable),
+        .app_wdf_rdy         (memrequest_write_ready),
+        .app_wdf_mask        (16'b0),
+        .app_rd_data         (memrequest_read_data),
+        .app_rd_data_valid   (memrequest_read_valid),
+        .app_rd_data_end     (),
+        .app_sr_req          (1'b0),
+        .app_ref_req         (1'b0),
+        .app_zq_req          (1'b0),
+        .app_sr_active       (),
+        .app_ref_ack         (),
+        .app_zq_ack          (),
 
-        // Outputs
-        .o_wb_stall(memrequest_busy), //1 = busy, cannot accept requests
-        .o_wb_ack(memrequest_complete), //1 = read/write request has completed
-        .o_wb_err(), //1 = Error due to ECC double bit error (fixed to 0 if WB_ERROR = 0)
-        .o_wb_data(memrequest_resp_data), //read data, for a 4:1 controller data width is 8 times the number of pins on the device
-        .o_aux(),
+        .ui_clk              (clk_dram_ctrl),
+        .ui_clk_sync_rst     (rst_dram_ctrl),
 
-        // DDR3 I/O interface
-        .o_ddr3_clk_p(ddr3_clk_p),
-        .o_ddr3_clk_n(ddr3_clk_n),
-        .o_ddr3_reset_n(ddr3_reset_n),
-        .o_ddr3_cke(ddr3_clke), // CKE
-        .o_ddr3_cs_n(), // chip select signal (controls rank 1 only) tied to 0 on this board by default.
-        .o_ddr3_ras_n(ddr3_ras_n), // RAS#
-        .o_ddr3_cas_n(ddr3_cas_n), // CAS#
-        .o_ddr3_we_n(ddr3_we_n), // WE#
-        .o_ddr3_addr(ddr3_addr),
-        .o_ddr3_ba_addr(ddr3_ba),
-        .io_ddr3_dq(ddr3_dq),
-        .io_ddr3_dqs(ddr3_dqs_p),
-        .io_ddr3_dqs_n(ddr3_dqs_n),
-        .o_ddr3_dm(ddr3_dm),
-        .o_ddr3_odt(ddr3_odt), // on-die termination
-        .o_debug1()
+        .sys_clk_i           (clk_dram_ref),
+        .sys_rst             (~rst_dram_ref),
+        
+        .init_calib_complete (init_calib_complete_dram_ctrl)
     );
+
 
     audio_processor aud_pcr (
         .clk(clk),
@@ -592,153 +439,8 @@ module top_level
         .sample_from_dram(sample_raw),
         .valid_from_dram(sample_raw_valid),
 
-        .spkl(spkl),
-        .spkr(spkr)
-    );
-
-    logic [23:0] pixel_to_display;
-    logic active_draw_to_hdmi;
-    logic v_sync_to_hdmi;
-    logic h_sync_to_hdmi;
-
-    video_processor #(
-        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
-    ) vid_pcr (
-        .clk_100MHz(clk),
-        .clk_pixel(clk_pixel),
-        .rst(rst),
-
-        //.instrument_samples(current_instrument_samples),
-        .midi_key(midi_key),
-        .midi_valid(midi_msg_valid),
-        .midi_velocity(midi_vel),
-        .volume_on_clk(volume),
-        .pitch_on_clk(pitch),
-        .delay_wet_on_clk(delay_wet),
-        .delay_rate_on_clk(delay_rate),
-        .delay_feedback_on_clk(delay_feedback),
-        .reverb_wet_on_clk(reverb_wet),
-        .reverb_size_on_clk(reverb_size),
-        .reverb_feedback_on_clk(reverb_feedback),
-        .filter_quality_on_clk(filter_quality),
-        .filter_cutoff_on_clk(filter_cutoff),
-        .distortion_drive_on_clk(distortion_drive),
-        .crush_pressure_on_clk(crush_pressure),
-        .delay_rate_fast_on_clk(delay_rate_fast),
-
-        .output_src_on_clk(output_src),
-        .crush_src_on_clk(crush_src),
-        .distortion_src_on_clk(distortion_src),
-        .filter_src_on_clk(filter_src),
-        .reverb_src_on_clk(reverb_src),
-        .delay_src_on_clk(delay_src),
-
-        .dram_read_data(dram_read_video_data),
-        .dram_read_active_draw(dram_read_active_draw),
-        .dram_read_h_count(dram_read_h_count),
-        .dram_read_v_count(dram_read_v_count),
-
-        .dram_write_data(dram_write_video_data),
-        .dram_write_valid(dram_write_video_valid),
-        .dram_write_last(dram_write_video_last),
-
-        .pixel_to_hdmi(pixel_to_display),
-        .active_draw_to_hdmi(active_draw_to_hdmi),
-        .v_sync_to_hdmi(v_sync_to_hdmi),
-        .h_sync_to_hdmi(h_sync_to_hdmi)
-      );
-
-    logic [9:0] tmds_10b    [0:2];
-    logic       tmds_signal [2:0];
- 
-    tmds_encoder tmds_red (
-        .clk(clk_pixel),
-        .rst(rst_pixel),
-        .video_data(pixel_to_display[23:16]),
-        .control(2'b0),
-        .video_enable(active_draw_to_hdmi),
-        .tmds(tmds_10b[2])
-    );
-    tmds_encoder tmds_green (
-        .clk(clk_pixel),
-        .rst(rst_pixel),
-        .video_data(pixel_to_display[15:8]),
-        .control(2'b0),
-        .video_enable(active_draw_to_hdmi),
-        .tmds(tmds_10b[1])
-    );
-    tmds_encoder tmds_blue (
-        .clk(clk_pixel),
-        .rst(rst_pixel),
-        .video_data(pixel_to_display[7:0]),
-        .control({v_sync_to_hdmi, h_sync_to_hdmi}),
-        .video_enable(active_draw_to_hdmi),
-        .tmds(tmds_10b[0])
-    );
-    
-    tmds_serializer red_ser (
-        .clk_pixel(clk_pixel),
-        .clk_5x(clk_tmds),
-        .rst(rst_pixel),
-        .tmds_in(tmds_10b[2]),
-        .tmds_out(tmds_signal[2])
-    );
-    tmds_serializer green_ser (
-        .clk_pixel(clk_pixel),
-        .clk_5x(clk_tmds),
-        .rst(rst_pixel),
-        .tmds_in(tmds_10b[1]),
-        .tmds_out(tmds_signal[1])
-    );
-    tmds_serializer blue_ser (
-        .clk_pixel(clk_pixel),
-        .clk_5x(clk_tmds),
-        .rst(rst_pixel),
-        .tmds_in(tmds_10b[0]),
-        .tmds_out(tmds_signal[0])
-    );
-
-    OBUFDS OBUFDS_blue (.I(tmds_signal[0]), .O(hdmi_tx_p[0]), .OB(hdmi_tx_n[0]));
-    OBUFDS OBUFDS_green(.I(tmds_signal[1]), .O(hdmi_tx_p[1]), .OB(hdmi_tx_n[1]));
-    OBUFDS OBUFDS_red  (.I(tmds_signal[2]), .O(hdmi_tx_p[2]), .OB(hdmi_tx_n[2]));
-    OBUFDS OBUFDS_clock(.I(clk_pixel), .O(hdmi_clk_p), .OB(hdmi_clk_n));
-
-    pcb_interface pcb (
-        .clk(clk),
-        .rst(rst),
-
-        .dry_pin(dry_pin),
-        .delay_pin(delay_pin),
-        .reverb_pin(reverb_pin),
-        .filter_pin(filter_pin),
-        .distortion_pin(distortion_pin),
-        .crush_pin(crush_pin),
-
-        .output_src(output_src),
-        .crush_src(crush_src),
-        .distortion_src(distortion_src),
-        .filter_src(filter_src),
-        .reverb_src(reverb_src),
-        .delay_src(delay_src),
-
-        .cipo(cipo),
-        .copi(copi),
-        .dclk(dclk),
-        .cs0(cs0),
-        .cs1(cs1),
-
-        .volume(volume_pcb),
-        .pitch(pitch_pcb),
-        .delay_wet(delay_wet_pcb),
-        .delay_rate(delay_rate_pcb),
-        .delay_feedback(delay_feedback_pcb),
-        .reverb_wet(reverb_wet_pcb),
-        .reverb_size(reverb_size_pcb),
-        .reverb_feedback(reverb_feedback_pcb),
-        .filter_quality(filter_quality_pcb),
-        .filter_cutoff(filter_cutoff_pcb),
-        .distortion_drive(distortion_drive_pcb),
-        .crush_pressure(crush_pressure_pcb)
+        .spkl(spk),
+        .spkr()
     );
 
 
@@ -749,7 +451,7 @@ module top_level
         if (rst_dram_ctrl) begin
             memrequest_complete_counter <= 0;
         end else begin
-            if (memrequest_complete) begin
+            if (memrequest_write_enable && memrequest_ready && memrequest_write_ready) begin
                 memrequest_complete_counter <= memrequest_complete_counter + 1;
             end
         end
@@ -757,20 +459,17 @@ module top_level
 
     logic [31:0] ss_val;
     assign ss_val = {
-        dwr.sample_loader_i.instrument_counter,  // clk_pixel (i.e. async to ssc clock)
+        dwr.sample_loader_i.instrument_counter,
         4'b0,
-        tg.write_addr_last_valid ? tg.write_addr_last : memrequest_complete_counter
+        memrequest_complete_counter
     };
 
-    logic [6:0] ss_c;
-    assign ss0_c = ss_c;
-    assign ss1_c = ss_c;
     seven_segment_controller ssc (
         .clk(clk_dram_ctrl),
         .rst(rst_dram_ctrl),
         .val(ss_val),
         .cat(ss_c),
-        .an({ss0_an, ss1_an})
+        .an(ss_a)
     );
 
     always_ff @ (posedge clk_dram_ctrl) begin
@@ -784,10 +483,12 @@ module top_level
     end
     assign led[1] = sample_load_complete;
     assign led[2] = addr_offsets_valid;
-    assign led[3] = tg.write_addr_last_valid;
-    assign led[15:4] = 0;
-    assign rgb0 = 0;
-    assign rgb1 = 0;
+    assign led[3] = init_calib_complete;
+    assign led[4] = init_calib_complete_dram_ctrl;
+    assign led[5] = ~rst_dram_ref;
+    assign led[6] = ~rst_dram_ctrl;
+    assign led[7] = cw_dram_locked;
+    assign led[15:8] = 0;
     assign uart_txd = 0;
 endmodule
 `default_nettype wire

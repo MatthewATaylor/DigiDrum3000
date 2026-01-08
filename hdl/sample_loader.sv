@@ -6,13 +6,13 @@ module sample_loader
         INSTRUMENT_COUNT
     )
     (
-        input  wire  clk_pixel,
-        input  wire  rst_pixel,
+        input  wire  clk,
+        input  wire  rst,
         input  wire  uart_din,
 
-        // Start address of each instrument + video (sent serially)
-        output logic [23:0] addr_offset,
-        output logic        addr_offset_valid,
+        // Start address of each instrument
+        output logic [23:0] addr_offsets [INSTRUMENT_COUNT:0],
+        output logic        addr_offsets_valid,
 
         output logic        sample_axis_tvalid,
         output logic [15:0] sample_axis_tdata,
@@ -31,19 +31,20 @@ module sample_loader
     logic [23:0] total_sample_counter;
 
     uart_receive #(
-        .INPUT_CLOCK_FREQ(74250000),
-        //.BAUD_RATE(115200)
+        .INPUT_CLOCK_FREQ(100000000),
         .BAUD_RATE(1500000)
     ) sample_load_uart (
-        .clk(clk_pixel),
-        .rst(rst_pixel),
+        .clk(clk),
+        .rst(rst),
         .din(uart_din),
         .dout_valid(uart_dout_valid),
         .dout(uart_dout)
     );
 
-    always_ff @ (posedge clk_pixel) begin
-        if (rst_pixel) begin
+    assign addr_offsets[0] = 24'b0;
+
+    always_ff @ (posedge clk) begin
+        if (rst) begin
             sample_size_byte_num <= 0;
             sample_size <= 0;
             sample_byte_num <= 0;
@@ -52,8 +53,10 @@ module sample_loader
 
             total_sample_counter <= 0;
             
-            addr_offset <= 0;
-            addr_offset_valid <= 0;
+            for (int i=0; i<INSTRUMENT_COUNT; i++) begin
+                addr_offsets[i+1] <= 0;
+            end
+            addr_offsets_valid <= 0;
             sample_axis_tvalid <= 0;
             sample_axis_tdata <= 0;
             sample_axis_tlast <= 0;
@@ -77,10 +80,10 @@ module sample_loader
                         if (sample_counter == sample_size - 1) begin
                             sample_size_byte_num <= 0;
                             instrument_counter <= instrument_counter + 1;
-                            addr_offset <= (total_sample_counter + 1) >> 3;
-                            addr_offset_valid <= 1;
+                            addr_offsets[instrument_counter+1] <= (total_sample_counter + 1) >> 3;
                             if (instrument_counter == INSTRUMENT_COUNT - 1) begin
                                 sample_axis_tlast <= 1;
+                                addr_offsets_valid <= 1;
                             end
                         end
                     end
@@ -94,9 +97,6 @@ module sample_loader
             end
             if (sample_axis_tlast) begin
                 sample_axis_tlast <= 0;
-            end
-            if (addr_offset_valid) begin
-                addr_offset_valid <= 0;
             end
         end
     end

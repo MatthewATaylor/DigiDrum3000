@@ -149,21 +149,21 @@ module audio_processor
         .sample_out(upsampler_out_l),
         .sample_out_valid()
     );
-    upsampler #(
-        .RATIO(16),
-        .VOLUME_EN(1),
-        .FILTER_FILE("DAC_filter_coeffs.mem"),
-        .FILTER_TAPS(1024),
-        .FILTER_SCALE(21)
-    ) upsampler_r (
-        .clk(clk),
-        .rst(rst),
-        .sample_in(sample_r_to_output),
-        .sample_in_valid(valid_to_output),
-        .volume(volume_on_clk),
-        .sample_out(upsampler_out_r),
-        .sample_out_valid()
-    );
+    // upsampler #(
+    //     .RATIO(16),
+    //     .VOLUME_EN(1),
+    //     .FILTER_FILE("DAC_filter_coeffs.mem"),
+    //     .FILTER_TAPS(1024),
+    //     .FILTER_SCALE(21)
+    // ) upsampler_r (
+    //     .clk(clk),
+    //     .rst(rst),
+    //     .sample_in(sample_r_to_output),
+    //     .sample_in_valid(valid_to_output),
+    //     .volume(volume_on_clk),
+    //     .sample_out(upsampler_out_r),
+    //     .sample_out_valid()
+    // );
 
     logic dac_out_l;
     dlt_sig_dac_2nd_order dlt_sig_l (
@@ -172,14 +172,13 @@ module audio_processor
         .current_sample(upsampler_out_l),
         .audio_out(dac_out_l)
     );
-
-    logic dac_out_r;
-    dlt_sig_dac_2nd_order dlt_sig_r (
-        .clk(clk),
-        .rst(rst),
-        .current_sample(upsampler_out_r),
-        .audio_out(dac_out_r)
-    );
+    // logic dac_out_r;
+    // dlt_sig_dac_2nd_order dlt_sig_r (
+    //     .clk(clk),
+    //     .rst(rst),
+    //     .current_sample(upsampler_out_r),
+    //     .audio_out(dac_out_r)
+    // );
 
     // This seems to help with noise
     always_ff @ (posedge clk) begin
@@ -188,7 +187,8 @@ module audio_processor
             spkr <= 0;
         end else begin
             spkl <= dac_out_l;
-            spkr <= dac_out_r;
+            spkr <= dac_out_l;
+            // spkr <= dac_out_r;
         end
     end
 
