@@ -45,16 +45,15 @@
 
 `timescale 1ps/1ps
 
-module cw_dram
+module cw_dram_eth
 
  (
-  output        clk_dram_ref,  // 200 MHz
+  input         clk_in,        // 100 MHz
   input         reset,
   output        locked,
-  input         clk_in1        // 100 MHz
+  output        clk_dram_ref,  // 200 MHz
+  output        eth_clk        // 50 MHz
  );
-  wire clk_in1_cw_dram;
-  assign clk_in1_cw_dram = clk_in1;
 
   // Clocking PRIMITIVE
   //------------------------------------
@@ -63,19 +62,19 @@ module cw_dram
   //    * Unused inputs are tied off
   //    * Unused outputs are labeled unused
 
-  wire        clk_dram_ref_cw_dram;
+  wire        clk_dram_ref_prebuf;
+  wire        eth_clk_prebuf;
 
   wire [15:0] do_unused;
   wire        drdy_unused;
   wire        psdone_unused;
   wire        locked_int;
-  wire        clkfbout_cw_dram;
-  wire        clkfbout_buf_cw_dram;
+  wire        clkfbout_prebuf;
+  wire        clkfbout;
   wire        clkfboutb_unused;
   wire        clkout0_unused;
   wire        clkout0b_unused;
   wire        clkout1b_unused;
-  wire        clkout2_unused;
   wire        clkout2b_unused;
   wire        clkout3_unused;
   wire        clkout3b_unused;
@@ -99,17 +98,21 @@ module cw_dram
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
+    .CLKOUT2_DIVIDE       (16),
+    .CLKOUT2_PHASE        (0.000),
+    .CLKOUT2_DUTY_CYCLE   (0.500),
+    .CLKOUT2_USE_FINE_PS  ("FALSE"),
     .CLKIN1_PERIOD        (10.000))
   mmcm_adv_inst
     // Output clocks
    (
-    .CLKFBOUT            (clkfbout_cw_dram),
+    .CLKFBOUT            (clkfbout_prebuf),
     .CLKFBOUTB           (clkfboutb_unused),
     .CLKOUT0             (clkout0_unused),
     .CLKOUT0B            (clkout0b_unused),
-    .CLKOUT1             (clk_dram_ref_cw_dram),
+    .CLKOUT1             (clk_dram_ref_prebuf),
     .CLKOUT1B            (clkout1b_unused),
-    .CLKOUT2             (clkout2_unused),
+    .CLKOUT2             (eth_clk_prebuf),
     .CLKOUT2B            (clkout2b_unused),
     .CLKOUT3             (clkout3_unused),
     .CLKOUT3B            (clkout3b_unused),
@@ -117,8 +120,8 @@ module cw_dram
     .CLKOUT5             (clkout5_unused),
     .CLKOUT6             (clkout6_unused),
      // Input clock control
-    .CLKFBIN             (clkfbout_buf_cw_dram),
-    .CLKIN1              (clk_in1_cw_dram),
+    .CLKFBIN             (clkfbout),
+    .CLKIN1              (clk_in),
     .CLKIN2              (1'b0),
      // Tied to always select the primary input clock
     .CLKINSEL            (1'b1),
@@ -149,13 +152,17 @@ module cw_dram
  // Output buffering
   //-----------------------------------
 
-  BUFG clkf_buf
-   (.O (clkfbout_buf_cw_dram),
-    .I (clkfbout_cw_dram));
+  BUFG clkfbout_buf
+   (.O (clkfbout),
+    .I (clkfbout_prebuf));
 
-  BUFG clkout1_buf
+  BUFG clk_dram_ref_buf
    (.O   (clk_dram_ref),
-    .I   (clk_dram_ref_cw_dram));
+    .I   (clk_dram_ref_prebuf));
+
+  BUFG eth_clk_buf
+   (.O   (eth_clk),
+    .I   (eth_clk_prebuf));
 
 endmodule
 

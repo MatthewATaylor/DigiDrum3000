@@ -17,21 +17,27 @@ module top_level
         output logic  [7:0] ss_a,
         output logic  [6:0] ss_c,
 
+        // Ethernet PHY
+        output logic        eth_clk,
+        output logic        eth_rst_n,
+        output logic        eth_txen,
+        output logic  [1:0] eth_txd,
+
         // SDRAM (DDR2) ports
-        inout  wire [15:0] ddr2_dq,
-        inout  wire  [1:0] ddr2_dqs_n,
-        inout  wire  [1:0] ddr2_dqs_p,
-        output wire [12:0] ddr2_addr,
-        output wire  [2:0] ddr2_ba,
-        output wire        ddr2_ras_n,
-        output wire        ddr2_cas_n,
-        output wire        ddr2_we_n,
-        output wire  [0:0] ddr2_ck_p,
-        output wire  [0:0] ddr2_ck_n,
-        output wire  [0:0] ddr2_cke,
-        output wire  [0:0] ddr2_odt,
-        output wire  [0:0] ddr2_cs_n,
-        output wire  [1:0] ddr2_dm
+        inout  wire  [15:0] ddr2_dq,
+        inout  wire   [1:0] ddr2_dqs_n,
+        inout  wire   [1:0] ddr2_dqs_p,
+        output wire  [12:0] ddr2_addr,
+        output wire   [2:0] ddr2_ba,
+        output wire         ddr2_ras_n,
+        output wire         ddr2_cas_n,
+        output wire         ddr2_we_n,
+        output wire   [0:0] ddr2_ck_p,
+        output wire   [0:0] ddr2_ck_n,
+        output wire   [0:0] ddr2_cke,
+        output wire   [0:0] ddr2_odt,
+        output wire   [0:0] ddr2_cs_n,
+        output wire   [1:0] ddr2_dm
     );
 
     localparam INSTRUMENT_COUNT = 10;
@@ -63,13 +69,17 @@ module top_level
     logic  clk_dram_ctrl;  // 150 MHz
     logic  rst_dram_ctrl;
 
-    // cw_dram
+    // cw_dram_eth
     logic  clk_dram_ref;   // 200 MHz
-    logic  cw_dram_locked;
+    logic  clks_locked;
 
-    logic  cw_dram_locked_dram_ref_buf [1:0];
-    logic  cw_dram_locked_dram_ref;
-    assign cw_dram_locked_dram_ref = cw_dram_locked_dram_ref_buf[0];
+    logic  clks_locked_dram_ref_buf [1:0];
+    logic  clks_locked_dram_ref;
+    assign clks_locked_dram_ref = clks_locked_dram_ref_buf[0];
+
+    logic  clks_locked_eth_buf [1:0];
+    logic  clks_locked_eth;
+    assign clks_locked_eth = clks_locked_eth_buf[0];
 
     logic  init_calib_complete_dram_ctrl;
     logic  init_calib_complete_buf [1:0];
@@ -78,11 +88,14 @@ module top_level
 
     logic  rst_buf [1:0];
     logic  rst;
-    assign rst = rst_buf[0] | ~cw_dram_locked | ~init_calib_complete;   
+    assign rst = rst_buf[0] | ~clks_locked | ~init_calib_complete;   
 
     logic  rst_dram_ref_buf [1:0];
     logic  rst_dram_ref;
-    assign rst_dram_ref = rst_dram_ref_buf[0] | ~cw_dram_locked_dram_ref;
+    assign rst_dram_ref = rst_dram_ref_buf[0] | ~clks_locked_dram_ref;
+
+    logic  rst_eth_buf [1:0];
+    assign eth_rst_n = ~rst_eth_buf[0] & clks_locked_eth;
 
     logic  uart_rxd_buf [1:0];
     logic  uart_din;
@@ -104,6 +117,14 @@ module top_level
 
     logic [23:0] addr_offsets [INSTRUMENT_COUNT:0];
     logic        addr_offsets_valid;
+
+
+    eth_transmit eth_transmit_i (
+        .eth_clk(eth_clk),
+        .eth_rst_n(eth_rst_n),
+        .eth_txen(eth_txen),
+        .eth_txd(eth_txd)
+    );
 
 
     logic [2:0] output_src;
@@ -191,9 +212,16 @@ module top_level
     end
     always_ff @ (posedge clk_dram_ref) begin
         rst_dram_ref_buf <= {btn[0], rst_dram_ref_buf[1]};
-        cw_dram_locked_dram_ref_buf <= {
-            cw_dram_locked,
-            cw_dram_locked_dram_ref_buf[1]
+        clks_locked_dram_ref_buf <= {
+            clks_locked,
+            clks_locked_dram_ref_buf[1]
+        };
+    end
+    always_ff @ (posedge eth_clk) begin
+        rst_eth_buf <= {btn[0], rst_eth_buf[1]};
+        clks_locked_eth_buf <= {
+            clks_locked,
+            clks_locked_eth_buf[1]
         };
     end
 
@@ -217,12 +245,12 @@ module top_level
     end
 
 
-    // Generate 200 MHz DRAM controller system clock
-    cw_dram cw_dram_i (
-        .clk_dram_ref(clk_dram_ref),
-        .reset(btn[0]),
-        .locked(cw_dram_locked),
-        .clk_in1(clk)
+    cw_dram_eth cw_dram_eth_i (
+        .clk_in(clk),                 // 100 MHz
+        .reset(rst_buf[0]),
+        .locked(clks_locked),
+        .clk_dram_ref(clk_dram_ref),  // 200 MHz
+        .eth_clk(eth_clk)             // 50 MHz
     );
 
 
@@ -487,8 +515,9 @@ module top_level
     assign led[4] = init_calib_complete_dram_ctrl;
     assign led[5] = ~rst_dram_ref;
     assign led[6] = ~rst_dram_ctrl;
-    assign led[7] = cw_dram_locked;
-    assign led[15:8] = 0;
+    assign led[7] = clks_locked;
+    assign led[8] = eth_rst_n;
+    assign led[15:9] = 0;
     assign uart_txd = 0;
 endmodule
 `default_nettype wire
