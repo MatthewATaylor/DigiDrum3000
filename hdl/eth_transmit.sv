@@ -16,16 +16,19 @@ module eth_transmit
 
     localparam        MAC_BYTES    = 6;
     localparam        MAC_CYCLES   = MAC_BYTES * 8 / BITS_PER_CYCLE;
-    localparam [47:0] MAC_SRC_ADDR = 48'h02_DE_AD_BE_EF_67;  // AAI address
+    // Actual MAC address is 48'h02_DE_AD_BE_EF_67
+    // Below is rearranged to transmit MS byte first
+    localparam [47:0] MAC_SRC_ADDR = 48'h67_EF_BE_AD_DE_02;  // AAI address
    
     localparam SIZE_BYTES  = 2;
     localparam SIZE_CYCLES = SIZE_BYTES * 8 / BITS_PER_CYCLE;
 
-    localparam        PAYLOAD_CHANNELS  = 1;//16;
-    localparam        PAYLOAD_SAMPLES   = 32;
-    localparam        PAYLOAD_BIT_DEPTH = 16;
-    localparam [15:0] PAYLOAD_BYTES     = PAYLOAD_CHANNELS * PAYLOAD_SAMPLES * PAYLOAD_BIT_DEPTH;
-    localparam        PAYLOAD_CYCLES    = PAYLOAD_BYTES * 8 / BITS_PER_CYCLE;
+    localparam        PAYLOAD_CHANNELS   = 1;//16;
+    localparam        PAYLOAD_SAMPLES    = 32;
+    localparam        PAYLOAD_BIT_DEPTH  = 16;
+    localparam [15:0] PAYLOAD_BYTES      = PAYLOAD_CHANNELS * PAYLOAD_SAMPLES * PAYLOAD_BIT_DEPTH / 8;
+    localparam [15:0] PAYLOAD_BYTES_MSBF = {PAYLOAD_BYTES[7:0], PAYLOAD_BYTES[15:8]};
+    localparam        PAYLOAD_CYCLES     = PAYLOAD_BYTES * 8 / BITS_PER_CYCLE;
 
     localparam FCS_BYTES  = 4;
     localparam FCS_CYCLES = FCS_BYTES * 8 / BITS_PER_CYCLE;
@@ -42,7 +45,7 @@ module eth_transmit
         MAC_DST,   // 6 bytes
         MAC_SRC,   // 6 bytes
         SIZE,      // 2 bytes
-        PAYLOAD,   // 1024 bytes (16 channels * 32 samples * 16 bits)
+        PAYLOAD,   // 1024 bytes (16 channels * 32 samples * 2 bytes/sample)
         FCS        // 4 bytes
     } state;
 
@@ -116,7 +119,7 @@ module eth_transmit
                     if (cycle_counter >= MAC_CYCLES - 1) begin
                         state <= SIZE;
                         cycle_counter <= 0;
-                        eth_txd <= PAYLOAD_BYTES[1:0];
+                        eth_txd <= PAYLOAD_BYTES_MSBF[1:0];
                     end else begin
                         cycle_counter <= cycle_counter + 1;
                         eth_txd <= {
@@ -134,8 +137,8 @@ module eth_transmit
                     end else begin
                         cycle_counter <= cycle_counter + 1;
                         eth_txd <= {
-                            PAYLOAD_BYTES[data_index_lsb+1],
-                            PAYLOAD_BYTES[data_index_lsb]
+                            PAYLOAD_BYTES_MSBF[data_index_lsb+1],
+                            PAYLOAD_BYTES_MSBF[data_index_lsb]
                         };
                     end
                 end
@@ -160,10 +163,11 @@ module eth_transmit
                         state <= IDLE;
                         cycle_counter <= 0;
                         eth_txd <= 2'b00;
+                        eth_txen <= 0;
                     end else begin
-                        if (cycle_counter >= FCS_CYCLES - 2) begin
-                            eth_txen <= 0;  // Deassert with last di-bit
-                        end
+                        //if (cycle_counter >= FCS_CYCLES - 2) begin
+                        //    eth_txen <= 0;  // Deassert with last di-bit
+                        //end
                         cycle_counter <= cycle_counter + 1;
                         eth_txd <= {
                             crc_dout_complement[30-data_index_lsb],

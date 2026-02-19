@@ -98,6 +98,28 @@ set_property -dict { PACKAGE_PIN P18   IOSTANDARD LVCMOS33 } [get_ports { btn[4]
 ##Pmod Headers
 
 
+set_property PULLTYPE PULLUP [ get_ports "delay_pin"]
+set_property PULLTYPE PULLUP [ get_ports "reverb_pin"]
+set_property PULLTYPE PULLUP [ get_ports "filter_pin"]
+set_property PULLTYPE PULLUP [ get_ports "distortion_pin"]
+set_property PULLTYPE PULLUP [ get_ports "crush_pin"]
+set_property PULLTYPE PULLUP [ get_ports "dry_pin"]
+
+set_property -dict {PACKAGE_PIN C17 IOSTANDARD LVCMOS33}  [ get_ports "delay_pin" ]
+set_property -dict {PACKAGE_PIN D18 IOSTANDARD LVCMOS33}  [ get_ports "filter_pin" ]
+set_property -dict {PACKAGE_PIN E18 IOSTANDARD LVCMOS33}  [ get_ports "crush_pin" ]
+set_property -dict {PACKAGE_PIN G17 IOSTANDARD LVCMOS33}  [ get_ports "cs0" ]
+set_property -dict {PACKAGE_PIN D17 IOSTANDARD LVCMOS33}  [ get_ports "dry_pin" ]
+set_property -dict {PACKAGE_PIN E17 IOSTANDARD LVCMOS33}  [ get_ports "reverb_pin" ]
+set_property -dict {PACKAGE_PIN F18 IOSTANDARD LVCMOS33}  [ get_ports "distortion_pin" ]
+set_property -dict {PACKAGE_PIN G18 IOSTANDARD LVCMOS33}  [ get_ports "cs1" ]
+
+set_property -dict {PACKAGE_PIN D14 IOSTANDARD LVCMOS33}  [ get_ports "cipo" ]
+set_property -dict {PACKAGE_PIN F16 IOSTANDARD LVCMOS33}  [ get_ports "dclk" ]
+set_property -dict {PACKAGE_PIN E16 IOSTANDARD LVCMOS33}  [ get_ports "copi" ]
+set_property -dict {PACKAGE_PIN F13 IOSTANDARD LVCMOS33}  [ get_ports "midi_pin" ]
+
+
 ##Pmod Header JA
 
 #set_property -dict { PACKAGE_PIN C17   IOSTANDARD LVCMOS33 } [get_ports { JA[1] }]; #IO_L20N_T3_A19_15 Sch=ja[1]
@@ -239,10 +261,10 @@ set_property -dict { PACKAGE_PIN D4    IOSTANDARD LVCMOS33 } [get_ports { uart_t
 #set_property -dict { PACKAGE_PIN C9    IOSTANDARD LVCMOS33 } [get_ports { ETH_MDC }]; #IO_L11P_T1_SRCC_16 Sch=eth_mdc
 #set_property -dict { PACKAGE_PIN A9    IOSTANDARD LVCMOS33 } [get_ports { ETH_MDIO }]; #IO_L14N_T2_SRCC_16 Sch=eth_mdio
 set_property -dict { PACKAGE_PIN B3    IOSTANDARD LVCMOS33 } [get_ports { eth_rst_n }]; #IO_L10P_T1_AD15P_35 Sch=eth_rstn
-#set_property -dict { PACKAGE_PIN D9    IOSTANDARD LVCMOS33 } [get_ports { ETH_CRSDV }]; #IO_L6N_T0_VREF_16 Sch=eth_crsdv
+set_property -dict { PACKAGE_PIN D9    IOSTANDARD LVCMOS33 } [get_ports { eth_mode[2] }]; #IO_L6N_T0_VREF_16 Sch=eth_crsdv
 #set_property -dict { PACKAGE_PIN C10   IOSTANDARD LVCMOS33 } [get_ports { ETH_RXERR }]; #IO_L13N_T2_MRCC_16 Sch=eth_rxerr
-#set_property -dict { PACKAGE_PIN C11   IOSTANDARD LVCMOS33 } [get_ports { ETH_RXD[0] }]; #IO_L13P_T2_MRCC_16 Sch=eth_rxd[0]
-#set_property -dict { PACKAGE_PIN D10   IOSTANDARD LVCMOS33 } [get_ports { ETH_RXD[1] }]; #IO_L19N_T3_VREF_16 Sch=eth_rxd[1]
+set_property -dict { PACKAGE_PIN C11   IOSTANDARD LVCMOS33 } [get_ports { eth_mode[0] }]; #IO_L13P_T2_MRCC_16 Sch=eth_rxd[0]
+set_property -dict { PACKAGE_PIN D10   IOSTANDARD LVCMOS33 } [get_ports { eth_mode[1] }]; #IO_L19N_T3_VREF_16 Sch=eth_rxd[1]
 set_property -dict { PACKAGE_PIN B9    IOSTANDARD LVCMOS33 } [get_ports { eth_txen }]; #IO_L11N_T1_SRCC_16 Sch=eth_txen
 set_property -dict { PACKAGE_PIN A10   IOSTANDARD LVCMOS33 } [get_ports { eth_txd[0] }]; #IO_L14P_T2_SRCC_16 Sch=eth_txd[0]
 set_property -dict { PACKAGE_PIN A8    IOSTANDARD LVCMOS33 } [get_ports { eth_txd[1] }]; #IO_L12N_T1_MRCC_16 Sch=eth_txd[1]

@@ -6,6 +6,7 @@ module top_level
         output logic [15:0] led,
         input  wire  [15:0] sw,
         input  wire   [4:0] btn,
+        input  wire         midi_pin,
         output logic        spk,
         output logic        aud_sd_n,
        
@@ -22,6 +23,7 @@ module top_level
         output logic        eth_rst_n,
         output logic        eth_txen,
         output logic  [1:0] eth_txd,
+        inout  wire   [2:0] eth_mode,
 
         // SDRAM (DDR2) ports
         inout  wire  [15:0] ddr2_dq,
@@ -37,7 +39,22 @@ module top_level
         output wire   [0:0] ddr2_cke,
         output wire   [0:0] ddr2_odt,
         output wire   [0:0] ddr2_cs_n,
-        output wire   [1:0] ddr2_dm
+        output wire   [1:0] ddr2_dm,
+
+        // Patch pins
+        inout wire          dry_pin,
+        inout wire          crush_pin,
+        inout wire          distortion_pin,
+        inout wire          filter_pin,
+        inout wire          reverb_pin,
+        inout wire          delay_pin,
+
+        // SPI ADC
+        output logic        copi,
+        output logic        dclk,
+        output logic        cs0,
+        output logic        cs1,
+        input  wire         cipo
     );
 
     localparam INSTRUMENT_COUNT = 10;
@@ -56,11 +73,10 @@ module top_level
         7'd51   // rc
     };
 
-    // TODO: add MIDI pin
-    logic  midi_pin;
-    assign midi_pin = 1'b0;
-
     assign aud_sd_n = 1'b1;  // Active low shutdown signal for audio output
+
+    logic  btn_rst;
+    assign btn_rst = btn[0];
 
     logic  clk;
     assign clk = clk_100mhz;
@@ -96,6 +112,7 @@ module top_level
 
     logic  rst_eth_buf [1:0];
     assign eth_rst_n = ~rst_eth_buf[0] & clks_locked_eth;
+    assign eth_mode = eth_rst_n ? 3'bZZZ : 3'b111;
 
     logic  uart_rxd_buf [1:0];
     logic  uart_din;
@@ -119,13 +136,29 @@ module top_level
     logic        addr_offsets_valid;
 
 
-    eth_transmit eth_transmit_i (
-        .eth_clk(eth_clk),
-        .eth_rst_n(eth_rst_n),
-        .eth_txen(eth_txen),
-        .eth_txd(eth_txd)
-    );
+    //eth_transmit eth_transmit_i (
+    //    .eth_clk(eth_clk),
+    //    .eth_rst_n(eth_rst_n),
+    //    .eth_txen(eth_txen),
+    //    .eth_txd(eth_txd)
+    //);
 
+
+    // From PCB interface
+    logic [2:0] output_src_pcb;
+    logic [2:0] crush_src_pcb;
+    logic [2:0] distortion_src_pcb;
+    logic [2:0] filter_src_pcb;
+    logic [2:0] reverb_src_pcb;
+    logic [2:0] delay_src_pcb;
+
+    // From UART controller
+    logic [2:0] output_src_uart;
+    logic [2:0] crush_src_uart;
+    logic [2:0] distortion_src_uart;
+    logic [2:0] filter_src_uart;
+    logic [2:0] reverb_src_uart;
+    logic [2:0] delay_src_uart;
 
     logic [2:0] output_src;
     logic [2:0] crush_src;
@@ -133,6 +166,36 @@ module top_level
     logic [2:0] filter_src;
     logic [2:0] reverb_src;
     logic [2:0] delay_src;
+
+
+    // From PCB interface
+    logic [9:0] volume_pcb;
+    logic [9:0] pitch_pcb;
+    logic [9:0] delay_wet_pcb;
+    logic [9:0] delay_rate_pcb;
+    logic [9:0] delay_feedback_pcb;
+    logic [9:0] reverb_wet_pcb;
+    logic [9:0] reverb_size_pcb;
+    logic [9:0] reverb_feedback_pcb;
+    logic [9:0] filter_quality_pcb;
+    logic [9:0] filter_cutoff_pcb;
+    logic [9:0] distortion_drive_pcb;
+    logic [9:0] crush_pressure_pcb;
+
+    // From UART controller
+    logic [9:0] volume_uart;
+    logic [9:0] pitch_uart;
+    logic [9:0] delay_wet_uart;
+    logic [9:0] delay_rate_uart;
+    logic [9:0] delay_feedback_uart;
+    logic [9:0] reverb_wet_uart;
+    logic [9:0] reverb_size_uart;
+    logic [9:0] reverb_feedback_uart;
+    logic [9:0] filter_quality_uart;
+    logic [9:0] filter_cutoff_uart;
+    logic [9:0] distortion_drive_uart;
+    logic [9:0] crush_pressure_uart;
+    logic       delay_rate_fast_uart;
 
     logic [9:0] volume;
     logic [9:0] pitch;
@@ -155,27 +218,60 @@ module top_level
         .en(sample_load_complete & addr_offsets_valid),
         .uart_din(uart_din),
 
-        .output_src(output_src),
-        .crush_src(crush_src),
-        .distortion_src(distortion_src),
-        .filter_src(filter_src),
-        .reverb_src(reverb_src),
-        .delay_src(delay_src),
+        .output_src(output_src_uart),
+        .crush_src(crush_src_uart),
+        .distortion_src(distortion_src_uart),
+        .filter_src(filter_src_uart),
+        .reverb_src(reverb_src_uart),
+        .delay_src(delay_src_uart),
         
-        .volume(volume),
-        .pitch(pitch),
-        .delay_wet(delay_wet),
-        .delay_rate(delay_rate),
-        .delay_feedback(delay_feedback),
-        .reverb_wet(reverb_wet),
-        .reverb_size(reverb_size),
-        .reverb_feedback(reverb_feedback),
-        .filter_quality(filter_quality),
-        .filter_cutoff(filter_cutoff),
-        .distortion_drive(distortion_drive),
-        .crush_pressure(crush_pressure),
-        .delay_rate_fast(delay_rate_fast)
+        .volume(volume_uart),
+        .pitch(pitch_uart),
+        .delay_wet(delay_wet_uart),
+        .delay_rate(delay_rate_uart),
+        .delay_feedback(delay_feedback_uart),
+        .reverb_wet(reverb_wet_uart),
+        .reverb_size(reverb_size_uart),
+        .reverb_feedback(reverb_feedback_uart),
+        .filter_quality(filter_quality_uart),
+        .filter_cutoff(filter_cutoff_uart),
+        .distortion_drive(distortion_drive_uart),
+        .crush_pressure(crush_pressure_uart),
+        .delay_rate_fast(delay_rate_fast_uart)
     );
+
+
+    always_comb begin
+        if (sw[1]) begin
+            volume = volume_uart;
+            pitch = pitch_uart;
+            delay_wet = delay_wet_uart;
+            delay_rate = delay_rate_uart;
+            delay_feedback = delay_feedback_uart;
+            reverb_wet = reverb_wet_uart;
+            reverb_size = reverb_size_uart;
+            reverb_feedback = reverb_feedback_uart;
+            filter_quality = filter_quality_uart;
+            filter_cutoff = filter_cutoff_uart;
+            distortion_drive = distortion_drive_uart;
+            crush_pressure = crush_pressure_uart;
+            delay_rate_fast = delay_rate_fast_uart;
+        end else begin
+            volume = volume_pcb;
+            pitch = pitch_pcb;
+            delay_wet = delay_wet_pcb;
+            delay_rate = delay_rate_pcb;
+            delay_feedback = delay_feedback_pcb;
+            reverb_wet = reverb_wet_pcb;
+            reverb_size = reverb_size_pcb;
+            reverb_feedback = reverb_feedback_pcb;
+            filter_quality = filter_quality_pcb;
+            filter_cutoff = filter_cutoff_pcb;
+            distortion_drive = distortion_drive_pcb;
+            crush_pressure = crush_pressure_pcb;
+            delay_rate_fast = sw[0];
+        end
+    end
 
 
     logic [13:0] sample_period;
@@ -189,7 +285,7 @@ module top_level
 
     // Synchronization
     always_ff @ (posedge clk) begin
-        rst_buf <= {btn[0], rst_buf[1]};
+        rst_buf <= {btn_rst, rst_buf[1]};
         init_calib_complete_buf <= {init_calib_complete_dram_ctrl, init_calib_complete_buf[1]};
 
         if (rst) begin
@@ -210,19 +306,27 @@ module top_level
             instr_debug_btn_buf <= {btn[4:1], instr_debug_btn_buf[1]};
         end
     end
-    always_ff @ (posedge clk_dram_ref) begin
-        rst_dram_ref_buf <= {btn[0], rst_dram_ref_buf[1]};
-        clks_locked_dram_ref_buf <= {
-            clks_locked,
-            clks_locked_dram_ref_buf[1]
-        };
+    always_ff @ (posedge clk_dram_ref, posedge btn_rst) begin
+        if (btn_rst) begin
+            rst_dram_ref_buf <= {1'b1, 1'b1};
+        end else begin
+            rst_dram_ref_buf <= {1'b0, rst_dram_ref_buf[1]};
+            clks_locked_dram_ref_buf <= {
+                clks_locked,
+                clks_locked_dram_ref_buf[1]
+            };
+        end
     end
-    always_ff @ (posedge eth_clk) begin
-        rst_eth_buf <= {btn[0], rst_eth_buf[1]};
-        clks_locked_eth_buf <= {
-            clks_locked,
-            clks_locked_eth_buf[1]
-        };
+    always_ff @ (posedge eth_clk, posedge btn_rst) begin
+        if (btn_rst) begin
+            rst_eth_buf <= {1'b1, 1'b1};
+        end else begin
+            rst_eth_buf <= {1'b0, rst_eth_buf[1]};
+            clks_locked_eth_buf <= {
+                clks_locked,
+                clks_locked_eth_buf[1]
+            };
+        end
     end
 
 
@@ -469,6 +573,45 @@ module top_level
 
         .spkl(spk),
         .spkr()
+    );
+
+
+    pcb_interface pcb (
+        .clk(clk),
+        .rst(rst),
+
+        .dry_pin(dry_pin),
+        .delay_pin(delay_pin),
+        .reverb_pin(reverb_pin),
+        .filter_pin(filter_pin),
+        .distortion_pin(distortion_pin),
+        .crush_pin(crush_pin),
+
+        .output_src(output_src),
+        .crush_src(crush_src),
+        .distortion_src(distortion_src),
+        .filter_src(filter_src),
+        .reverb_src(reverb_src),
+        .delay_src(delay_src),
+
+        .cipo(cipo),
+        .copi(copi),
+        .dclk(dclk),
+        .cs0(cs0),
+        .cs1(cs1),
+
+        .volume(volume_pcb),
+        .pitch(pitch_pcb),
+        .delay_wet(delay_wet_pcb),
+        .delay_rate(delay_rate_pcb),
+        .delay_feedback(delay_feedback_pcb),
+        .reverb_wet(reverb_wet_pcb),
+        .reverb_size(reverb_size_pcb),
+        .reverb_feedback(reverb_feedback_pcb),
+        .filter_quality(filter_quality_pcb),
+        .filter_cutoff(filter_cutoff_pcb),
+        .distortion_drive(distortion_drive_pcb),
+        .crush_pressure(crush_pressure_pcb)
     );
 
 
