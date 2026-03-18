@@ -629,11 +629,22 @@ module top_level
     end
 
     logic [31:0] ss_val;
-    assign ss_val = {
-        dwr.sample_loader_i.instrument_counter,
-        4'b0,
-        memrequest_complete_counter
-    };
+    always_comb begin
+        if (sample_load_complete) begin
+            ss_val = {
+                1'b0,
+                drd_req.midi_proc.velocity,  // 7 bits
+                4'b0,
+                memrequest_complete_counter[19:0]
+            };
+        end else begin
+            ss_val = {
+                dwr.sample_loader_i.instrument_counter, // 4 bits
+                4'b0,
+                memrequest_complete_counter  // 24 bits
+            };
+        end
+    end
 
     seven_segment_controller ssc (
         .clk(clk_dram_ctrl),

@@ -39,18 +39,34 @@ module sample_mixer
     end
 
     logic [22:0] din_vel_mult;
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            din_vel_mult <= 0;
-        end else begin
-            din_vel_mult <=
+    logic  [6:0] velocity_shifted;
+    assign       velocity_shifted = velocity[instr_counter_next] - 7'd64;
+    always_comb begin
+        if (velocity[instr_counter_next] <= 7'd73) begin
+            // Scale by velocity * 0.25 (after bit shift below)
+            din_vel_mult =
                 $signed(din[instr_counter_next]) *
                 $signed({1'b0, velocity[instr_counter_next]});
+        end else begin
+            // Scale by velocity * 2 (after bit shift below)
+            din_vel_mult =
+                $signed(din[instr_counter_next]) *
+                $signed({1'b0, velocity_shifted});
         end
     end
 
     logic [15:0] din_vel_mult_shift;
-    assign din_vel_mult_shift = $signed(din_vel_mult) >>> 7;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            din_vel_mult_shift <= 0;
+        end else begin
+            if (velocity[instr_counter_next] <= 7'd73) begin
+                din_vel_mult_shift <= $signed(din_vel_mult) >>> 9;
+            end else begin
+                din_vel_mult_shift <= $signed(din_vel_mult) >>> 6;
+            end
+        end
+    end
 
     logic [16:0] next_sum;
     assign next_sum = $signed(dout) + $signed(din_vel_mult_shift);
