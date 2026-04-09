@@ -22,7 +22,7 @@ SERIAL_PORTNAME = '/dev/ttyUSB1'
 BAUD = 1500000
 SAMPLE_RATE_IN = 48000
 SAMPLE_RATE_OUT = 44100
-SAMPLE_DIR = './media/'
+SAMPLE_DIR = './media/compressed/'
 RESAMPLED_DIR = SAMPLE_DIR+'resampled/'
 
 def send_wav(ser=None):

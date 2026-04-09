@@ -38,16 +38,20 @@ module audio_processor
 
     logic [15:0] sample_from_base;
     logic        valid_from_base;
-    resampler resampler_i (
-        .clk(clk),
-        .rst(rst),
-        .sample_period_in(sample_period_dram_out),
-        .sample_period_farrow_out(14'd568),
-        .sample_in(sample_from_dram),
-        .sample_in_valid(valid_from_dram),
-        .sample_out(sample_from_base),
-        .sample_out_valid(valid_from_base)
-    );
+
+    assign sample_from_base = sample_from_dram;
+    assign valid_from_base = valid_from_dram;
+
+    //resampler resampler_i (
+    //    .clk(clk),
+    //    .rst(rst),
+    //    .sample_period_in(sample_period_dram_out),
+    //    .sample_period_farrow_out(14'd568),
+    //    .sample_in(sample_from_dram),
+    //    .sample_in_valid(valid_from_dram),
+    //    .sample_out(sample_from_base),
+    //    .sample_out_valid(valid_from_base)
+    //);
 
     logic [15:0] sample_to_delay;
     logic        valid_to_delay;

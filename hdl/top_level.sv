@@ -275,12 +275,13 @@ module top_level
 
 
     logic [13:0] sample_period;
-    pitch_to_sample_period p2sp (
-        .clk(clk),
-        .rst(rst),
-        .pitch(pitch),
-        .sample_period(sample_period)
-    );
+    assign sample_period = 14'd2272;
+    //pitch_to_sample_period p2sp (
+    //    .clk(clk),
+    //    .rst(rst),
+    //    .pitch(pitch),
+    //    .sample_period(sample_period)
+    //);
 
 
     // Synchronization

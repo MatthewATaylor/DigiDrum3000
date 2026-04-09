@@ -7,15 +7,15 @@ from pathlib import Path
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge, ReadOnly,with_timeout
 from cocotb.utils import get_sim_time as gst
-from cocotb.runner import get_runner
+from cocotb_tools.runner import get_runner
 import matplotlib.pyplot as plt
 #from vicoco.vivado_runner import get_runner
 test_file = os.path.basename(__file__).replace(".py","")
 
 
 SAMPLE_PERIOD_IN = 2272/4
-F = 1000
-SIG_CYCLES = 3
+F = 50000
+SIG_CYCLES = 16
 DURATION_S = 1/F * SIG_CYCLES
 CLOCK_CYCLES = int(DURATION_S / 10e-9)
 SAMPLE_MAX = 2**15 - 1

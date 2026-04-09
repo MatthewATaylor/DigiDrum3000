@@ -1,0 +1,15 @@
+Power Supply
+    JAMECO RELIAPRO DDU050100M2270 (5V/1A, linear) -> FPGA and LM3940 (for analog 3.3V)
+
+Audio Input
+    1/4" TRS jack -> potentiometer -> AC coupling capacitor -> diode clipping
+    4 channel differential audio ADC (balanced mono in): PCM1840
+        PCBA service from JLCPCB
+
+Expression Pedals
+    1/4" TRS jack (S=GND, T/R=3.3V and wiper)
+    4 channel 10-bit ADC: ADC104S021
+        PCBA service from JLCPCB
+
+Audio Output
+    TLV320DAC3203?
