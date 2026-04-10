@@ -32,11 +32,9 @@ module dram_reader_audio
     logic [167:0]                unstacker_chunk_axis_tdata;
     
     logic         sample_axis_tvalid [INSTRUMENT_COUNT-1:0];
-    logic         sample_axis_tready [INSTRUMENT_COUNT-1:0];
+    logic         sample_axis_tready;
     logic [15:0]  sample_axis_tdata  [INSTRUMENT_COUNT-1:0];
     assign instrument_samples = sample_axis_tdata;
-
-    assign sample_period = unstacker_chunk_axis_tdata[165:152];
 
     logic [23:0]  data_addr;
     assign data_addr = unstacker_chunk_axis_tdata[151:128];
@@ -83,19 +81,31 @@ module dram_reader_audio
                 .chunk_tlast(0),
 
                 .pixel_tvalid(sample_axis_tvalid[i]),
-                .pixel_tready(sample_axis_tready[i]),
+                .pixel_tready(sample_axis_tready),
                 .pixel_tdata(sample_axis_tdata[i]),
                 .pixel_tlast()
             );
         end
     endgenerate
 
+    logic [13:0] sample_period_to_mixer;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            sample_period_to_mixer <= 14'd2272;
+        end else begin
+            if (unstacker_chunk_axis_tvalid) begin
+                sample_period_to_mixer <= unstacker_chunk_axis_tdata[165:152];
+            end
+        end
+    end
+
     sample_mixer #(
         .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
     ) mixer (
         .clk(clk),
         .rst(rst),
-        .sample_period(sample_period),
+        .sample_period_in(sample_period_to_mixer),
+        .sample_period_out(sample_period),
         .velocity(velocity),
         .din(sample_axis_tdata),
         .din_valid(sample_axis_tvalid),

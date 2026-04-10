@@ -12,4 +12,7 @@ Expression Pedals
         PCBA service from JLCPCB
 
 Audio Output
-    TLV320DAC3203?
+    FPGA -> DAC -> 2x 1/4" TRS jacks (balanced L/R)
+    TAD5242
+        PCBA service from JLCPCB
+
