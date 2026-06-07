@@ -49,12 +49,18 @@ module top_level
         inout wire          reverb_pin,
         inout wire          delay_pin,
 
-        // SPI ADC
+        // SPI ADC (pots)
         output logic        copi,
         output logic        dclk,
         output logic        cs0,
         output logic        cs1,
-        input  wire         cipo
+        input  wire         cipo,
+
+        // SPI ADC (pedals)
+        output logic        pedal_copi,
+        output logic        pedal_dclk,
+        output logic        pedal_cs,
+        input  wire         pedal_cipo
     );
 
     localparam INSTRUMENT_COUNT = 10;
@@ -143,7 +149,6 @@ module top_level
     //    .eth_txd(eth_txd)
     //);
 
-
     // From PCB interface
     logic [2:0] output_src_pcb;
     logic [2:0] crush_src_pcb;
@@ -166,7 +171,6 @@ module top_level
     logic [2:0] filter_src;
     logic [2:0] reverb_src;
     logic [2:0] delay_src;
-
 
     // From PCB interface
     logic [9:0] volume_pcb;
@@ -211,6 +215,12 @@ module top_level
     logic [9:0] crush_pressure;
     logic       delay_rate_fast;
 
+    // From pedals
+    logic [9:0] volume_pedal;
+    logic [9:0] pitch_pedal;
+    logic [9:0] delay_rate_pedal;
+    logic [9:0] delay_feedback_pedal;
+
     uart_param_controller uart_ctrl (
         .clk(clk),
         .rst(rst),
@@ -241,6 +251,65 @@ module top_level
     );
 
 
+    logic [11:0] delay_rate_sum;
+    logic [11:0] delay_feedback_sum;
+    logic [11:0] pitch_sum;
+    logic [11:0] volume_sum;
+
+    logic [9:0] delay_rate_clipped;
+    logic [9:0] delay_feedback_clipped;
+    logic [9:0] pitch_clipped;
+    logic [9:0] volume_clipped;
+
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            delay_rate_sum <= 0;
+            delay_feedback_sum <= 0;
+            pitch_sum <= 0;
+            volume_sum <= 0;
+            delay_rate_clipped <= 0;
+            delay_feedback_clipped <= 0;
+            pitch_clipped <= 0;
+            volume_clipped <= 0;
+        end else begin
+            delay_rate_sum <= {2'b00, delay_rate_pedal} + {2'b00, delay_rate_pcb} - 12'd512;
+            if ($signed(delay_rate_sum) < 12'sd0) begin
+                delay_rate_clipped <= 10'd0;
+            end else if ($signed(delay_rate_sum) > 12'sd1023) begin
+                delay_rate_clipped <= 10'd1023;
+            end else begin
+                delay_rate_clipped <= delay_rate_sum;
+            end
+
+            delay_feedback_sum <= {2'b00, delay_feedback_pedal} + {2'b00, delay_feedback_pcb} - 12'd512;
+            if ($signed(delay_feedback_sum) < 12'sd0) begin
+                delay_feedback_clipped <= 10'd0;
+            end else if ($signed(delay_feedback_sum) > 12'sd1023) begin
+                delay_feedback_clipped <= 10'd1023;
+            end else begin
+                delay_feedback_clipped <= delay_feedback_sum;
+            end
+
+            pitch_sum <= {2'b00, pitch_pedal} + {2'b00, pitch_pcb} - 12'd512;
+            if ($signed(pitch_sum) < 12'sd0) begin
+                pitch_clipped <= 10'd0;
+            end else if ($signed(pitch_sum) > 12'sd1023) begin
+                pitch_clipped <= 10'd1023;
+            end else begin
+                pitch_clipped <= pitch_sum;
+            end
+
+            volume_sum <= {2'b00, volume_pedal} + {2'b00, volume_pcb} - 12'd512;
+            if ($signed(volume_sum) < 12'sd0) begin
+                volume_clipped <= 10'd0;
+            end else if ($signed(volume_sum) > 12'sd1023) begin
+                volume_clipped <= 10'd1023;
+            end else begin
+                volume_clipped <= volume_sum;
+            end
+        end
+    end
+
     always_comb begin
         if (sw[1]) begin
             volume = volume_uart;
@@ -257,11 +326,18 @@ module top_level
             crush_pressure = crush_pressure_uart;
             delay_rate_fast = delay_rate_fast_uart;
         end else begin
-            volume = volume_pcb;
-            pitch = pitch_pcb;
+            if (sw[2]) begin
+                delay_rate = delay_rate_clipped;
+                delay_feedback = delay_feedback_clipped;
+                pitch = pitch_clipped;
+                volume = volume_clipped;
+            end else begin
+                delay_rate = delay_rate_pcb;
+                delay_feedback = delay_feedback_pcb;
+                pitch = pitch_pcb;
+                volume = volume_pcb;
+            end
             delay_wet = delay_wet_pcb;
-            delay_rate = delay_rate_pcb;
-            delay_feedback = delay_feedback_pcb;
             reverb_wet = reverb_wet_pcb;
             reverb_size = reverb_size_pcb;
             reverb_feedback = reverb_feedback_pcb;
@@ -615,6 +691,41 @@ module top_level
     );
 
 
+    logic [9:0] pedal_value;
+    logic [1:0] pedal_index;
+    logic       pedal_value_valid;
+    pedal_controller pedal_con (
+        .clk(clk),
+        .rst(rst),
+
+        .cipo(pedal_cipo),
+        .copi(pedal_copi),
+        .dclk(pedal_dclk),
+        .cs(pedal_cs),
+        
+        .value(pedal_value),
+        .pedal_index(pedal_index),
+        .value_valid(pedal_value_valid)
+    );
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            volume_pedal <= 0;
+            pitch_pedal <= 0;
+            delay_rate_pedal <= 0;
+            delay_feedback_pedal <= 0;
+        end else begin
+            if (pedal_value_valid) begin
+                case (pedal_index)
+                    2'b00: volume_pedal <= pedal_value;
+                    2'b01: pitch_pedal <= pedal_value;
+                    2'b10: delay_rate_pedal <= pedal_value;
+                    2'b11: delay_feedback_pedal <= pedal_value <= 10'd823 ? pedal_value+10'd200 : 10'd1023;
+                endcase
+            end
+        end
+    end
+
+
     // Debug
 
     logic [23:0]  memrequest_complete_counter;
@@ -632,6 +743,7 @@ module top_level
     always_comb begin
         if (sample_load_complete) begin
             ss_val = {
+                //pedal_value[9:2],
                 1'b0,
                 drd_req.midi_proc.velocity,  // 7 bits
                 4'b0,
@@ -653,6 +765,29 @@ module top_level
         .cat(ss_c),
         .an(ss_a)
     );
+
+
+    //logic[31:0] ss_val;
+    //always_ff @ (posedge clk) begin
+    //    if (rst) begin
+    //        ss_val <= 0;
+    //    end else begin
+    //        ss_val <= {
+    //            6'b0,
+    //            pitch_pedal,
+    //            6'b0,
+    //            volume_pedal
+    //        };
+    //    end
+    //end
+    //seven_segment_controller ssc (
+    //    .clk(clk),
+    //    .rst(rst),
+    //    .val(ss_val),
+    //    .cat(ss_c),
+    //    .an(ss_a)
+    //);
+
 
     always_ff @ (posedge clk_dram_ctrl) begin
         if (rst_dram_ctrl) begin

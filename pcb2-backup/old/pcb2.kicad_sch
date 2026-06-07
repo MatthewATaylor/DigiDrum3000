@@ -4571,8 +4571,8 @@
 		(uuid "b70b2846-197a-43ff-bb45-a77b74aca41d")
 	)
 	(no_connect
-		(at 232.41 160.02)
-		(uuid "e4345678-4c9b-4e4f-b76a-3f67d678a517")
+		(at 232.41 120.65)
+		(uuid "e5e82a2e-73dc-4217-84cd-9ea5a90b8691")
 	)
 	(no_connect
 		(at 260.35 78.74)
@@ -6300,8 +6300,18 @@
 		)
 		(uuid "2427de14-f438-4c38-9590-775a701cf554")
 	)
+	(label "ADC_PEDAL_CS"
+		(at 232.41 160.02 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "25490605-9402-4dcc-9220-1eac61b1c5d2")
+	)
 	(label "DAC_DIN"
-		(at 232.41 152.4 0)
+		(at 232.41 128.27 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6340,6 +6350,16 @@
 		)
 		(uuid "37f4f2b7-0c25-452a-b3de-47da97171669")
 	)
+	(label "ADC_PEDAL_DIN"
+		(at 232.41 157.48 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "4532257e-0b33-4023-a0e1-fbfd1fc2446e")
+	)
 	(label "ADC_IN4N"
 		(at 100.33 148.59 0)
 		(effects
@@ -6349,6 +6369,16 @@
 			(justify left bottom)
 		)
 		(uuid "458ab771-fa27-4112-8e1d-32581825d157")
+	)
+	(label "ADC_PEDAL_CLK"
+		(at 232.41 152.4 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "4946305a-6ac9-43aa-b946-746dea766c75")
 	)
 	(label "DAC_OUT2N"
 		(at 246.38 80.01 0)
@@ -6380,35 +6410,15 @@
 		)
 		(uuid "62b92efd-2954-4d01-82ad-685443ee009f")
 	)
-	(label "ADC_PEDAL_DIN"
-		(at 232.41 128.27 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "637639b8-4932-4e58-8f00-bee0f7f13484")
-	)
-	(label "ADC_PEDAL_CS"
-		(at 232.41 120.65 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "73a6f38c-9a3d-401d-b50b-07778ec46c52")
-	)
 	(label "ADC_PEDAL_DOUT"
-		(at 232.41 125.73 0)
+		(at 232.41 154.94 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "75daf1dd-cfdf-471c-b4e2-59c94e709e62")
+		(uuid "79cec198-2b2c-4d3d-ae9b-91249f66cece")
 	)
 	(label "DAC_OUT1P"
 		(at 246.38 54.61 0)
@@ -6431,7 +6441,7 @@
 		(uuid "88757d3a-1160-4d3b-bcc5-8c16ade7827d")
 	)
 	(label "ADC_AUDIO_CLK"
-		(at 219.71 157.48 180)
+		(at 219.71 154.94 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6441,7 +6451,7 @@
 		(uuid "a4df95d1-855c-44dd-8753-247adf4b60a3")
 	)
 	(label "DAC_FSYNC"
-		(at 232.41 154.94 0)
+		(at 232.41 123.19 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6450,18 +6460,8 @@
 		)
 		(uuid "a5c6f0a7-8460-42e9-b4a5-8ccca1194795")
 	)
-	(label "ADC_PEDAL_CLK"
-		(at 232.41 123.19 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "af7c3cc1-a56b-44af-96fb-8ec04b795a3f")
-	)
 	(label "ADC_AUDIO_DOUT"
-		(at 219.71 154.94 180)
+		(at 219.71 157.48 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6571,7 +6571,7 @@
 		(uuid "f7cdd5c8-4311-46a7-9064-f7ca53ce0328")
 	)
 	(label "DAC_CLK"
-		(at 232.41 157.48 0)
+		(at 232.41 125.73 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -6911,9 +6911,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "067eeaaf-bc6b-4a67-bd92-8ff9d398dec6")
 		(property "Reference" "J11"
@@ -8087,9 +8087,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "241961b2-b776-4f45-b927-855ccc76c9d9")
@@ -8248,9 +8248,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "2dc39c8f-f34b-45ab-a183-7dde321ab58e")
 		(property "Reference" "J4"
@@ -8584,9 +8584,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "345ffe7a-30ca-40d5-925f-fa39d72c9b90")
@@ -8903,9 +8903,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "3b40f0cf-90b8-4949-a700-b874fc5fcf01")
 		(property "Reference" "J1"
@@ -9154,9 +9154,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "3f8ec8e8-2aac-4786-bacd-d81f45821abe")
 		(property "Reference" "J10"
@@ -9336,9 +9336,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "45b99c1c-a25c-4be9-a4db-85e1b9415c28")
 		(property "Reference" "J8"
@@ -9859,9 +9859,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "584f81df-a99f-4b29-b1ee-91e10b630f20")
 		(property "Reference" "J5"
@@ -10201,9 +10201,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "5c3b7d3e-792b-4ce3-8237-efe7795bb073")
 		(property "Reference" "J7"
@@ -11297,9 +11297,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "6b47e6e2-43ba-43de-8c35-0919b16ace1e")
@@ -11993,9 +11993,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "79fd94b5-a486-477d-b273-572cefe520b7")
 		(property "Reference" "J15"
@@ -13419,9 +13419,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "9c9ae456-12f9-4ff2-ab51-f951ea925d28")
 		(property "Reference" "J13"
@@ -13621,9 +13621,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "a03fcd8e-23f9-4ee0-8bbb-ac085b2762d8")
 		(property "Reference" "J9"
@@ -13896,9 +13896,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "a43cbed7-dcb4-43f6-9579-dc31e0ed6537")
 		(property "Reference" "J2"
@@ -14150,9 +14150,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "b0937bde-a7d0-4531-9d4a-de460377c78d")
 		(property "Reference" "J12"
@@ -15262,9 +15262,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "c77a66d3-b03d-4376-898b-7c0b0cf79d03")
 		(property "Reference" "J14"
@@ -16341,9 +16341,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "e5014a2d-d622-49e9-af5f-8edaa49c5acf")
@@ -17099,9 +17099,9 @@
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
-		(in_bom no)
+		(in_bom yes)
 		(on_board yes)
-		(in_pos_files no)
+		(in_pos_files yes)
 		(dnp no)
 		(uuid "f8ce5b46-b005-4116-992d-2accaf6f3a09")
 		(property "Reference" "J6"
@@ -17566,17 +17566,6 @@
 			)
 		)
 		(property "MPN" "C2669894"
-			(at 157.48 48.26 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "FT Rotation Offset" "-90"
 			(at 157.48 48.26 0)
 			(hide yes)
 			(show_name no)
