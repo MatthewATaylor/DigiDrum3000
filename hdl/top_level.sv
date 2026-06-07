@@ -26,20 +26,20 @@ module top_level
         inout  wire   [2:0] eth_mode,
 
         // SDRAM (DDR2) ports
-        inout  wire  [15:0] ddr2_dq,
-        inout  wire   [1:0] ddr2_dqs_n,
-        inout  wire   [1:0] ddr2_dqs_p,
-        output wire  [12:0] ddr2_addr,
-        output wire   [2:0] ddr2_ba,
-        output wire         ddr2_ras_n,
-        output wire         ddr2_cas_n,
-        output wire         ddr2_we_n,
-        output wire   [0:0] ddr2_ck_p,
-        output wire   [0:0] ddr2_ck_n,
-        output wire   [0:0] ddr2_cke,
-        output wire   [0:0] ddr2_odt,
-        output wire   [0:0] ddr2_cs_n,
-        output wire   [1:0] ddr2_dm,
+        //inout  wire  [15:0] ddr2_dq,
+        //inout  wire   [1:0] ddr2_dqs_n,
+        //inout  wire   [1:0] ddr2_dqs_p,
+        //output wire  [12:0] ddr2_addr,
+        //output wire   [2:0] ddr2_ba,
+        //output wire         ddr2_ras_n,
+        //output wire         ddr2_cas_n,
+        //output wire         ddr2_we_n,
+        //output wire   [0:0] ddr2_ck_p,
+        //output wire   [0:0] ddr2_ck_n,
+        //output wire   [0:0] ddr2_cke,
+        //output wire   [0:0] ddr2_odt,
+        //output wire   [0:0] ddr2_cs_n,
+        //output wire   [1:0] ddr2_dm,
 
         // Patch pins
         inout wire          dry_pin,
@@ -110,7 +110,7 @@ module top_level
 
     logic  rst_buf [1:0];
     logic  rst;
-    assign rst = rst_buf[0] | ~clks_locked | ~init_calib_complete;   
+    assign rst = rst_buf[0] | ~clks_locked;// | ~init_calib_complete;   
 
     logic  rst_dram_ref_buf [1:0];
     logic  rst_dram_ref;
@@ -142,221 +142,221 @@ module top_level
     logic        addr_offsets_valid;
 
 
-    //eth_transmit eth_transmit_i (
-    //    .eth_clk(eth_clk),
-    //    .eth_rst_n(eth_rst_n),
-    //    .eth_txen(eth_txen),
-    //    .eth_txd(eth_txd)
+    eth_transmit eth_transmit_i (
+        .eth_clk(eth_clk),
+        .eth_rst_n(eth_rst_n),
+        .eth_txen(eth_txen),
+        .eth_txd(eth_txd)
+    );
+
+    //// From PCB interface
+    //logic [2:0] output_src_pcb;
+    //logic [2:0] crush_src_pcb;
+    //logic [2:0] distortion_src_pcb;
+    //logic [2:0] filter_src_pcb;
+    //logic [2:0] reverb_src_pcb;
+    //logic [2:0] delay_src_pcb;
+
+    //// From UART controller
+    //logic [2:0] output_src_uart;
+    //logic [2:0] crush_src_uart;
+    //logic [2:0] distortion_src_uart;
+    //logic [2:0] filter_src_uart;
+    //logic [2:0] reverb_src_uart;
+    //logic [2:0] delay_src_uart;
+
+    //logic [2:0] output_src;
+    //logic [2:0] crush_src;
+    //logic [2:0] distortion_src;
+    //logic [2:0] filter_src;
+    //logic [2:0] reverb_src;
+    //logic [2:0] delay_src;
+
+    //// From PCB interface
+    //logic [9:0] volume_pcb;
+    //logic [9:0] pitch_pcb;
+    //logic [9:0] delay_wet_pcb;
+    //logic [9:0] delay_rate_pcb;
+    //logic [9:0] delay_feedback_pcb;
+    //logic [9:0] reverb_wet_pcb;
+    //logic [9:0] reverb_size_pcb;
+    //logic [9:0] reverb_feedback_pcb;
+    //logic [9:0] filter_quality_pcb;
+    //logic [9:0] filter_cutoff_pcb;
+    //logic [9:0] distortion_drive_pcb;
+    //logic [9:0] crush_pressure_pcb;
+
+    //// From UART controller
+    //logic [9:0] volume_uart;
+    //logic [9:0] pitch_uart;
+    //logic [9:0] delay_wet_uart;
+    //logic [9:0] delay_rate_uart;
+    //logic [9:0] delay_feedback_uart;
+    //logic [9:0] reverb_wet_uart;
+    //logic [9:0] reverb_size_uart;
+    //logic [9:0] reverb_feedback_uart;
+    //logic [9:0] filter_quality_uart;
+    //logic [9:0] filter_cutoff_uart;
+    //logic [9:0] distortion_drive_uart;
+    //logic [9:0] crush_pressure_uart;
+    //logic       delay_rate_fast_uart;
+
+    //logic [9:0] volume;
+    //logic [9:0] pitch;
+    //logic [9:0] delay_wet;
+    //logic [9:0] delay_rate;
+    //logic [9:0] delay_feedback;
+    //logic [9:0] reverb_wet;
+    //logic [9:0] reverb_size;
+    //logic [9:0] reverb_feedback;
+    //logic [9:0] filter_quality;
+    //logic [9:0] filter_cutoff;
+    //logic [9:0] distortion_drive;
+    //logic [9:0] crush_pressure;
+    //logic       delay_rate_fast;
+
+    //// From pedals
+    //logic [9:0] volume_pedal;
+    //logic [9:0] pitch_pedal;
+    //logic [9:0] delay_rate_pedal;
+    //logic [9:0] delay_feedback_pedal;
+
+    //uart_param_controller uart_ctrl (
+    //    .clk(clk),
+    //    .rst(rst),
+
+    //    .en(sample_load_complete & addr_offsets_valid),
+    //    .uart_din(uart_din),
+
+    //    .output_src(output_src_uart),
+    //    .crush_src(crush_src_uart),
+    //    .distortion_src(distortion_src_uart),
+    //    .filter_src(filter_src_uart),
+    //    .reverb_src(reverb_src_uart),
+    //    .delay_src(delay_src_uart),
+    //    
+    //    .volume(volume_uart),
+    //    .pitch(pitch_uart),
+    //    .delay_wet(delay_wet_uart),
+    //    .delay_rate(delay_rate_uart),
+    //    .delay_feedback(delay_feedback_uart),
+    //    .reverb_wet(reverb_wet_uart),
+    //    .reverb_size(reverb_size_uart),
+    //    .reverb_feedback(reverb_feedback_uart),
+    //    .filter_quality(filter_quality_uart),
+    //    .filter_cutoff(filter_cutoff_uart),
+    //    .distortion_drive(distortion_drive_uart),
+    //    .crush_pressure(crush_pressure_uart),
+    //    .delay_rate_fast(delay_rate_fast_uart)
     //);
 
-    // From PCB interface
-    logic [2:0] output_src_pcb;
-    logic [2:0] crush_src_pcb;
-    logic [2:0] distortion_src_pcb;
-    logic [2:0] filter_src_pcb;
-    logic [2:0] reverb_src_pcb;
-    logic [2:0] delay_src_pcb;
 
-    // From UART controller
-    logic [2:0] output_src_uart;
-    logic [2:0] crush_src_uart;
-    logic [2:0] distortion_src_uart;
-    logic [2:0] filter_src_uart;
-    logic [2:0] reverb_src_uart;
-    logic [2:0] delay_src_uart;
+    //logic [11:0] delay_rate_sum;
+    //logic [11:0] delay_feedback_sum;
+    //logic [11:0] pitch_sum;
+    //logic [11:0] volume_sum;
 
-    logic [2:0] output_src;
-    logic [2:0] crush_src;
-    logic [2:0] distortion_src;
-    logic [2:0] filter_src;
-    logic [2:0] reverb_src;
-    logic [2:0] delay_src;
+    //logic [9:0] delay_rate_clipped;
+    //logic [9:0] delay_feedback_clipped;
+    //logic [9:0] pitch_clipped;
+    //logic [9:0] volume_clipped;
 
-    // From PCB interface
-    logic [9:0] volume_pcb;
-    logic [9:0] pitch_pcb;
-    logic [9:0] delay_wet_pcb;
-    logic [9:0] delay_rate_pcb;
-    logic [9:0] delay_feedback_pcb;
-    logic [9:0] reverb_wet_pcb;
-    logic [9:0] reverb_size_pcb;
-    logic [9:0] reverb_feedback_pcb;
-    logic [9:0] filter_quality_pcb;
-    logic [9:0] filter_cutoff_pcb;
-    logic [9:0] distortion_drive_pcb;
-    logic [9:0] crush_pressure_pcb;
+    //always_ff @ (posedge clk) begin
+    //    if (rst) begin
+    //        delay_rate_sum <= 0;
+    //        delay_feedback_sum <= 0;
+    //        pitch_sum <= 0;
+    //        volume_sum <= 0;
+    //        delay_rate_clipped <= 0;
+    //        delay_feedback_clipped <= 0;
+    //        pitch_clipped <= 0;
+    //        volume_clipped <= 0;
+    //    end else begin
+    //        delay_rate_sum <= {2'b00, delay_rate_pedal} + {2'b00, delay_rate_pcb} - 12'd512;
+    //        if ($signed(delay_rate_sum) < 12'sd0) begin
+    //            delay_rate_clipped <= 10'd0;
+    //        end else if ($signed(delay_rate_sum) > 12'sd1023) begin
+    //            delay_rate_clipped <= 10'd1023;
+    //        end else begin
+    //            delay_rate_clipped <= delay_rate_sum;
+    //        end
 
-    // From UART controller
-    logic [9:0] volume_uart;
-    logic [9:0] pitch_uart;
-    logic [9:0] delay_wet_uart;
-    logic [9:0] delay_rate_uart;
-    logic [9:0] delay_feedback_uart;
-    logic [9:0] reverb_wet_uart;
-    logic [9:0] reverb_size_uart;
-    logic [9:0] reverb_feedback_uart;
-    logic [9:0] filter_quality_uart;
-    logic [9:0] filter_cutoff_uart;
-    logic [9:0] distortion_drive_uart;
-    logic [9:0] crush_pressure_uart;
-    logic       delay_rate_fast_uart;
+    //        delay_feedback_sum <= {2'b00, delay_feedback_pedal} + {2'b00, delay_feedback_pcb} - 12'd512;
+    //        if ($signed(delay_feedback_sum) < 12'sd0) begin
+    //            delay_feedback_clipped <= 10'd0;
+    //        end else if ($signed(delay_feedback_sum) > 12'sd1023) begin
+    //            delay_feedback_clipped <= 10'd1023;
+    //        end else begin
+    //            delay_feedback_clipped <= delay_feedback_sum;
+    //        end
 
-    logic [9:0] volume;
-    logic [9:0] pitch;
-    logic [9:0] delay_wet;
-    logic [9:0] delay_rate;
-    logic [9:0] delay_feedback;
-    logic [9:0] reverb_wet;
-    logic [9:0] reverb_size;
-    logic [9:0] reverb_feedback;
-    logic [9:0] filter_quality;
-    logic [9:0] filter_cutoff;
-    logic [9:0] distortion_drive;
-    logic [9:0] crush_pressure;
-    logic       delay_rate_fast;
+    //        pitch_sum <= {2'b00, pitch_pedal} + {2'b00, pitch_pcb} - 12'd512;
+    //        if ($signed(pitch_sum) < 12'sd0) begin
+    //            pitch_clipped <= 10'd0;
+    //        end else if ($signed(pitch_sum) > 12'sd1023) begin
+    //            pitch_clipped <= 10'd1023;
+    //        end else begin
+    //            pitch_clipped <= pitch_sum;
+    //        end
 
-    // From pedals
-    logic [9:0] volume_pedal;
-    logic [9:0] pitch_pedal;
-    logic [9:0] delay_rate_pedal;
-    logic [9:0] delay_feedback_pedal;
+    //        volume_sum <= {2'b00, volume_pedal} + {2'b00, volume_pcb} - 12'd512;
+    //        if ($signed(volume_sum) < 12'sd0) begin
+    //            volume_clipped <= 10'd0;
+    //        end else if ($signed(volume_sum) > 12'sd1023) begin
+    //            volume_clipped <= 10'd1023;
+    //        end else begin
+    //            volume_clipped <= volume_sum;
+    //        end
+    //    end
+    //end
 
-    uart_param_controller uart_ctrl (
-        .clk(clk),
-        .rst(rst),
-
-        .en(sample_load_complete & addr_offsets_valid),
-        .uart_din(uart_din),
-
-        .output_src(output_src_uart),
-        .crush_src(crush_src_uart),
-        .distortion_src(distortion_src_uart),
-        .filter_src(filter_src_uart),
-        .reverb_src(reverb_src_uart),
-        .delay_src(delay_src_uart),
-        
-        .volume(volume_uart),
-        .pitch(pitch_uart),
-        .delay_wet(delay_wet_uart),
-        .delay_rate(delay_rate_uart),
-        .delay_feedback(delay_feedback_uart),
-        .reverb_wet(reverb_wet_uart),
-        .reverb_size(reverb_size_uart),
-        .reverb_feedback(reverb_feedback_uart),
-        .filter_quality(filter_quality_uart),
-        .filter_cutoff(filter_cutoff_uart),
-        .distortion_drive(distortion_drive_uart),
-        .crush_pressure(crush_pressure_uart),
-        .delay_rate_fast(delay_rate_fast_uart)
-    );
+    //always_comb begin
+    //    if (sw[1]) begin
+    //        volume = volume_uart;
+    //        pitch = pitch_uart;
+    //        delay_wet = delay_wet_uart;
+    //        delay_rate = delay_rate_uart;
+    //        delay_feedback = delay_feedback_uart;
+    //        reverb_wet = reverb_wet_uart;
+    //        reverb_size = reverb_size_uart;
+    //        reverb_feedback = reverb_feedback_uart;
+    //        filter_quality = filter_quality_uart;
+    //        filter_cutoff = filter_cutoff_uart;
+    //        distortion_drive = distortion_drive_uart;
+    //        crush_pressure = crush_pressure_uart;
+    //        delay_rate_fast = delay_rate_fast_uart;
+    //    end else begin
+    //        if (sw[2]) begin
+    //            delay_rate = delay_rate_clipped;
+    //            delay_feedback = delay_feedback_clipped;
+    //            pitch = pitch_clipped;
+    //            volume = volume_clipped;
+    //        end else begin
+    //            delay_rate = delay_rate_pcb;
+    //            delay_feedback = delay_feedback_pcb;
+    //            pitch = pitch_pcb;
+    //            volume = volume_pcb;
+    //        end
+    //        delay_wet = delay_wet_pcb;
+    //        reverb_wet = reverb_wet_pcb;
+    //        reverb_size = reverb_size_pcb;
+    //        reverb_feedback = reverb_feedback_pcb;
+    //        filter_quality = filter_quality_pcb;
+    //        filter_cutoff = filter_cutoff_pcb;
+    //        distortion_drive = distortion_drive_pcb;
+    //        crush_pressure = crush_pressure_pcb;
+    //        delay_rate_fast = sw[0];
+    //    end
+    //end
 
 
-    logic [11:0] delay_rate_sum;
-    logic [11:0] delay_feedback_sum;
-    logic [11:0] pitch_sum;
-    logic [11:0] volume_sum;
-
-    logic [9:0] delay_rate_clipped;
-    logic [9:0] delay_feedback_clipped;
-    logic [9:0] pitch_clipped;
-    logic [9:0] volume_clipped;
-
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            delay_rate_sum <= 0;
-            delay_feedback_sum <= 0;
-            pitch_sum <= 0;
-            volume_sum <= 0;
-            delay_rate_clipped <= 0;
-            delay_feedback_clipped <= 0;
-            pitch_clipped <= 0;
-            volume_clipped <= 0;
-        end else begin
-            delay_rate_sum <= {2'b00, delay_rate_pedal} + {2'b00, delay_rate_pcb} - 12'd512;
-            if ($signed(delay_rate_sum) < 12'sd0) begin
-                delay_rate_clipped <= 10'd0;
-            end else if ($signed(delay_rate_sum) > 12'sd1023) begin
-                delay_rate_clipped <= 10'd1023;
-            end else begin
-                delay_rate_clipped <= delay_rate_sum;
-            end
-
-            delay_feedback_sum <= {2'b00, delay_feedback_pedal} + {2'b00, delay_feedback_pcb} - 12'd512;
-            if ($signed(delay_feedback_sum) < 12'sd0) begin
-                delay_feedback_clipped <= 10'd0;
-            end else if ($signed(delay_feedback_sum) > 12'sd1023) begin
-                delay_feedback_clipped <= 10'd1023;
-            end else begin
-                delay_feedback_clipped <= delay_feedback_sum;
-            end
-
-            pitch_sum <= {2'b00, pitch_pedal} + {2'b00, pitch_pcb} - 12'd512;
-            if ($signed(pitch_sum) < 12'sd0) begin
-                pitch_clipped <= 10'd0;
-            end else if ($signed(pitch_sum) > 12'sd1023) begin
-                pitch_clipped <= 10'd1023;
-            end else begin
-                pitch_clipped <= pitch_sum;
-            end
-
-            volume_sum <= {2'b00, volume_pedal} + {2'b00, volume_pcb} - 12'd512;
-            if ($signed(volume_sum) < 12'sd0) begin
-                volume_clipped <= 10'd0;
-            end else if ($signed(volume_sum) > 12'sd1023) begin
-                volume_clipped <= 10'd1023;
-            end else begin
-                volume_clipped <= volume_sum;
-            end
-        end
-    end
-
-    always_comb begin
-        if (sw[1]) begin
-            volume = volume_uart;
-            pitch = pitch_uart;
-            delay_wet = delay_wet_uart;
-            delay_rate = delay_rate_uart;
-            delay_feedback = delay_feedback_uart;
-            reverb_wet = reverb_wet_uart;
-            reverb_size = reverb_size_uart;
-            reverb_feedback = reverb_feedback_uart;
-            filter_quality = filter_quality_uart;
-            filter_cutoff = filter_cutoff_uart;
-            distortion_drive = distortion_drive_uart;
-            crush_pressure = crush_pressure_uart;
-            delay_rate_fast = delay_rate_fast_uart;
-        end else begin
-            if (sw[2]) begin
-                delay_rate = delay_rate_clipped;
-                delay_feedback = delay_feedback_clipped;
-                pitch = pitch_clipped;
-                volume = volume_clipped;
-            end else begin
-                delay_rate = delay_rate_pcb;
-                delay_feedback = delay_feedback_pcb;
-                pitch = pitch_pcb;
-                volume = volume_pcb;
-            end
-            delay_wet = delay_wet_pcb;
-            reverb_wet = reverb_wet_pcb;
-            reverb_size = reverb_size_pcb;
-            reverb_feedback = reverb_feedback_pcb;
-            filter_quality = filter_quality_pcb;
-            filter_cutoff = filter_cutoff_pcb;
-            distortion_drive = distortion_drive_pcb;
-            crush_pressure = crush_pressure_pcb;
-            delay_rate_fast = sw[0];
-        end
-    end
-
-
-    logic [13:0] sample_period;
-    pitch_to_sample_period p2sp (
-        .clk(clk),
-        .rst(rst),
-        .pitch(pitch),
-        .sample_period(sample_period)
-    );
+    //logic [13:0] sample_period;
+    //pitch_to_sample_period p2sp (
+    //    .clk(clk),
+    //    .rst(rst),
+    //    .pitch(pitch),
+    //    .sample_period(sample_period)
+    //);
 
 
     // Synchronization
@@ -406,23 +406,23 @@ module top_level
     end
 
 
-    // Instrument trigger buttons
-    genvar i;
-    generate
-        for (i=0; i<4; i++) begin
-            debouncer_trig db_instr_trig (
-                .clk(clk),
-                .rst(rst),
-                .dirty(instr_debug_btn[i]),
-                .clean(instr_trig_debug[i])
-            );
-        end
-    endgenerate
-    always_comb begin
-        for (int i=4; i<INSTRUMENT_COUNT; i++) begin
-            instr_trig_debug[i] = 1'b0;
-        end
-    end
+    //// Instrument trigger buttons
+    //genvar i;
+    //generate
+    //    for (i=0; i<4; i++) begin
+    //        debouncer_trig db_instr_trig (
+    //            .clk(clk),
+    //            .rst(rst),
+    //            .dirty(instr_debug_btn[i]),
+    //            .clean(instr_trig_debug[i])
+    //        );
+    //    end
+    //endgenerate
+    //always_comb begin
+    //    for (int i=4; i<INSTRUMENT_COUNT; i++) begin
+    //        instr_trig_debug[i] = 1'b0;
+    //    end
+    //end
 
 
     cw_dram_eth cw_dram_eth_i (
@@ -434,337 +434,337 @@ module top_level
     );
 
 
-    logic [127:0] write_axis_data;
-    logic         write_axis_tlast;
-    logic         write_axis_valid;
-    logic         write_axis_ready;
+    //logic [127:0] write_axis_data;
+    //logic         write_axis_tlast;
+    //logic         write_axis_valid;
+    //logic         write_axis_ready;
 
-    dram_writer #(
-        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
-    ) dwr (
-        .clk(clk),
-        .clk_dram_ctrl(clk_dram_ctrl),
-        .rst(rst),
-        .uart_din(uart_din),
-        
-        .addr_offsets(addr_offsets),
-        .addr_offsets_valid(addr_offsets_valid),
-    
-        .fifo_receiver_axis_tvalid(write_axis_valid),
-        .fifo_receiver_axis_tready(write_axis_ready),
-        .fifo_receiver_axis_tdata(write_axis_data),
-        .fifo_receiver_axis_tlast(write_axis_tlast)
-    );
+    //dram_writer #(
+    //    .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
+    //) dwr (
+    //    .clk(clk),
+    //    .clk_dram_ctrl(clk_dram_ctrl),
+    //    .rst(rst),
+    //    .uart_din(uart_din),
+    //    
+    //    .addr_offsets(addr_offsets),
+    //    .addr_offsets_valid(addr_offsets_valid),
+    //
+    //    .fifo_receiver_axis_tvalid(write_axis_valid),
+    //    .fifo_receiver_axis_tready(write_axis_ready),
+    //    .fifo_receiver_axis_tdata(write_axis_data),
+    //    .fifo_receiver_axis_tlast(write_axis_tlast)
+    //);
 
-    logic [39:0]  read_addr_axis_data;
-    logic         read_addr_axis_tlast;
-    logic         read_addr_axis_valid;
-    logic         read_addr_axis_ready;
+    //logic [39:0]  read_addr_axis_data;
+    //logic         read_addr_axis_tlast;
+    //logic         read_addr_axis_valid;
+    //logic         read_addr_axis_ready;
 
-    logic [ 6:0]  velocity_map [INSTRUMENT_COUNT-1:0];
+    //logic [ 6:0]  velocity_map [INSTRUMENT_COUNT-1:0];
 
-    logic [6:0] midi_key;
-    logic [6:0] midi_vel;
-    logic       midi_msg_valid;
+    //logic [6:0] midi_key;
+    //logic [6:0] midi_vel;
+    //logic       midi_msg_valid;
 
-    dram_read_requester #(
-        .INSTRUMENT_COUNT(INSTRUMENT_COUNT),
-        .MIDI_KEYS(MIDI_KEYS)
-    ) drd_req (
-        .clk(clk),
-        .clk_dram_ctrl(clk_dram_ctrl),
-        .rst(rst),
-        .midi_din(midi_din),
+    //dram_read_requester #(
+    //    .INSTRUMENT_COUNT(INSTRUMENT_COUNT),
+    //    .MIDI_KEYS(MIDI_KEYS)
+    //) drd_req (
+    //    .clk(clk),
+    //    .clk_dram_ctrl(clk_dram_ctrl),
+    //    .rst(rst),
+    //    .midi_din(midi_din),
 
-        .sample_period(sample_period),
-        .sample_load_complete(sample_load_complete),
-        .addr_offsets(addr_offsets),
-        .addr_offsets_valid(addr_offsets_valid),
-        
-        .fifo_receiver_axis_tvalid(read_addr_axis_valid),
-        .fifo_receiver_axis_tready(read_addr_axis_ready),
-        .fifo_receiver_axis_tdata(read_addr_axis_data),
-        .fifo_receiver_axis_tlast(read_addr_axis_tlast),
+    //    .sample_period(sample_period),
+    //    .sample_load_complete(sample_load_complete),
+    //    .addr_offsets(addr_offsets),
+    //    .addr_offsets_valid(addr_offsets_valid),
+    //    
+    //    .fifo_receiver_axis_tvalid(read_addr_axis_valid),
+    //    .fifo_receiver_axis_tready(read_addr_axis_ready),
+    //    .fifo_receiver_axis_tdata(read_addr_axis_data),
+    //    .fifo_receiver_axis_tlast(read_addr_axis_tlast),
 
-        .velocity(velocity_map),
+    //    .velocity(velocity_map),
 
-        .instr_trig_debug(instr_trig_debug),
+    //    .instr_trig_debug(instr_trig_debug),
 
-        .midi_key(midi_key),
-        .midi_vel(midi_vel),
-        .midi_dout_valid(midi_msg_valid)
-    );
+    //    .midi_key(midi_key),
+    //    .midi_vel(midi_vel),
+    //    .midi_dout_valid(midi_msg_valid)
+    //);
 
-    logic [15:0]  sample_raw;
-    logic         sample_raw_valid;
+    //logic [15:0]  sample_raw;
+    //logic         sample_raw_valid;
 
-    logic         read_data_audio_axis_valid;
-    logic         read_data_audio_axis_ready;
-    logic [167:0] read_data_audio_axis_data;
+    //logic         read_data_audio_axis_valid;
+    //logic         read_data_audio_axis_ready;
+    //logic [167:0] read_data_audio_axis_data;
 
-    logic [15:0]  current_instrument_samples [INSTRUMENT_COUNT-1:0];
-    logic [13:0]  sample_period_dram_out;
+    //logic [15:0]  current_instrument_samples [INSTRUMENT_COUNT-1:0];
+    //logic [13:0]  sample_period_dram_out;
 
-    dram_reader_audio #(
-        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
-    ) drd_audio (
-        .clk(clk),
-        .clk_dram_ctrl(clk_dram_ctrl),
-        .rst(rst),
-        .rst_dram_ctrl(rst_dram_ctrl),
+    //dram_reader_audio #(
+    //    .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
+    //) drd_audio (
+    //    .clk(clk),
+    //    .clk_dram_ctrl(clk_dram_ctrl),
+    //    .rst(rst),
+    //    .rst_dram_ctrl(rst_dram_ctrl),
 
-        .addr_offsets(addr_offsets),
-        .addr_offsets_valid(addr_offsets_valid),
-        .velocity(velocity_map),
+    //    .addr_offsets(addr_offsets),
+    //    .addr_offsets_valid(addr_offsets_valid),
+    //    .velocity(velocity_map),
 
-        .instrument_samples(current_instrument_samples),
-        .sample(sample_raw),
-        .sample_valid(sample_raw_valid),
+    //    .instrument_samples(current_instrument_samples),
+    //    .sample(sample_raw),
+    //    .sample_valid(sample_raw_valid),
 
-        .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
-        .fifo_sender_axis_tready(read_data_audio_axis_ready),
-        .fifo_sender_axis_tdata(read_data_audio_axis_data),
+    //    .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
+    //    .fifo_sender_axis_tready(read_data_audio_axis_ready),
+    //    .fifo_sender_axis_tdata(read_data_audio_axis_data),
 
-        .sample_period(sample_period_dram_out)
-    );
+    //    .sample_period(sample_period_dram_out)
+    //);
 
-    logic [23:0]  memrequest_addr;
-    logic         memrequest_en;
-    logic [127:0] memrequest_write_data;
-    logic         memrequest_write_enable;
-    logic         memrequest_write_ready;
-    logic [127:0] memrequest_read_data;
-    logic         memrequest_read_valid;
+    //logic [23:0]  memrequest_addr;
+    //logic         memrequest_en;
+    //logic [127:0] memrequest_write_data;
+    //logic         memrequest_write_enable;
+    //logic         memrequest_write_ready;
+    //logic [127:0] memrequest_read_data;
+    //logic         memrequest_read_valid;
 
-    logic         memrequest_ready;
-    logic         memrequest_busy;
-    assign        memrequest_busy = ~memrequest_ready;
+    //logic         memrequest_ready;
+    //logic         memrequest_busy;
+    //assign        memrequest_busy = ~memrequest_ready;
 
-    traffic_generator tg (
-        .clk_dram_ctrl(clk_dram_ctrl),
-        .rst_dram_ctrl(rst_dram_ctrl),
+    //traffic_generator tg (
+    //    .clk_dram_ctrl(clk_dram_ctrl),
+    //    .rst_dram_ctrl(rst_dram_ctrl),
 
-        .sample_load_complete(sample_load_complete_dram_ctrl),
+    //    .sample_load_complete(sample_load_complete_dram_ctrl),
 
-        .memrequest_addr(memrequest_addr),
-        .memrequest_en(memrequest_en),
-        .memrequest_write_data(memrequest_write_data),
-        .memrequest_write_enable(memrequest_write_enable),
-        .memrequest_write_ready(memrequest_write_ready),
-        .memrequest_read_data(memrequest_read_data),
-        .memrequest_read_valid(memrequest_read_valid),
-        .memrequest_busy(memrequest_busy),
+    //    .memrequest_addr(memrequest_addr),
+    //    .memrequest_en(memrequest_en),
+    //    .memrequest_write_data(memrequest_write_data),
+    //    .memrequest_write_enable(memrequest_write_enable),
+    //    .memrequest_write_ready(memrequest_write_ready),
+    //    .memrequest_read_data(memrequest_read_data),
+    //    .memrequest_read_valid(memrequest_read_valid),
+    //    .memrequest_busy(memrequest_busy),
 
-        .write_axis_data(write_axis_data),
-        .write_axis_tlast(write_axis_tlast),
-        .write_axis_valid(write_axis_valid),
-        .write_axis_ready(write_axis_ready),
+    //    .write_axis_data(write_axis_data),
+    //    .write_axis_tlast(write_axis_tlast),
+    //    .write_axis_valid(write_axis_valid),
+    //    .write_axis_ready(write_axis_ready),
 
-        .read_addr_axis_data(read_addr_axis_data),
-        .read_addr_axis_tlast(read_addr_axis_tlast),
-        .read_addr_axis_valid(read_addr_axis_valid),
-        .read_addr_axis_ready(read_addr_axis_ready),
+    //    .read_addr_axis_data(read_addr_axis_data),
+    //    .read_addr_axis_tlast(read_addr_axis_tlast),
+    //    .read_addr_axis_valid(read_addr_axis_valid),
+    //    .read_addr_axis_ready(read_addr_axis_ready),
 
-        .read_data_audio_axis_valid(read_data_audio_axis_valid),
-        .read_data_audio_axis_ready(read_data_audio_axis_ready),
-        .read_data_audio_axis_data(read_data_audio_axis_data)
-    );
+    //    .read_data_audio_axis_valid(read_data_audio_axis_valid),
+    //    .read_data_audio_axis_ready(read_data_audio_axis_ready),
+    //    .read_data_audio_axis_data(read_data_audio_axis_data)
+    //);
 
-    mig_nexys4ddr mig_nexys4ddr_i (
-        // Memory interface ports
-        .ddr2_addr           (ddr2_addr),
-        .ddr2_ba             (ddr2_ba),
-        .ddr2_cas_n          (ddr2_cas_n),
-        .ddr2_ck_n           (ddr2_ck_n),
-        .ddr2_ck_p           (ddr2_ck_p),
-        .ddr2_cke            (ddr2_cke),
-        .ddr2_ras_n          (ddr2_ras_n),
-        .ddr2_we_n           (ddr2_we_n),
-        .ddr2_dq             (ddr2_dq),
-        .ddr2_dqs_n          (ddr2_dqs_n),
-        .ddr2_dqs_p          (ddr2_dqs_p),
-        .ddr2_odt            (ddr2_odt),
-        .ddr2_cs_n           (ddr2_cs_n),
-        .ddr2_dm             (ddr2_dm),
+    //mig_nexys4ddr mig_nexys4ddr_i (
+    //    // Memory interface ports
+    //    .ddr2_addr           (ddr2_addr),
+    //    .ddr2_ba             (ddr2_ba),
+    //    .ddr2_cas_n          (ddr2_cas_n),
+    //    .ddr2_ck_n           (ddr2_ck_n),
+    //    .ddr2_ck_p           (ddr2_ck_p),
+    //    .ddr2_cke            (ddr2_cke),
+    //    .ddr2_ras_n          (ddr2_ras_n),
+    //    .ddr2_we_n           (ddr2_we_n),
+    //    .ddr2_dq             (ddr2_dq),
+    //    .ddr2_dqs_n          (ddr2_dqs_n),
+    //    .ddr2_dqs_p          (ddr2_dqs_p),
+    //    .ddr2_odt            (ddr2_odt),
+    //    .ddr2_cs_n           (ddr2_cs_n),
+    //    .ddr2_dm             (ddr2_dm),
 
-        // Application interface ports
-        .app_addr            ({memrequest_addr, 3'b0}),
-        .app_cmd             ({2'b0, ~memrequest_write_enable}),
-        .app_en              (memrequest_en),
-        .app_rdy             (memrequest_ready),
-        .app_wdf_data        (memrequest_write_data),
-        .app_wdf_end         (memrequest_write_enable),
-        .app_wdf_wren        (memrequest_write_enable),
-        .app_wdf_rdy         (memrequest_write_ready),
-        .app_wdf_mask        (16'b0),
-        .app_rd_data         (memrequest_read_data),
-        .app_rd_data_valid   (memrequest_read_valid),
-        .app_rd_data_end     (),
-        .app_sr_req          (1'b0),
-        .app_ref_req         (1'b0),
-        .app_zq_req          (1'b0),
-        .app_sr_active       (),
-        .app_ref_ack         (),
-        .app_zq_ack          (),
+    //    // Application interface ports
+    //    .app_addr            ({memrequest_addr, 3'b0}),
+    //    .app_cmd             ({2'b0, ~memrequest_write_enable}),
+    //    .app_en              (memrequest_en),
+    //    .app_rdy             (memrequest_ready),
+    //    .app_wdf_data        (memrequest_write_data),
+    //    .app_wdf_end         (memrequest_write_enable),
+    //    .app_wdf_wren        (memrequest_write_enable),
+    //    .app_wdf_rdy         (memrequest_write_ready),
+    //    .app_wdf_mask        (16'b0),
+    //    .app_rd_data         (memrequest_read_data),
+    //    .app_rd_data_valid   (memrequest_read_valid),
+    //    .app_rd_data_end     (),
+    //    .app_sr_req          (1'b0),
+    //    .app_ref_req         (1'b0),
+    //    .app_zq_req          (1'b0),
+    //    .app_sr_active       (),
+    //    .app_ref_ack         (),
+    //    .app_zq_ack          (),
 
-        .ui_clk              (clk_dram_ctrl),
-        .ui_clk_sync_rst     (rst_dram_ctrl),
+    //    .ui_clk              (clk_dram_ctrl),
+    //    .ui_clk_sync_rst     (rst_dram_ctrl),
 
-        .sys_clk_i           (clk_dram_ref),
-        .sys_rst             (~rst_dram_ref),
-        
-        .init_calib_complete (init_calib_complete_dram_ctrl)
-    );
-
-
-    audio_processor aud_pcr (
-        .clk(clk),
-        .rst(rst),
-
-        .volume_on_clk(volume),
-        .delay_wet_on_clk(delay_wet),
-        .delay_rate_on_clk(delay_rate),
-        .delay_feedback_on_clk(delay_feedback),
-        .reverb_wet_on_clk(reverb_wet),
-        .reverb_size_on_clk(reverb_size),
-        .reverb_feedback_on_clk(reverb_feedback),
-        .filter_quality_on_clk(filter_quality),
-        .filter_cutoff_on_clk(filter_cutoff),
-        .distortion_drive_on_clk(distortion_drive),
-        .crush_pressure_on_clk(crush_pressure),
-
-        .output_src_on_clk(output_src),
-        .crush_src_on_clk(crush_src),
-        .distortion_src_on_clk(distortion_src),
-        .filter_src_on_clk(filter_src),
-        .reverb_src_on_clk(reverb_src),
-        .delay_src_on_clk(delay_src),
-
-        .delay_rate_fast_on_clk(delay_rate_fast),
-
-        .sample_period_dram_out(sample_period_dram_out),
-
-        .sample_from_dram(sample_raw),
-        .valid_from_dram(sample_raw_valid),
-
-        .spkl(spk),
-        .spkr()
-    );
+    //    .sys_clk_i           (clk_dram_ref),
+    //    .sys_rst             (~rst_dram_ref),
+    //    
+    //    .init_calib_complete (init_calib_complete_dram_ctrl)
+    //);
 
 
-    pcb_interface pcb (
-        .clk(clk),
-        .rst(rst),
+    //audio_processor aud_pcr (
+    //    .clk(clk),
+    //    .rst(rst),
 
-        .dry_pin(dry_pin),
-        .delay_pin(delay_pin),
-        .reverb_pin(reverb_pin),
-        .filter_pin(filter_pin),
-        .distortion_pin(distortion_pin),
-        .crush_pin(crush_pin),
+    //    .volume_on_clk(volume),
+    //    .delay_wet_on_clk(delay_wet),
+    //    .delay_rate_on_clk(delay_rate),
+    //    .delay_feedback_on_clk(delay_feedback),
+    //    .reverb_wet_on_clk(reverb_wet),
+    //    .reverb_size_on_clk(reverb_size),
+    //    .reverb_feedback_on_clk(reverb_feedback),
+    //    .filter_quality_on_clk(filter_quality),
+    //    .filter_cutoff_on_clk(filter_cutoff),
+    //    .distortion_drive_on_clk(distortion_drive),
+    //    .crush_pressure_on_clk(crush_pressure),
 
-        .output_src(output_src),
-        .crush_src(crush_src),
-        .distortion_src(distortion_src),
-        .filter_src(filter_src),
-        .reverb_src(reverb_src),
-        .delay_src(delay_src),
+    //    .output_src_on_clk(output_src),
+    //    .crush_src_on_clk(crush_src),
+    //    .distortion_src_on_clk(distortion_src),
+    //    .filter_src_on_clk(filter_src),
+    //    .reverb_src_on_clk(reverb_src),
+    //    .delay_src_on_clk(delay_src),
 
-        .cipo(cipo),
-        .copi(copi),
-        .dclk(dclk),
-        .cs0(cs0),
-        .cs1(cs1),
+    //    .delay_rate_fast_on_clk(delay_rate_fast),
 
-        .volume(volume_pcb),
-        .pitch(pitch_pcb),
-        .delay_wet(delay_wet_pcb),
-        .delay_rate(delay_rate_pcb),
-        .delay_feedback(delay_feedback_pcb),
-        .reverb_wet(reverb_wet_pcb),
-        .reverb_size(reverb_size_pcb),
-        .reverb_feedback(reverb_feedback_pcb),
-        .filter_quality(filter_quality_pcb),
-        .filter_cutoff(filter_cutoff_pcb),
-        .distortion_drive(distortion_drive_pcb),
-        .crush_pressure(crush_pressure_pcb)
-    );
+    //    .sample_period_dram_out(sample_period_dram_out),
+
+    //    .sample_from_dram(sample_raw),
+    //    .valid_from_dram(sample_raw_valid),
+
+    //    .spkl(spk),
+    //    .spkr()
+    //);
 
 
-    logic [9:0] pedal_value;
-    logic [1:0] pedal_index;
-    logic       pedal_value_valid;
-    pedal_controller pedal_con (
-        .clk(clk),
-        .rst(rst),
+    //pcb_interface pcb (
+    //    .clk(clk),
+    //    .rst(rst),
 
-        .cipo(pedal_cipo),
-        .copi(pedal_copi),
-        .dclk(pedal_dclk),
-        .cs(pedal_cs),
-        
-        .value(pedal_value),
-        .pedal_index(pedal_index),
-        .value_valid(pedal_value_valid)
-    );
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            volume_pedal <= 0;
-            pitch_pedal <= 0;
-            delay_rate_pedal <= 0;
-            delay_feedback_pedal <= 0;
-        end else begin
-            if (pedal_value_valid) begin
-                case (pedal_index)
-                    2'b00: volume_pedal <= pedal_value;
-                    2'b01: pitch_pedal <= pedal_value;
-                    2'b10: delay_rate_pedal <= pedal_value;
-                    2'b11: delay_feedback_pedal <= pedal_value <= 10'd823 ? pedal_value+10'd200 : 10'd1023;
-                endcase
-            end
-        end
-    end
+    //    .dry_pin(dry_pin),
+    //    .delay_pin(delay_pin),
+    //    .reverb_pin(reverb_pin),
+    //    .filter_pin(filter_pin),
+    //    .distortion_pin(distortion_pin),
+    //    .crush_pin(crush_pin),
+
+    //    .output_src(output_src),
+    //    .crush_src(crush_src),
+    //    .distortion_src(distortion_src),
+    //    .filter_src(filter_src),
+    //    .reverb_src(reverb_src),
+    //    .delay_src(delay_src),
+
+    //    .cipo(cipo),
+    //    .copi(copi),
+    //    .dclk(dclk),
+    //    .cs0(cs0),
+    //    .cs1(cs1),
+
+    //    .volume(volume_pcb),
+    //    .pitch(pitch_pcb),
+    //    .delay_wet(delay_wet_pcb),
+    //    .delay_rate(delay_rate_pcb),
+    //    .delay_feedback(delay_feedback_pcb),
+    //    .reverb_wet(reverb_wet_pcb),
+    //    .reverb_size(reverb_size_pcb),
+    //    .reverb_feedback(reverb_feedback_pcb),
+    //    .filter_quality(filter_quality_pcb),
+    //    .filter_cutoff(filter_cutoff_pcb),
+    //    .distortion_drive(distortion_drive_pcb),
+    //    .crush_pressure(crush_pressure_pcb)
+    //);
 
 
-    // Debug
+    //logic [9:0] pedal_value;
+    //logic [1:0] pedal_index;
+    //logic       pedal_value_valid;
+    //pedal_controller pedal_con (
+    //    .clk(clk),
+    //    .rst(rst),
 
-    logic [23:0]  memrequest_complete_counter;
-    always_ff @ (posedge clk_dram_ctrl) begin
-        if (rst_dram_ctrl) begin
-            memrequest_complete_counter <= 0;
-        end else begin
-            if (memrequest_write_enable && memrequest_ready && memrequest_write_ready) begin
-                memrequest_complete_counter <= memrequest_complete_counter + 1;
-            end
-        end
-    end
+    //    .cipo(pedal_cipo),
+    //    .copi(pedal_copi),
+    //    .dclk(pedal_dclk),
+    //    .cs(pedal_cs),
+    //    
+    //    .value(pedal_value),
+    //    .pedal_index(pedal_index),
+    //    .value_valid(pedal_value_valid)
+    //);
+    //always_ff @ (posedge clk) begin
+    //    if (rst) begin
+    //        volume_pedal <= 0;
+    //        pitch_pedal <= 0;
+    //        delay_rate_pedal <= 0;
+    //        delay_feedback_pedal <= 0;
+    //    end else begin
+    //        if (pedal_value_valid) begin
+    //            case (pedal_index)
+    //                2'b00: volume_pedal <= pedal_value;
+    //                2'b01: pitch_pedal <= pedal_value;
+    //                2'b10: delay_rate_pedal <= pedal_value;
+    //                2'b11: delay_feedback_pedal <= pedal_value <= 10'd823 ? pedal_value+10'd200 : 10'd1023;
+    //            endcase
+    //        end
+    //    end
+    //end
 
-    logic [31:0] ss_val;
-    always_comb begin
-        if (sample_load_complete) begin
-            ss_val = {
-                //pedal_value[9:2],
-                1'b0,
-                drd_req.midi_proc.velocity,  // 7 bits
-                4'b0,
-                memrequest_complete_counter[19:0]
-            };
-        end else begin
-            ss_val = {
-                dwr.sample_loader_i.instrument_counter, // 4 bits
-                4'b0,
-                memrequest_complete_counter  // 24 bits
-            };
-        end
-    end
 
-    seven_segment_controller ssc (
-        .clk(clk_dram_ctrl),
-        .rst(rst_dram_ctrl),
-        .val(ss_val),
-        .cat(ss_c),
-        .an(ss_a)
-    );
+    //// Debug
+
+    //logic [23:0]  memrequest_complete_counter;
+    //always_ff @ (posedge clk_dram_ctrl) begin
+    //    if (rst_dram_ctrl) begin
+    //        memrequest_complete_counter <= 0;
+    //    end else begin
+    //        if (memrequest_write_enable && memrequest_ready && memrequest_write_ready) begin
+    //            memrequest_complete_counter <= memrequest_complete_counter + 1;
+    //        end
+    //    end
+    //end
+
+    //logic [31:0] ss_val;
+    //always_comb begin
+    //    if (sample_load_complete) begin
+    //        ss_val = {
+    //            //pedal_value[9:2],
+    //            1'b0,
+    //            drd_req.midi_proc.velocity,  // 7 bits
+    //            4'b0,
+    //            memrequest_complete_counter[19:0]
+    //        };
+    //    end else begin
+    //        ss_val = {
+    //            dwr.sample_loader_i.instrument_counter, // 4 bits
+    //            4'b0,
+    //            memrequest_complete_counter  // 24 bits
+    //        };
+    //    end
+    //end
+
+    //seven_segment_controller ssc (
+    //    .clk(clk_dram_ctrl),
+    //    .rst(rst_dram_ctrl),
+    //    .val(ss_val),
+    //    .cat(ss_c),
+    //    .an(ss_a)
+    //);
 
 
     //logic[31:0] ss_val;
@@ -789,24 +789,24 @@ module top_level
     //);
 
 
-    always_ff @ (posedge clk_dram_ctrl) begin
-        if (rst_dram_ctrl) begin
-            led[0] <= 0;
-        end else begin
-            if (write_axis_tlast) begin
-                led[0] <= 1;
-            end
-        end
-    end
-    assign led[1] = sample_load_complete;
-    assign led[2] = addr_offsets_valid;
-    assign led[3] = init_calib_complete;
-    assign led[4] = init_calib_complete_dram_ctrl;
-    assign led[5] = ~rst_dram_ref;
-    assign led[6] = ~rst_dram_ctrl;
+    //always_ff @ (posedge clk_dram_ctrl) begin
+    //    if (rst_dram_ctrl) begin
+    //        led[0] <= 0;
+    //    end else begin
+    //        if (write_axis_tlast) begin
+    //            led[0] <= 1;
+    //        end
+    //    end
+    //end
+    //assign led[1] = sample_load_complete;
+    //assign led[2] = addr_offsets_valid;
+    //assign led[3] = init_calib_complete;
+    //assign led[4] = init_calib_complete_dram_ctrl;
+    //assign led[5] = ~rst_dram_ref;
+    //assign led[6] = ~rst_dram_ctrl;
     assign led[7] = clks_locked;
     assign led[8] = eth_rst_n;
-    assign led[15:9] = 0;
-    assign uart_txd = 0;
+    //assign led[15:9] = 0;
+    //assign uart_txd = 0;
 endmodule
 `default_nettype wire
