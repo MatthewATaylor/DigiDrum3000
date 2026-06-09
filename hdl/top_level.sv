@@ -26,20 +26,20 @@ module top_level
         inout  wire   [2:0] eth_mode,
 
         // SDRAM (DDR2) ports
-        //inout  wire  [15:0] ddr2_dq,
-        //inout  wire   [1:0] ddr2_dqs_n,
-        //inout  wire   [1:0] ddr2_dqs_p,
-        //output wire  [12:0] ddr2_addr,
-        //output wire   [2:0] ddr2_ba,
-        //output wire         ddr2_ras_n,
-        //output wire         ddr2_cas_n,
-        //output wire         ddr2_we_n,
-        //output wire   [0:0] ddr2_ck_p,
-        //output wire   [0:0] ddr2_ck_n,
-        //output wire   [0:0] ddr2_cke,
-        //output wire   [0:0] ddr2_odt,
-        //output wire   [0:0] ddr2_cs_n,
-        //output wire   [1:0] ddr2_dm,
+        inout  wire  [15:0] ddr2_dq,
+        inout  wire   [1:0] ddr2_dqs_n,
+        inout  wire   [1:0] ddr2_dqs_p,
+        output wire  [12:0] ddr2_addr,
+        output wire   [2:0] ddr2_ba,
+        output wire         ddr2_ras_n,
+        output wire         ddr2_cas_n,
+        output wire         ddr2_we_n,
+        output wire   [0:0] ddr2_ck_p,
+        output wire   [0:0] ddr2_ck_n,
+        output wire   [0:0] ddr2_cke,
+        output wire   [0:0] ddr2_odt,
+        output wire   [0:0] ddr2_cs_n,
+        output wire   [1:0] ddr2_dm,
 
         // Patch pins
         inout wire          dry_pin,
@@ -110,7 +110,7 @@ module top_level
 
     logic  rst_buf [1:0];
     logic  rst;
-    assign rst = rst_buf[0] | ~clks_locked;// | ~init_calib_complete;   
+    assign rst = rst_buf[0] | ~clks_locked | ~init_calib_complete;
 
     logic  rst_dram_ref_buf [1:0];
     logic  rst_dram_ref;
@@ -350,7 +350,8 @@ module top_level
     //end
 
 
-    //logic [13:0] sample_period;
+    logic [13:0] sample_period;
+    assign sample_period = 14'd2272;
     //pitch_to_sample_period p2sp (
     //    .clk(clk),
     //    .rst(rst),
@@ -434,187 +435,187 @@ module top_level
     );
 
 
-    //logic [127:0] write_axis_data;
-    //logic         write_axis_tlast;
-    //logic         write_axis_valid;
-    //logic         write_axis_ready;
+    logic [127:0] write_axis_data;
+    logic         write_axis_tlast;
+    logic         write_axis_valid;
+    logic         write_axis_ready;
 
-    //dram_writer #(
-    //    .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
-    //) dwr (
-    //    .clk(clk),
-    //    .clk_dram_ctrl(clk_dram_ctrl),
-    //    .rst(rst),
-    //    .uart_din(uart_din),
-    //    
-    //    .addr_offsets(addr_offsets),
-    //    .addr_offsets_valid(addr_offsets_valid),
-    //
-    //    .fifo_receiver_axis_tvalid(write_axis_valid),
-    //    .fifo_receiver_axis_tready(write_axis_ready),
-    //    .fifo_receiver_axis_tdata(write_axis_data),
-    //    .fifo_receiver_axis_tlast(write_axis_tlast)
-    //);
+    dram_writer #(
+        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
+    ) dwr (
+        .clk(clk),
+        .clk_dram_ctrl(clk_dram_ctrl),
+        .rst(rst),
+        .uart_din(uart_din),
+        
+        .addr_offsets(addr_offsets),
+        .addr_offsets_valid(addr_offsets_valid),
+    
+        .fifo_receiver_axis_tvalid(write_axis_valid),
+        .fifo_receiver_axis_tready(write_axis_ready),
+        .fifo_receiver_axis_tdata(write_axis_data),
+        .fifo_receiver_axis_tlast(write_axis_tlast)
+    );
 
-    //logic [39:0]  read_addr_axis_data;
-    //logic         read_addr_axis_tlast;
-    //logic         read_addr_axis_valid;
-    //logic         read_addr_axis_ready;
+    logic [39:0]  read_addr_axis_data;
+    logic         read_addr_axis_tlast;
+    logic         read_addr_axis_valid;
+    logic         read_addr_axis_ready;
 
-    //logic [ 6:0]  velocity_map [INSTRUMENT_COUNT-1:0];
+    logic [ 6:0]  velocity_map [INSTRUMENT_COUNT-1:0];
 
-    //logic [6:0] midi_key;
-    //logic [6:0] midi_vel;
-    //logic       midi_msg_valid;
+    logic [6:0] midi_key;
+    logic [6:0] midi_vel;
+    logic       midi_msg_valid;
 
-    //dram_read_requester #(
-    //    .INSTRUMENT_COUNT(INSTRUMENT_COUNT),
-    //    .MIDI_KEYS(MIDI_KEYS)
-    //) drd_req (
-    //    .clk(clk),
-    //    .clk_dram_ctrl(clk_dram_ctrl),
-    //    .rst(rst),
-    //    .midi_din(midi_din),
+    dram_read_requester #(
+        .INSTRUMENT_COUNT(INSTRUMENT_COUNT),
+        .MIDI_KEYS(MIDI_KEYS)
+    ) drd_req (
+        .clk(clk),
+        .clk_dram_ctrl(clk_dram_ctrl),
+        .rst(rst),
+        .midi_din(midi_din),
 
-    //    .sample_period(sample_period),
-    //    .sample_load_complete(sample_load_complete),
-    //    .addr_offsets(addr_offsets),
-    //    .addr_offsets_valid(addr_offsets_valid),
-    //    
-    //    .fifo_receiver_axis_tvalid(read_addr_axis_valid),
-    //    .fifo_receiver_axis_tready(read_addr_axis_ready),
-    //    .fifo_receiver_axis_tdata(read_addr_axis_data),
-    //    .fifo_receiver_axis_tlast(read_addr_axis_tlast),
+        .sample_period(sample_period),
+        .sample_load_complete(sample_load_complete),
+        .addr_offsets(addr_offsets),
+        .addr_offsets_valid(addr_offsets_valid),
+        
+        .fifo_receiver_axis_tvalid(read_addr_axis_valid),
+        .fifo_receiver_axis_tready(read_addr_axis_ready),
+        .fifo_receiver_axis_tdata(read_addr_axis_data),
+        .fifo_receiver_axis_tlast(read_addr_axis_tlast),
 
-    //    .velocity(velocity_map),
+        .velocity(velocity_map),
 
-    //    .instr_trig_debug(instr_trig_debug),
+        .instr_trig_debug(instr_trig_debug),
 
-    //    .midi_key(midi_key),
-    //    .midi_vel(midi_vel),
-    //    .midi_dout_valid(midi_msg_valid)
-    //);
+        .midi_key(midi_key),
+        .midi_vel(midi_vel),
+        .midi_dout_valid(midi_msg_valid)
+    );
 
-    //logic [15:0]  sample_raw;
-    //logic         sample_raw_valid;
+    logic [15:0]  sample_raw;
+    logic         sample_raw_valid;
 
-    //logic         read_data_audio_axis_valid;
-    //logic         read_data_audio_axis_ready;
-    //logic [167:0] read_data_audio_axis_data;
+    logic         read_data_audio_axis_valid;
+    logic         read_data_audio_axis_ready;
+    logic [167:0] read_data_audio_axis_data;
 
-    //logic [15:0]  current_instrument_samples [INSTRUMENT_COUNT-1:0];
-    //logic [13:0]  sample_period_dram_out;
+    logic [15:0]  current_instrument_samples [INSTRUMENT_COUNT-1:0];
+    logic [13:0]  sample_period_dram_out;
 
-    //dram_reader_audio #(
-    //    .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
-    //) drd_audio (
-    //    .clk(clk),
-    //    .clk_dram_ctrl(clk_dram_ctrl),
-    //    .rst(rst),
-    //    .rst_dram_ctrl(rst_dram_ctrl),
+    dram_reader_audio #(
+        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
+    ) drd_audio (
+        .clk(clk),
+        .clk_dram_ctrl(clk_dram_ctrl),
+        .rst(rst),
+        .rst_dram_ctrl(rst_dram_ctrl),
 
-    //    .addr_offsets(addr_offsets),
-    //    .addr_offsets_valid(addr_offsets_valid),
-    //    .velocity(velocity_map),
+        .addr_offsets(addr_offsets),
+        .addr_offsets_valid(addr_offsets_valid),
+        .velocity(velocity_map),
 
-    //    .instrument_samples(current_instrument_samples),
-    //    .sample(sample_raw),
-    //    .sample_valid(sample_raw_valid),
+        .instrument_samples(current_instrument_samples),
+        .sample(sample_raw),
+        .sample_valid(sample_raw_valid),
 
-    //    .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
-    //    .fifo_sender_axis_tready(read_data_audio_axis_ready),
-    //    .fifo_sender_axis_tdata(read_data_audio_axis_data),
+        .fifo_sender_axis_tvalid(read_data_audio_axis_valid),
+        .fifo_sender_axis_tready(read_data_audio_axis_ready),
+        .fifo_sender_axis_tdata(read_data_audio_axis_data),
 
-    //    .sample_period(sample_period_dram_out)
-    //);
+        .sample_period(sample_period_dram_out)
+    );
 
-    //logic [23:0]  memrequest_addr;
-    //logic         memrequest_en;
-    //logic [127:0] memrequest_write_data;
-    //logic         memrequest_write_enable;
-    //logic         memrequest_write_ready;
-    //logic [127:0] memrequest_read_data;
-    //logic         memrequest_read_valid;
+    logic [23:0]  memrequest_addr;
+    logic         memrequest_en;
+    logic [127:0] memrequest_write_data;
+    logic         memrequest_write_enable;
+    logic         memrequest_write_ready;
+    logic [127:0] memrequest_read_data;
+    logic         memrequest_read_valid;
 
-    //logic         memrequest_ready;
-    //logic         memrequest_busy;
-    //assign        memrequest_busy = ~memrequest_ready;
+    logic         memrequest_ready;
+    logic         memrequest_busy;
+    assign        memrequest_busy = ~memrequest_ready;
 
-    //traffic_generator tg (
-    //    .clk_dram_ctrl(clk_dram_ctrl),
-    //    .rst_dram_ctrl(rst_dram_ctrl),
+    traffic_generator tg (
+        .clk_dram_ctrl(clk_dram_ctrl),
+        .rst_dram_ctrl(rst_dram_ctrl),
 
-    //    .sample_load_complete(sample_load_complete_dram_ctrl),
+        .sample_load_complete(sample_load_complete_dram_ctrl),
 
-    //    .memrequest_addr(memrequest_addr),
-    //    .memrequest_en(memrequest_en),
-    //    .memrequest_write_data(memrequest_write_data),
-    //    .memrequest_write_enable(memrequest_write_enable),
-    //    .memrequest_write_ready(memrequest_write_ready),
-    //    .memrequest_read_data(memrequest_read_data),
-    //    .memrequest_read_valid(memrequest_read_valid),
-    //    .memrequest_busy(memrequest_busy),
+        .memrequest_addr(memrequest_addr),
+        .memrequest_en(memrequest_en),
+        .memrequest_write_data(memrequest_write_data),
+        .memrequest_write_enable(memrequest_write_enable),
+        .memrequest_write_ready(memrequest_write_ready),
+        .memrequest_read_data(memrequest_read_data),
+        .memrequest_read_valid(memrequest_read_valid),
+        .memrequest_busy(memrequest_busy),
 
-    //    .write_axis_data(write_axis_data),
-    //    .write_axis_tlast(write_axis_tlast),
-    //    .write_axis_valid(write_axis_valid),
-    //    .write_axis_ready(write_axis_ready),
+        .write_axis_data(write_axis_data),
+        .write_axis_tlast(write_axis_tlast),
+        .write_axis_valid(write_axis_valid),
+        .write_axis_ready(write_axis_ready),
 
-    //    .read_addr_axis_data(read_addr_axis_data),
-    //    .read_addr_axis_tlast(read_addr_axis_tlast),
-    //    .read_addr_axis_valid(read_addr_axis_valid),
-    //    .read_addr_axis_ready(read_addr_axis_ready),
+        .read_addr_axis_data(read_addr_axis_data),
+        .read_addr_axis_tlast(read_addr_axis_tlast),
+        .read_addr_axis_valid(read_addr_axis_valid),
+        .read_addr_axis_ready(read_addr_axis_ready),
 
-    //    .read_data_audio_axis_valid(read_data_audio_axis_valid),
-    //    .read_data_audio_axis_ready(read_data_audio_axis_ready),
-    //    .read_data_audio_axis_data(read_data_audio_axis_data)
-    //);
+        .read_data_audio_axis_valid(read_data_audio_axis_valid),
+        .read_data_audio_axis_ready(read_data_audio_axis_ready),
+        .read_data_audio_axis_data(read_data_audio_axis_data)
+    );
 
-    //mig_nexys4ddr mig_nexys4ddr_i (
-    //    // Memory interface ports
-    //    .ddr2_addr           (ddr2_addr),
-    //    .ddr2_ba             (ddr2_ba),
-    //    .ddr2_cas_n          (ddr2_cas_n),
-    //    .ddr2_ck_n           (ddr2_ck_n),
-    //    .ddr2_ck_p           (ddr2_ck_p),
-    //    .ddr2_cke            (ddr2_cke),
-    //    .ddr2_ras_n          (ddr2_ras_n),
-    //    .ddr2_we_n           (ddr2_we_n),
-    //    .ddr2_dq             (ddr2_dq),
-    //    .ddr2_dqs_n          (ddr2_dqs_n),
-    //    .ddr2_dqs_p          (ddr2_dqs_p),
-    //    .ddr2_odt            (ddr2_odt),
-    //    .ddr2_cs_n           (ddr2_cs_n),
-    //    .ddr2_dm             (ddr2_dm),
+    mig_nexys4ddr mig_nexys4ddr_i (
+        // Memory interface ports
+        .ddr2_addr           (ddr2_addr),
+        .ddr2_ba             (ddr2_ba),
+        .ddr2_cas_n          (ddr2_cas_n),
+        .ddr2_ck_n           (ddr2_ck_n),
+        .ddr2_ck_p           (ddr2_ck_p),
+        .ddr2_cke            (ddr2_cke),
+        .ddr2_ras_n          (ddr2_ras_n),
+        .ddr2_we_n           (ddr2_we_n),
+        .ddr2_dq             (ddr2_dq),
+        .ddr2_dqs_n          (ddr2_dqs_n),
+        .ddr2_dqs_p          (ddr2_dqs_p),
+        .ddr2_odt            (ddr2_odt),
+        .ddr2_cs_n           (ddr2_cs_n),
+        .ddr2_dm             (ddr2_dm),
 
-    //    // Application interface ports
-    //    .app_addr            ({memrequest_addr, 3'b0}),
-    //    .app_cmd             ({2'b0, ~memrequest_write_enable}),
-    //    .app_en              (memrequest_en),
-    //    .app_rdy             (memrequest_ready),
-    //    .app_wdf_data        (memrequest_write_data),
-    //    .app_wdf_end         (memrequest_write_enable),
-    //    .app_wdf_wren        (memrequest_write_enable),
-    //    .app_wdf_rdy         (memrequest_write_ready),
-    //    .app_wdf_mask        (16'b0),
-    //    .app_rd_data         (memrequest_read_data),
-    //    .app_rd_data_valid   (memrequest_read_valid),
-    //    .app_rd_data_end     (),
-    //    .app_sr_req          (1'b0),
-    //    .app_ref_req         (1'b0),
-    //    .app_zq_req          (1'b0),
-    //    .app_sr_active       (),
-    //    .app_ref_ack         (),
-    //    .app_zq_ack          (),
+        // Application interface ports
+        .app_addr            ({memrequest_addr, 3'b0}),
+        .app_cmd             ({2'b0, ~memrequest_write_enable}),
+        .app_en              (memrequest_en),
+        .app_rdy             (memrequest_ready),
+        .app_wdf_data        (memrequest_write_data),
+        .app_wdf_end         (memrequest_write_enable),
+        .app_wdf_wren        (memrequest_write_enable),
+        .app_wdf_rdy         (memrequest_write_ready),
+        .app_wdf_mask        (16'b0),
+        .app_rd_data         (memrequest_read_data),
+        .app_rd_data_valid   (memrequest_read_valid),
+        .app_rd_data_end     (),
+        .app_sr_req          (1'b0),
+        .app_ref_req         (1'b0),
+        .app_zq_req          (1'b0),
+        .app_sr_active       (),
+        .app_ref_ack         (),
+        .app_zq_ack          (),
 
-    //    .ui_clk              (clk_dram_ctrl),
-    //    .ui_clk_sync_rst     (rst_dram_ctrl),
+        .ui_clk              (clk_dram_ctrl),
+        .ui_clk_sync_rst     (rst_dram_ctrl),
 
-    //    .sys_clk_i           (clk_dram_ref),
-    //    .sys_rst             (~rst_dram_ref),
-    //    
-    //    .init_calib_complete (init_calib_complete_dram_ctrl)
-    //);
+        .sys_clk_i           (clk_dram_ref),
+        .sys_rst             (~rst_dram_ref),
+        
+        .init_calib_complete (init_calib_complete_dram_ctrl)
+    );
 
 
     //audio_processor aud_pcr (

@@ -57,121 +57,127 @@ module eth_transmit
     logic [$clog2(PAYLOAD_BYTES*8)-1:0] data_index_lsb;
     assign data_index_lsb = (cycle_counter+1) << 1;
 
+    // Send next eth_txd value to crc32.
+    // This avoids waiting 1 extra clock cycle at the end of crc calculation.
+    logic [1:0] eth_txd_next;
+
     logic        crc_en;
     logic [31:0] crc_dout;
     logic [31:0] crc_dout_complement;
     assign crc_dout_complement = ~crc_dout;
-
-    logic crc_xor_in;
 
     always_ff @ (posedge eth_clk) begin
         if (~eth_rst_n) begin
             state <= IDLE;
             cycle_counter <= 0;
             crc_en <= 0;
-            crc_xor_in <= 1;
             eth_txen <= 0;
             eth_txd <= 2'b00;
+            eth_txd_next <= 2'b00;
         end else begin
             case (state)
                 IDLE: begin
                     if (cycle_counter >= IPG_CYCLES - 1) begin
                         state <= PREAMBLE;
                         cycle_counter <= 0;
-                        eth_txd <= 2'b01;
-                        eth_txen <= 1;
+                        eth_txd_next <= 2'b01;
                     end else begin
                         cycle_counter <= cycle_counter + 1;
                     end
+
+                    eth_txd <= eth_txd_next;
                 end
 
                 PREAMBLE: begin
                     if (cycle_counter >= PREAMBLE_CYCLES - 1) begin
                         state <= SFD;
                         cycle_counter <= 0;
-                        eth_txd <= 2'b11;
+                        eth_txd_next <= 2'b11;
                     end else begin
+                        eth_txen <= 1;
                         cycle_counter <= cycle_counter + 1;
                     end
+
+                    eth_txd <= eth_txd_next;
                 end
 
                 SFD: begin
                     state <= MAC_DST;
-                    eth_txd <= 2'b11;  // Broadcast address
+                    eth_txd_next <= 2'b11;  // Broadcast address
                     crc_en <= 1;
-                    crc_xor_in <= 1;  // Take complement of first 32 bits
+
+                    eth_txd <= eth_txd_next;
                 end
 
                 MAC_DST: begin
                     if (cycle_counter >= MAC_CYCLES - 1) begin
                         state <= MAC_SRC;
                         cycle_counter <= 0;
-                        eth_txd <= MAC_SRC_ADDR[1:0];
+                        eth_txd_next <= MAC_SRC_ADDR[1:0];
                     end else begin
-                        if (cycle_counter >= INIT_COMPLEMENT_CYCLES - 1) begin
-                            crc_xor_in <= 0;
-                        end
                         cycle_counter <= cycle_counter + 1;
                     end
+
+                    eth_txd <= eth_txd_next;
                 end
 
                 MAC_SRC: begin
                     if (cycle_counter >= MAC_CYCLES - 1) begin
                         state <= SIZE;
                         cycle_counter <= 0;
-                        eth_txd <= PAYLOAD_BYTES_MSBF[1:0];
+                        eth_txd_next <= PAYLOAD_BYTES_MSBF[1:0];
                     end else begin
                         cycle_counter <= cycle_counter + 1;
-                        eth_txd <= {
+                        eth_txd_next <= {
                             MAC_SRC_ADDR[data_index_lsb+1],
                             MAC_SRC_ADDR[data_index_lsb]
                         };
                     end
+
+                    eth_txd <= eth_txd_next;
                 end
 
                 SIZE: begin
                     if (cycle_counter >= SIZE_CYCLES - 1) begin
                         state <= PAYLOAD;
                         cycle_counter <= 0;
-                        eth_txd <= 2'b10;  // TODO: Replace with real data
+                        eth_txd_next <= 2'b10;  // TODO: Replace with real data
                     end else begin
                         cycle_counter <= cycle_counter + 1;
-                        eth_txd <= {
+                        eth_txd_next <= {
                             PAYLOAD_BYTES_MSBF[data_index_lsb+1],
                             PAYLOAD_BYTES_MSBF[data_index_lsb]
                         };
                     end
+
+                    eth_txd <= eth_txd_next;
                 end
 
                 PAYLOAD: begin
                     if (cycle_counter >= PAYLOAD_CYCLES - 1) begin
                         state <= FCS;
-                        cycle_counter <= 0;
-                        eth_txd <= {
-                            crc_dout_complement[30],
-                            crc_dout_complement[31]
-                        };
                         crc_en <= 0;
+                        cycle_counter <= 0;
                     end else begin
                         cycle_counter <= cycle_counter + 1;
-                        eth_txd <= 2'b10;  // TODO: Replace with real data
+                        eth_txd_next <= 2'b10;  // TODO: Replace with real data
                     end
+
+                    eth_txd <= eth_txd_next;
                 end
 
                 FCS: begin
-                    if (cycle_counter >= FCS_CYCLES - 1) begin
+                    if (cycle_counter >= FCS_CYCLES) begin
                         state <= IDLE;
                         cycle_counter <= 0;
                         eth_txd <= 2'b00;
+                        eth_txd_next <= 2'b00;
                         eth_txen <= 0;
                     end else begin
-                        //if (cycle_counter >= FCS_CYCLES - 2) begin
-                        //    eth_txen <= 0;  // Deassert with last di-bit
-                        //end
                         cycle_counter <= cycle_counter + 1;
                         eth_txd <= {
-                            crc_dout_complement[30-data_index_lsb],
-                            crc_dout_complement[31-data_index_lsb]
+                            crc_dout_complement[32-data_index_lsb],
+                            crc_dout_complement[33-data_index_lsb]
                         };
                     end
                 end
@@ -183,10 +189,12 @@ module eth_transmit
         .clk(eth_clk),
         .rst(~eth_rst_n | ~eth_txen),  // Reset at end of frame
         .din_valid(crc_en),
-        .din(eth_txd ^ {2{crc_xor_in}}),
+        .din(eth_txd_next),
         .dout(crc_dout)
     );
 
 endmodule
+
+
 
 `default_nettype wire

@@ -1,6 +1,63 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+//module crc32
+//    (
+//        input  wire         clk,
+//        input  wire         rst,
+//        input  wire         din_valid,
+//        input  wire         din,
+//        output logic [31:0] dout
+//    );
+//
+//    logic xor_in;
+//    assign xor_in = din ^ dout[31];
+//
+//    always_ff @ (posedge clk) begin
+//        if (rst) begin
+//            dout <= 32'hFFFF_FFFF;
+//        end else begin
+//            if (din_valid) begin
+//                dout[0] <= xor_in;
+//                dout[1] <= xor_in ^ dout[0];
+//                dout[2] <= xor_in ^ dout[1];
+//                dout[3] <= dout[2];
+//                dout[4] <= xor_in ^ dout[3];
+//                dout[5] <= xor_in ^ dout[4];
+//                dout[6] <= dout[5];
+//                dout[7] <= xor_in ^ dout[6];
+//                dout[8] <= xor_in ^ dout[7];
+//                dout[9] <= dout[8];
+//                dout[10] <= xor_in ^ dout[9];
+//                dout[11] <= xor_in ^ dout[10];
+//                dout[12] <= xor_in ^ dout[11];
+//                dout[13] <= dout[12];
+//                dout[14] <= dout[13];
+//                dout[15] <= dout[14];
+//                dout[16] <= xor_in ^ dout[15];
+//                dout[17] <= dout[16];
+//                dout[18] <= dout[17];
+//                dout[19] <= dout[18];
+//                dout[20] <= dout[19];
+//                dout[21] <= dout[20];
+//                dout[22] <= xor_in ^ dout[21];
+//                dout[23] <= xor_in ^ dout[22];
+//                dout[24] <= dout[23];
+//                dout[25] <= dout[24];
+//                dout[26] <= xor_in ^ dout[25];
+//                dout[27] <= dout[26];
+//                dout[28] <= dout[27];
+//                dout[29] <= dout[28];
+//                dout[30] <= dout[29];
+//                dout[31] <= dout[30];
+//            end
+//        end
+//    end
+//
+//endmodule
+
+
+
 module crc32
     (
         input  wire         clk,
