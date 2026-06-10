@@ -52,7 +52,8 @@ module cw_dram_eth
   input         reset,
   output        locked,
   output        clk_dram_ref,  // 200 MHz
-  output        eth_clk        // 50 MHz
+  output        eth_clk,       // 50 MHz
+  output        clk_audio      // 120 MHz
  );
 
   // Clocking PRIMITIVE
@@ -64,6 +65,7 @@ module cw_dram_eth
 
   wire        clk_dram_ref_prebuf;
   wire        eth_clk_prebuf;
+  wire        clk_audio_prebuf;
 
   wire [15:0] do_unused;
   wire        drdy_unused;
@@ -91,17 +93,21 @@ module cw_dram_eth
     .COMPENSATION         ("ZHOLD"),
     .STARTUP_WAIT         ("FALSE"),
     .DIVCLK_DIVIDE        (1),
-    .CLKFBOUT_MULT_F      (8.000),
+    .CLKFBOUT_MULT_F      (6.000),
     .CLKFBOUT_PHASE       (0.000),
     .CLKFBOUT_USE_FINE_PS ("FALSE"),
-    .CLKOUT1_DIVIDE       (4),
+    .CLKOUT1_DIVIDE       (3),
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
     .CLKOUT1_USE_FINE_PS  ("FALSE"),
-    .CLKOUT2_DIVIDE       (16),
+    .CLKOUT2_DIVIDE       (12),
     .CLKOUT2_PHASE        (0.000),
     .CLKOUT2_DUTY_CYCLE   (0.500),
     .CLKOUT2_USE_FINE_PS  ("FALSE"),
+    .CLKOUT3_DIVIDE       (5),
+    .CLKOUT3_PHASE        (0.000),
+    .CLKOUT3_DUTY_CYCLE   (0.500),
+    .CLKOUT3_USE_FINE_PS  ("FALSE"),
     .CLKIN1_PERIOD        (10.000))
   mmcm_adv_inst
     // Output clocks
@@ -114,7 +120,7 @@ module cw_dram_eth
     .CLKOUT1B            (clkout1b_unused),
     .CLKOUT2             (eth_clk_prebuf),
     .CLKOUT2B            (clkout2b_unused),
-    .CLKOUT3             (clkout3_unused),
+    .CLKOUT3             (clk_audio_prebuf),
     .CLKOUT3B            (clkout3b_unused),
     .CLKOUT4             (clkout4_unused),
     .CLKOUT5             (clkout5_unused),
@@ -153,8 +159,8 @@ module cw_dram_eth
   //-----------------------------------
 
   BUFG clkfbout_buf
-   (.O (clkfbout),
-    .I (clkfbout_prebuf));
+   (.O   (clkfbout),
+    .I   (clkfbout_prebuf));
 
   BUFG clk_dram_ref_buf
    (.O   (clk_dram_ref),
@@ -163,6 +169,10 @@ module cw_dram_eth
   BUFG eth_clk_buf
    (.O   (eth_clk),
     .I   (eth_clk_prebuf));
+
+  BUFG clk_audio_buf
+   (.O   (clk_audio),
+    .I   (clk_audio_prebuf));
 
 endmodule
 

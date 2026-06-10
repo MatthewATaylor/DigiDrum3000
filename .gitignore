@@ -7,6 +7,7 @@ clockInfo.txt
 tight_setup_hold_pins.txt
 ip/*/ip
 __pycache__
+build
 
 # Kicad recommended
 *.000

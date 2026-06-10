@@ -2,11 +2,17 @@
 `default_nettype none
 
 module eth_transmit
+    #(
+        parameter PAYLOAD_BUFFER_WIDTH
+    )
     (
         input  wire        eth_clk,
         input  wire        eth_rst_n,
         output logic       eth_txen,
-        output logic [1:0] eth_txd
+        output logic [1:0] eth_txd,
+
+        input  wire  [PAYLOAD_BUFFER_WIDTH-1:0] payload_buffer,
+        input  wire                             payload_buffer_valid
     );
 
     localparam BITS_PER_CYCLE = 2;
@@ -23,10 +29,7 @@ module eth_transmit
     localparam SIZE_BYTES  = 2;
     localparam SIZE_CYCLES = SIZE_BYTES * 8 / BITS_PER_CYCLE;
 
-    localparam        PAYLOAD_CHANNELS   = 1;//16;
-    localparam        PAYLOAD_SAMPLES    = 32;
-    localparam        PAYLOAD_BIT_DEPTH  = 16;
-    localparam [15:0] PAYLOAD_BYTES      = PAYLOAD_CHANNELS * PAYLOAD_SAMPLES * PAYLOAD_BIT_DEPTH / 8;
+    localparam [15:0] PAYLOAD_BYTES      = PAYLOAD_BUFFER_WIDTH / 8;
     localparam [15:0] PAYLOAD_BYTES_MSBF = {PAYLOAD_BYTES[7:0], PAYLOAD_BYTES[15:8]};
     localparam        PAYLOAD_CYCLES     = PAYLOAD_BYTES * 8 / BITS_PER_CYCLE;
 
@@ -77,7 +80,7 @@ module eth_transmit
         end else begin
             case (state)
                 IDLE: begin
-                    if (cycle_counter >= IPG_CYCLES - 1) begin
+                    if (cycle_counter >= IPG_CYCLES - 1 && payload_buffer_valid) begin
                         state <= PREAMBLE;
                         cycle_counter <= 0;
                         eth_txd_next <= 2'b01;
@@ -141,7 +144,7 @@ module eth_transmit
                     if (cycle_counter >= SIZE_CYCLES - 1) begin
                         state <= PAYLOAD;
                         cycle_counter <= 0;
-                        eth_txd_next <= 2'b10;  // TODO: Replace with real data
+                        eth_txd_next <= payload_buffer[1:0];
                     end else begin
                         cycle_counter <= cycle_counter + 1;
                         eth_txd_next <= {
@@ -160,7 +163,10 @@ module eth_transmit
                         cycle_counter <= 0;
                     end else begin
                         cycle_counter <= cycle_counter + 1;
-                        eth_txd_next <= 2'b10;  // TODO: Replace with real data
+                        eth_txd_next <= {
+                            payload_buffer[data_index_lsb+1],
+                            payload_buffer[data_index_lsb]
+                        };
                     end
 
                     eth_txd <= eth_txd_next;
@@ -194,7 +200,5 @@ module eth_transmit
     );
 
 endmodule
-
-
 
 `default_nettype wire

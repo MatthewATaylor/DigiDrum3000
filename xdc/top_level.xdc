@@ -11,8 +11,8 @@ create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { c
 
 # CDC
 
-set_max_delay -datapath_only 6 -from  [get_clocks clk_pll_i] -to [get_clocks sys_clk_pin]
-set_max_delay -datapath_only 6 -from  [get_clocks sys_clk_pin] -to [get_clocks clk_pll_i]
+set_max_delay -datapath_only 6 -from  [get_clocks eth_clk_prebuf] -to [get_clocks clk_audio_prebuf]
+set_max_delay -datapath_only 6 -from  [get_clocks clk_audio_prebuf] -to [get_clocks eth_clk_prebuf]
 
 
 #Switches
