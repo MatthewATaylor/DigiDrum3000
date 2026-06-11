@@ -60,7 +60,12 @@ module top_level
         output logic        pedal_copi,
         output logic        pedal_dclk,
         output logic        pedal_cs,
-        input  wire         pedal_cipo
+        input  wire         pedal_cipo,
+
+        // TDM DAC (audio out)
+        output logic        dac_copi,
+        output logic        dac_bclk,
+        output logic        dac_fsync
     );
 
     //localparam INSTRUMENT_COUNT = 10;
@@ -191,6 +196,17 @@ module top_level
         .eth_txd(eth_txd)
     );
 
+    dac_controller dac_controller_i (
+        .clk(clk_audio),
+        .rst(rst_audio),
+        .sample_in_l(square_wave_samples[31:16]),
+        .sample_in_r(square_wave_samples[31:16]),
+        .sample_in_valid(square_wave_samples_valid),
+        
+        .dac_copi(dac_copi),
+        .dac_bclk(dac_bclk),
+        .dac_fsync(dac_fsync)
+    );
 
     //// From PCB interface
     //logic [2:0] output_src_pcb;

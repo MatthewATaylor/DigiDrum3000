@@ -1,3 +1,6 @@
+// To run without sudo:
+// sudo setcap cap_net_raw+ep ./build/ethernet_audio_interface
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
