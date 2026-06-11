@@ -458,10 +458,8 @@ module top_level
         .clk_dram_ctrl(clk_dram_ctrl),
         .rst(rst_audio),
         .uart_din(uart_din),
-        
         .addr_offsets(addr_offsets),
         .addr_offsets_valid(addr_offsets_valid),
-    
         .fifo_receiver_axis_tvalid(write_axis_valid),
         .fifo_receiver_axis_tready(write_axis_ready),
         .fifo_receiver_axis_tdata(write_axis_data),

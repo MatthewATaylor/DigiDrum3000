@@ -3,7 +3,7 @@
 
 module dram_writer
     #(
-        INSTRUMENT_COUNT
+        parameter INSTRUMENT_COUNT
     )
     (
         input wire clk,
