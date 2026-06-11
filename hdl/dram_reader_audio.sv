@@ -91,7 +91,7 @@ module dram_reader_audio
     logic [13:0] sample_period_to_mixer;
     always_ff @ (posedge clk) begin
         if (rst) begin
-            sample_period_to_mixer <= 14'd2272;
+            sample_period_to_mixer <= 14'd2500;
         end else begin
             if (unstacker_chunk_axis_tvalid) begin
                 sample_period_to_mixer <= unstacker_chunk_axis_tdata[165:152];

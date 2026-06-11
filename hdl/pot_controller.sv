@@ -16,7 +16,7 @@ module pot_controller (
     output logic value_valid
 );
 
-  localparam CYCLES_PER_TRIGGER = 1000;
+  localparam CYCLES_PER_TRIGGER = 1200;
 
   logic cs;
   assign cs0 = pot_index[0] ? cs : 1'b1;
@@ -33,7 +33,7 @@ module pot_controller (
   );
 
   localparam ADC_DATA_WIDTH = 17;
-  localparam ADC_DATA_CLK_PERIOD = 50;
+  localparam ADC_DATA_CLK_PERIOD = 60;
 
   logic [ADC_DATA_WIDTH-1:0] spi_write_data;
   logic [ADC_DATA_WIDTH-1:0] spi_read_data;

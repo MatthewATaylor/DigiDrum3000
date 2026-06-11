@@ -15,7 +15,7 @@ module pedal_controller (
     output logic value_valid
 );
 
-  localparam CYCLES_PER_TRIGGER = 1000;
+  localparam CYCLES_PER_TRIGGER = 1200;
 
   logic [31:0] trigger_count;
   logic        spi_trigger;
@@ -28,7 +28,7 @@ module pedal_controller (
   );
 
   localparam ADC_DATA_WIDTH = 16;
-  localparam ADC_DATA_CLK_PERIOD = 50;
+  localparam ADC_DATA_CLK_PERIOD = 60;
 
   logic [ADC_DATA_WIDTH-1:0] spi_write_data;
   logic [ADC_DATA_WIDTH-1:0] spi_read_data;

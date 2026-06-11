@@ -13,7 +13,7 @@ module downsampler
         input  wire         clk,
         input  wire         rst,
         input  wire  [15:0] sample_in,
-        input  wire         sample_in_valid,  // Expects valid every 2272/4 clock cycles
+        input  wire         sample_in_valid,  // Expects valid every 2500/4 clock cycles
         output logic [15:0] sample_out,
         output logic        sample_out_valid
     );

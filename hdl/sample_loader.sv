@@ -31,7 +31,7 @@ module sample_loader
     logic [23:0] total_sample_counter;
 
     uart_receive #(
-        .INPUT_CLOCK_FREQ(100000000),
+        .INPUT_CLOCK_FREQ(120000000),
         .BAUD_RATE(1500000)
     ) sample_load_uart (
         .clk(clk),

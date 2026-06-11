@@ -7,14 +7,14 @@ from pathlib import Path
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge, ReadOnly, with_timeout, NextTimeStep
 from cocotb.utils import get_sim_time as gst
-from cocotb.runner import get_runner
+from cocotb_tools.runner import get_runner
 #from vicoco.vivado_runner import get_runner
 import matplotlib.pyplot as plt
 import numpy as np
 test_file = os.path.basename(__file__).replace(".py","")
 
 
-def pitch_to_sample_period(pitch):
+def pitch_to_sample_period_44ksps(pitch):
     pitch_lerp_1 = (pitch % 256) * 4544
     pitch_lerp_2 = abs(((pitch + 128) % 256) - 128) * 826
     pitch_lerp_3 = abs(((pitch + 64) % 128) - 64) * 367
@@ -24,8 +24,22 @@ def pitch_to_sample_period(pitch):
     return int(sample_period_numerator >> int(pitch >> 8))
 
 
-def pitch_to_sample_period_fp(pitch):
+def pitch_to_sample_period_48ksps(pitch):
+    pitch_lerp_1 = (pitch % 256) * 5000
+    pitch_lerp_2 = abs(((pitch + 128) % 256) - 128) * 909
+    pitch_lerp_3 = abs(((pitch + 64) % 128) - 64) * 404
+    sample_period_numerator = \
+            10000 - \
+            int((pitch_lerp_1 + pitch_lerp_2 + pitch_lerp_3) / 256)
+    return int(sample_period_numerator >> int(pitch >> 8))
+
+
+def pitch_to_sample_period_fp_44ksps(pitch):
     return 9088 / 2**(pitch/256)
+
+
+def pitch_to_sample_period_fp_48ksps(pitch):
+    return 10000 / 2**(pitch/256)
 
 
 def delta_cents(sample_periods):
@@ -53,9 +67,9 @@ async def test_a(dut):
         if pitch_in > 3:
             sample_period_out = dut.sample_period.value.integer
             sample_period_outs.append(sample_period_out)
-            sample_period_fps.append(pitch_to_sample_period_fp(pitch_in_buf[-1]))
+            sample_period_fps.append(pitch_to_sample_period_fp_48ksps(pitch_in_buf[-1]))
 
-            sample_period = pitch_to_sample_period(pitch_in_buf[-1])
+            sample_period = pitch_to_sample_period_48ksps(pitch_in_buf[-1])
             print(f'pitch={pitch_in_buf[-1]}, expect sample_period={sample_period}, got: {sample_period_out}')
             assert sample_period_out == sample_period
 

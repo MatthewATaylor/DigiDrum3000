@@ -239,8 +239,8 @@ set_property -dict { PACKAGE_PIN G3    IOSTANDARD LVCMOS33 } [get_ports "pedal_c
 
 ##PWM Audio Amplifier
 
-set_property -dict { PACKAGE_PIN A11   IOSTANDARD LVCMOS33 } [get_ports { spk }]; #IO_L4N_T0_15 Sch=aud_pwm
-set_property -dict { PACKAGE_PIN D12   IOSTANDARD LVCMOS33 } [get_ports { aud_sd_n }]; #IO_L6P_T0_15 Sch=aud_sd
+#set_property -dict { PACKAGE_PIN A11   IOSTANDARD LVCMOS33 } [get_ports { spk }]; #IO_L4N_T0_15 Sch=aud_pwm
+#set_property -dict { PACKAGE_PIN D12   IOSTANDARD LVCMOS33 } [get_ports { aud_sd_n }]; #IO_L6P_T0_15 Sch=aud_sd
 
 
 ##USB-RS232 Interface

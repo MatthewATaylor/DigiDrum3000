@@ -35,7 +35,7 @@ module uart_param_controller
     logic       uart_dout_valid;
 
     uart_receive #(
-        .INPUT_CLOCK_FREQ(100000000),
+        .INPUT_CLOCK_FREQ(120000000),
         .BAUD_RATE(1500000)
     ) uart_receive_param_ctrl (
         .clk(clk),

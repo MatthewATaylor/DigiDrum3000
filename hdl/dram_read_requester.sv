@@ -116,7 +116,7 @@ module dram_read_requester
     always_ff @ (posedge clk) begin
         if (rst) begin
             sample_counter <= 0;
-            sample_period_hold <= 2272;
+            sample_period_hold <= 14'd2500;
         end else begin
             if (sample_counter == sample_period_hold_x8 - 1) begin
                 sample_period_hold <= sample_period;

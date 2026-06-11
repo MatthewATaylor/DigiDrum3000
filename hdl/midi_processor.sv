@@ -56,6 +56,7 @@ module midi_processor
     end
 
     uart_receive #(
+        .INPUT_CLOCK_FREQ(120000000),
         .BAUD_RATE(31250)
     ) uart_midi (
         .clk(clk),
