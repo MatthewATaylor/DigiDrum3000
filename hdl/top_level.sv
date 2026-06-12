@@ -153,6 +153,35 @@ module top_level
     logic        addr_offsets_valid;
 
 
+    logic [16*8-1:0] square_wave_samples;
+    logic            square_wave_samples_valid;
+
+    square_wave #(
+        .AMPLITUDE(10000),
+        .FREQUENCY(50.0)
+    ) square_wave_0 (
+        .clk(clk_audio),
+        .rst(rst_audio),
+        .sample_out(square_wave_samples[16*1-1:16*0]),
+        .sample_out_valid(square_wave_samples_valid)
+    );
+
+    genvar sqi;
+    generate
+        for (sqi=1; sqi<8; sqi++) begin
+            square_wave #(
+                .AMPLITUDE(10000),
+                .FREQUENCY(50.0*(sqi+1))
+            ) square_wave_i (
+                .clk(clk_audio),
+                .rst(rst_audio),
+                .sample_out(square_wave_samples[16*(sqi+1)-1:16*sqi]),
+                .sample_out_valid()
+            );
+        end
+    endgenerate
+
+
     // From PCB interface
     logic [2:0] output_src_pcb;
     logic [2:0] crush_src_pcb;
@@ -739,34 +768,6 @@ module top_level
         end
     end
 
-
-    //logic [16*8-1:0] square_wave_samples;
-    //logic            square_wave_samples_valid;
-
-    //square_wave #(
-    //    .AMPLITUDE(10000),
-    //    .FREQUENCY(50.0)
-    //) square_wave_0 (
-    //    .clk(clk_audio),
-    //    .rst(rst_audio),
-    //    .sample_out(square_wave_samples[16*1-1:16*0]),
-    //    .sample_out_valid(square_wave_samples_valid)
-    //);
-
-    //genvar i;
-    //generate
-    //    for (i=1; i<8; i++) begin
-    //        square_wave #(
-    //            .AMPLITUDE(10000),
-    //            .FREQUENCY(50.0*(i+1))
-    //        ) square_wave_i (
-    //            .clk(clk_audio),
-    //            .rst(rst_audio),
-    //            .sample_out(square_wave_samples[16*(i+1)-1:16*i]),
-    //            .sample_out_valid()
-    //        );
-    //    end
-    //endgenerate
 
     audio_eth_transmit audio_eth_transmit_i (
         .clk(clk_audio),

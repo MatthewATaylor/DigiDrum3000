@@ -17,7 +17,7 @@ module upsampler #(
     input  wire         clk,
     input  wire         rst,
     input  wire  [15:0] sample_in,
-    input  wire         sample_in_valid,// expected to be pulsed high every 2272 cycles
+    input  wire         sample_in_valid,// expected to be pulsed high every 2500 cycles
     input  wire   [9:0] volume,
     output logic [15:0] sample_out,     // upsampled by RATIO, held output
     output logic        sample_out_valid// unused by DAC
@@ -25,7 +25,7 @@ module upsampler #(
   localparam BUFFER_DEPTH   = FILTER_TAPS/RATIO;
   localparam BUFFER_ADDR_W  = $clog2(BUFFER_DEPTH);
   localparam BUFFER_DELAY   = 4;
-  localparam OUTPUT_PERIOD  = 2272/RATIO;
+  localparam OUTPUT_PERIOD  = 2500/RATIO;
   localparam OUTPUT_SHIFT   = FILTER_SCALE - $clog2(RATIO) + VOLUME_EN*2;
   localparam SAMPLE_TIMER_W = $clog2(OUTPUT_PERIOD);
 
