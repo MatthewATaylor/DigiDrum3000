@@ -655,11 +655,13 @@ module top_level
         .init_calib_complete (init_calib_complete_dram_ctrl)
     );
 
-
+    logic [15:0] instrument_samples_resampled [INSTRUMENT_COUNT-1:0];
     logic [15:0] sample_processed_l;
     logic [15:0] sample_processed_r;
     logic        sample_processed_valid;
-    audio_processor aud_pcr (
+    audio_processor #(
+        .INSTRUMENT_COUNT(INSTRUMENT_COUNT)
+    ) aud_pcr (
         .clk(clk_audio),
         .rst(rst_audio),
 
@@ -686,12 +688,15 @@ module top_level
 
         .sample_period_dram_out(sample_period_dram_out),
 
+        .instrument_samples(current_instrument_samples),
         .sample_from_dram(sample_raw),
         .valid_from_dram(sample_raw_valid),
 
         .sample_out_l(sample_processed_l),
         .sample_out_r(sample_processed_r),
-        .sample_out_valid(sample_processed_valid)
+        .instrument_samples_out(instrument_samples_resampled),
+        .sample_out_valid(),
+        .sample_out_valid_base(sample_processed_valid)
     );
 
 
@@ -772,7 +777,22 @@ module top_level
     audio_eth_transmit audio_eth_transmit_i (
         .clk(clk_audio),
         .rst(rst_audio),
-        .sample_in({96'b0, sample_processed_r, sample_processed_l}),
+        .sample_in(
+            {
+                instrument_samples_resampled[9],
+                instrument_samples_resampled[8],
+                instrument_samples_resampled[7],
+                instrument_samples_resampled[6],
+                instrument_samples_resampled[5],
+                instrument_samples_resampled[4],
+                instrument_samples_resampled[3],
+                instrument_samples_resampled[2],
+                instrument_samples_resampled[1],
+                instrument_samples_resampled[0],
+                sample_processed_r,
+                sample_processed_l
+            }
+        ),
         .sample_in_valid(sample_processed_valid),
 
         .eth_clk(eth_clk),

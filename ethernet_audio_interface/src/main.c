@@ -20,9 +20,9 @@
 
 #define MAC_SRC         0x02DEADBEEF67ULL
 #define MAC_DEST        0xFFFFFFFFFFFFULL
-#define IFACE_NAME      "enp0s20f0u1u4"
+#define IFACE_NAME      "enp0s20f0u2u4"
 #define AUDIO_BUF_SIZE  32
-#define NUM_CHANNELS    8
+#define NUM_CHANNELS    12
 #define SAMPLE_RATE     48000
 #define RING_SAMPLES    4096
 #define AUDIO_STRIDE    (NUM_CHANNELS * sizeof(int16_t))

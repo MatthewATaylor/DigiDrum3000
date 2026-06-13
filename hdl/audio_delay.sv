@@ -19,10 +19,11 @@ module audio_delay
     );
 
     localparam DELAY_DEPTH = 8 * 1024;
-    localparam BASE_SAMPLE_PERIOD = 2272;
+    localparam BASE_SAMPLE_PERIOD = 2500;
 
     logic [15:0] resampled_in;
     logic        resampled_in_valid;
+    logic  [1:0] resampled_in_valid_buf;
 
     logic [15:0] delay_line_out;
     logic        delay_line_out_valid;
@@ -30,6 +31,7 @@ module audio_delay
     logic [15:0] bram_dout;
     logic [15:0] bram_din;
 
+    // Old numbers:
     // sample_period: [2272/4, 2272*4]
     //   sw_delay_fast: [2.91 ms, 46.5 ms]
     //  !sw_delay_fast: [46.5 ms, 744 ms]
@@ -60,7 +62,7 @@ module audio_delay
         end
     end
 
-    logic [1:0]  sample_in_valid_buf;
+    logic  [1:0] sample_in_valid_buf;
     logic [15:0] sample_in_buf;
     logic [13:0] sample_period_buf;
 
@@ -80,7 +82,6 @@ module audio_delay
     assign       out_fb = $signed(out_fb_mult) >>> 10;
 
     logic [16:0] fb_plus_in;
-    assign       fb_plus_in = $signed(resampled_in) + $signed(out_fb);
 
     // Input clip
     logic [15:0] delay_line_in;
@@ -96,6 +97,7 @@ module audio_delay
 
     always_ff @ (posedge clk) begin
         if (rst) begin
+            resampled_in_valid_buf <= 0;
             bram_din <= 0;
             bram_wr_addr <= 0;
             sample_in_valid_buf <= 0;
@@ -103,23 +105,34 @@ module audio_delay
             sample_period_buf <= BASE_SAMPLE_PERIOD;
             delay_line_out_valid <= 0;
             delay_line_out <= 0;
+            fb_plus_in <= 0;
         end else begin
+            // Received sample. Set sample period and wait for resampling
             if (sample_in_valid) begin
                 sample_period_buf <= sample_period;
             end
 
+            // Input resampler done. Start computing delay line input.
             if (resampled_in_valid) begin
                 sample_in_buf <= resampled_in;
+            end
+            // One cycle later (after feedback amount calculated).
+            if (resampled_in_valid_buf[0]) begin
+                fb_plus_in <= $signed(sample_in_buf) + $signed(out_fb);
+            end
+            // One more cycle later. Write computed sample to delay line;
+            if (resampled_in_valid_buf[1]) begin
                 bram_din <= delay_line_in;
                 bram_wr_addr <= bram_wr_addr + 1;
             end
+            resampled_in_valid_buf <= {resampled_in_valid_buf[0], resampled_in_valid};
 
+            // Ready to send output of delay line to the output resampler.
             if (sample_in_valid_buf[1]) begin
                 delay_line_out_valid <= 1;
                 delay_line_out <= out_dry + out_wet;
             end
-
-            sample_in_valid_buf <= {sample_in_valid_buf[0], resampled_in_valid};
+            sample_in_valid_buf <= {sample_in_valid_buf[0], resampled_in_valid_buf[1]};
 
             if (delay_line_out_valid) begin
                 delay_line_out_valid <= 0;

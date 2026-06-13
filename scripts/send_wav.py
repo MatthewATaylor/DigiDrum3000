@@ -21,7 +21,7 @@ samples = [
 SERIAL_PORTNAME = '/dev/ttyUSB1'
 BAUD = 1500000
 SAMPLE_RATE_IN = 48000
-SAMPLE_RATE_OUT = 44100
+SAMPLE_RATE_OUT = 48000
 SAMPLE_DIR = './media/compressed/'
 RESAMPLED_DIR = SAMPLE_DIR+'resampled/'
 
@@ -51,7 +51,7 @@ def send_wav(ser=None):
             wav_samples = np.frombuffer(frames, dtype='<i2')  # 16-bit little endian byte order
             if nchannels == 2:
                 wav_samples = wav_samples[0::2]  # Discard one channel
-            wav_samples = samplerate.resample(wav_samples, SAMPLE_RATE_OUT/SAMPLE_RATE_IN)
+            #wav_samples = samplerate.resample(wav_samples, SAMPLE_RATE_OUT/SAMPLE_RATE_IN)
             wav_samples = wav_samples.astype('<i2')
 
             # Pad samples with zeros (each DRAM read/write is 16*8=128 bits)

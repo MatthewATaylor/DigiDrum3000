@@ -43,7 +43,7 @@ module dac_controller
         bit_counter == 8'd24 ||
         bit_counter == 8'd36;
 
-    assign dac_bclk = (state != RST) && (clk_counter < HALF_BIT_CYCLES);
+    assign dac_bclk = (!rst) && (state != RST) && (clk_counter < HALF_BIT_CYCLES);
 
     always_ff @ (posedge clk) begin
         if (rst) begin

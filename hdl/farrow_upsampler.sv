@@ -105,6 +105,8 @@ module farrow_upsampler
     enum {
         IDLE,
 
+        D3_FACTOR,
+
         MULT_1_PRE,
         MULT_1,
         MULT_1_POST,
@@ -124,7 +126,7 @@ module farrow_upsampler
     logic [SAMPLE_WIDTH-1:0] left_sum_shift;
 
     logic [SAMPLE_WIDTH-1:0] x1mx2;
-    assign                   x1mx2 = x[1] - x[2];
+    logic [SAMPLE_WIDTH-1:0] x3mx0;
     logic [SAMPLE_WIDTH-1:0] d3_factor; 
 
     logic [SAMPLE_WIDTH-1:0] x0px2;
@@ -135,24 +137,37 @@ module farrow_upsampler
 
     logic [SAMPLE_WIDTH+DELAY_WIDTH+1-1:0] top_sum_2;
     logic [SAMPLE_WIDTH+DELAY_WIDTH*2  :0] top_sum;
+    logic [SAMPLE_WIDTH+DELAY_WIDTH*3  :0] farrow_out_lower;
+    logic [SAMPLE_WIDTH+DELAY_WIDTH*3  :0] farrow_out_upper;
     logic [SAMPLE_WIDTH+DELAY_WIDTH*3+1:0] farrow_out;
     logic                                  farrow_out_valid;
 
-    logic [SAMPLE_WIDTH+DELAY_WIDTH*2  :0] mult_a;
+    logic [SAMPLE_WIDTH+DELAY_WIDTH  +1:0] mult_a;
     logic              [DELAY_WIDTH  -1:0] mult_b;
-    logic [SAMPLE_WIDTH+DELAY_WIDTH*3+1:0] mult_out;
+    logic [SAMPLE_WIDTH+DELAY_WIDTH*2  :0] mult_out;
     assign mult_out = $signed(mult_a) * $signed(mult_b);
+
+    // An additional multiplier for the farrow_out multiplication
+    logic [DELAY_WIDTH  -1:0] mult_ext_in;
+    logic [DELAY_WIDTH*2-1:0] mult_ext_out;
+    assign mult_ext_out = $signed(mult_ext_in) * $signed(mult_b);
 
     always_ff @ (posedge clk) begin
         if (rst) begin
             left_sum <= 0;
             left_sum_shift <= 0;
+
+            x1mx2 <= 0;
+            x3mx0 <= 0;
             d3_factor <= 0;
+
             d2_factor_pre <= 0;
             farrow_out_addend <= 0;
 
             top_sum_2 <= 0;
             top_sum <= 0;
+            farrow_out_lower <= 0;
+            farrow_out_upper <= 0;
             farrow_out <= 0;
 
             farrow_out_valid <= 0;
@@ -160,15 +175,23 @@ module farrow_upsampler
 
             mult_a <= 0;
             mult_b <= 0;
+
+            mult_ext_in <= 0;
         end else begin
             case (farrow_state)
                 IDLE: begin
                     farrow_out_valid <= 0;
                     if (prev_div_delay_out_valid) begin
                         mult_b <= $signed(delay);
-                        d3_factor <= (x1mx2<<1) + x1mx2 + (x[3] - x[0]);
-                        farrow_state <= MULT_1_PRE;
+                        x1mx2 <= x[1] - x[2];
+                        x3mx0 <= x[3] - x[0];
+                        farrow_state <= D3_FACTOR;
                     end
+                end
+
+                D3_FACTOR: begin
+                    d3_factor <= (x1mx2<<1) + x1mx2 + x3mx0;
+                    farrow_state <= MULT_1_PRE;
                 end
 
                 MULT_1_PRE: begin
@@ -211,15 +234,19 @@ module farrow_upsampler
                 end
 
                 MULT_3_PRE: begin
-                    mult_a <= $signed(top_sum);
+                    // Split top_sum into unsigned lower part and signed upper
+                    // part to use two parallel multiplies rather than series.
+                    mult_a <= {1'b0, top_sum[SAMPLE_WIDTH+DELAY_WIDTH:0]};
+                    mult_ext_in <= $signed(top_sum[SAMPLE_WIDTH+DELAY_WIDTH*2:SAMPLE_WIDTH+DELAY_WIDTH+1]);
                     farrow_state <= MULT_3;
                 end
                 MULT_3: begin
-                    farrow_out <= mult_out;
+                    farrow_out_lower <= $signed({1'b0, mult_out});
+                    farrow_out_upper <= $signed(mult_ext_out) <<< (SAMPLE_WIDTH+DELAY_WIDTH+1);
                     farrow_state <= MULT_3_POST;
                 end
                 MULT_3_POST: begin
-                    farrow_out <= $signed(farrow_out) + $signed(farrow_out_addend);
+                    farrow_out <= $signed(farrow_out_lower) + $signed(farrow_out_upper) + $signed(farrow_out_addend);
                     farrow_state <= OUT;
                 end
 

@@ -3,7 +3,7 @@
 
 module audio_eth_transmit
     #(
-        parameter PAYLOAD_CHANNELS  = 8,
+        parameter PAYLOAD_CHANNELS  = 12,
         parameter PAYLOAD_SAMPLES   = 32,
         parameter PAYLOAD_BIT_DEPTH = 16
     )
