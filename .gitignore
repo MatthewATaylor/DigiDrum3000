@@ -8,6 +8,7 @@ tight_setup_hold_pins.txt
 ip/*/ip
 __pycache__
 build
+.history
 
 # Kicad recommended
 *.000
