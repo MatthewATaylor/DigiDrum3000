@@ -92,7 +92,7 @@ static void on_process(void *userdata) {
             n_bytes
         );
         spa_ringbuffer_read_update(&s->ring, read_idx + n_frames);
-        printf("Read %d frames from ring buffer at index: %d\n", n_frames, read_idx);
+        //printf("Read %d frames from ring buffer at index: %d\n", n_frames, read_idx);
     } else {
         // Underrun (fill with zeros)
         memset(out, 0, n_bytes);
@@ -170,7 +170,7 @@ static void *eth_thread(void *arg) {
         );
         spa_ringbuffer_write_update(&s->ring, write_idx + AUDIO_BUF_SIZE);
 
-        printf("Wrote Ethernet payload to ring buffer at index: %d\n", write_idx % RING_SAMPLES);
+        //printf("Wrote Ethernet payload to ring buffer at index: %d\n", write_idx % RING_SAMPLES);
     }
 
     return 0;

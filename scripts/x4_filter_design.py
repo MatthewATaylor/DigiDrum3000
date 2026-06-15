@@ -5,7 +5,8 @@ import random as rand
 import math
 
 over_rate = 4
-sample_rate = 1/(2500/over_rate * 10e-9)
+sample_rate = 1/(2500/over_rate / 120e6)
+print(f'Sample rate: {sample_rate}')
 
 
 def find_nearest_index(frequencies, target_freq):

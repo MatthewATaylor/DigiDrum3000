@@ -7,7 +7,7 @@ from pathlib import Path
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge, ReadOnly,with_timeout
 from cocotb.utils import get_sim_time as gst
-from cocotb.runner import get_runner
+from cocotb_tools.runner import get_runner
 import matplotlib.pyplot as plt
 import wave
 import numpy as np
