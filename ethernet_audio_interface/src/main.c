@@ -24,7 +24,7 @@
 #define AUDIO_BUF_SIZE  32
 #define NUM_CHANNELS    12
 #define SAMPLE_RATE     48000
-#define RING_SAMPLES    4096
+#define RING_SAMPLES    128
 #define AUDIO_STRIDE    (NUM_CHANNELS * sizeof(int16_t))
 #define RING_BYTES      (RING_SAMPLES * AUDIO_STRIDE)
 
@@ -92,7 +92,7 @@ static void on_process(void *userdata) {
             n_bytes
         );
         spa_ringbuffer_read_update(&s->ring, read_idx + n_frames);
-        //printf("Read %d frames from ring buffer at index: %d\n", n_frames, read_idx);
+        //printf("Read %d frames from ring buffer at index: %d\n", n_frames, read_idx % RING_SAMPLES);
     } else {
         // Underrun (fill with zeros)
         memset(out, 0, n_bytes);
@@ -133,7 +133,7 @@ static void *eth_thread(void *arg) {
         }
 
         if ((size_t)n != FRAME_LEN_EXPECTED) {
-            fprintf(stderr, "Skipping frame with incorrect length (%zd bytes)\n", n);
+            //fprintf(stderr, "Skipping frame with incorrect length (%zd bytes)\n", n);
             continue;
         }
 
@@ -149,11 +149,17 @@ static void *eth_thread(void *arg) {
 
         uint32_t write_idx;
         int32_t  fill_level = spa_ringbuffer_get_write_index(&s->ring, &write_idx);
+        uint32_t used_bytes;
         if (fill_level > 0) {
-            if ((size_t)fill_level + AUDIO_BUF_BYTES > sizeof(s->ring_buf)) {
-                fprintf(stderr, "Ring buffer overrun, dropping frame\n");
-                continue;
-            }
+            used_bytes = (uint32_t) fill_level;
+        } else {
+            used_bytes = 0;
+        }
+        //printf("Fill level (samples): %d\n", fill_level/2);
+
+        if ((size_t)used_bytes + AUDIO_BUF_BYTES > sizeof(s->ring_buf)) {
+            fprintf(stderr, "Ring buffer overrun, dropping frame\n");
+            continue;
         }
 
         spa_ringbuffer_write_data(
