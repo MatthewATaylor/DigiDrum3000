@@ -125,7 +125,6 @@ module top_level
 
     logic  rst_eth_buf [1:0];
     assign eth_rst_n = ~rst_eth_buf[0] & clks_locked_eth;
-    assign eth_mode = eth_rst_n ? 3'bZZZ : 3'b111;
 
     logic  rst_audio_buf [1:0];
     logic  rst_audio;
@@ -798,7 +797,9 @@ module top_level
         .eth_clk(eth_clk),
         .eth_rst_n(eth_rst_n),
         .eth_txen(eth_txen),
-        .eth_txd(eth_txd)
+        .eth_txd(eth_txd),
+        .eth_crsdv(eth_mode[2]),
+        .eth_rxd(eth_mode[1:0])
     );
 
     dac_controller dac_controller_i (
@@ -829,21 +830,26 @@ module top_level
 
     logic [31:0] ss_val;
     always_comb begin
-        if (sample_load_complete) begin
-            ss_val = {
-                //pedal_value[9:2],
-                1'b0,
-                drd_req.midi_proc.velocity,  // 7 bits
-                4'b0,
-                memrequest_complete_counter[19:0]
-            };
-        end else begin
-            ss_val = {
-                dwr.sample_loader_i.instrument_counter, // 4 bits
-                4'b0,
-                memrequest_complete_counter  // 24 bits
-            };
-        end
+        ss_val = {
+            audio_eth_transmit_i.packet_rx_counter,
+            audio_eth_transmit_i.sample_period_offset
+        };
+
+        //if (sample_load_complete) begin
+        //    ss_val = {
+        //        //pedal_value[9:2],
+        //        1'b0,
+        //        drd_req.midi_proc.velocity,  // 7 bits
+        //        4'b0,
+        //        memrequest_complete_counter[19:0]
+        //    };
+        //end else begin
+        //    ss_val = {
+        //        dwr.sample_loader_i.instrument_counter, // 4 bits
+        //        4'b0,
+        //        memrequest_complete_counter  // 24 bits
+        //    };
+        //end
     end
     seven_segment_controller ssc (
         .clk(clk_dram_ctrl),

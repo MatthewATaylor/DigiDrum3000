@@ -16,11 +16,14 @@ module audio_eth_transmit
         input  wire        eth_clk,
         input  wire        eth_rst_n,
         output logic       eth_txen,
-        output logic [1:0] eth_txd
+        output logic [1:0] eth_txd,
+        inout  wire        eth_crsdv,
+        inout  wire  [1:0] eth_rxd
     );
 
-    localparam SAMPLE_FIFO_WIDTH = PAYLOAD_BIT_DEPTH*PAYLOAD_CHANNELS;
-    localparam BUFFER_WIDTH = SAMPLE_FIFO_WIDTH*PAYLOAD_SAMPLES;
+    localparam        SAMPLE_FIFO_WIDTH = PAYLOAD_BIT_DEPTH*PAYLOAD_CHANNELS;
+    localparam        BUFFER_WIDTH = SAMPLE_FIFO_WIDTH*PAYLOAD_SAMPLES;
+    localparam [15:0] RESAMPLER_SP_IN = 16'd1042;
 
     logic [BUFFER_WIDTH-1:0]            audio_buffer [1:0];
     logic [$clog2(PAYLOAD_SAMPLES)-1:0] sample_index;
@@ -62,6 +65,54 @@ module audio_eth_transmit
         .payload_buffer_valid(buffer_valid)
     );
 
+    logic [15:0] sample_period_offset;
+    logic [15:0] packet_rx_counter;
+    eth_receive eth_receive_i (
+        .eth_clk(eth_clk),
+        .eth_rst_n(eth_rst_n),
+        .eth_crsdv(eth_crsdv),
+        .eth_rxd(eth_rxd),
+
+        .sample_period_offset(sample_period_offset),
+        .packet_rx_counter(packet_rx_counter)
+    );
+
+
+    // Adaptive resampling for clock drift between FPGA and Ethernet audio receiver
+
+    logic [SAMPLE_FIFO_WIDTH-1:0] sample_resampled;
+    logic  [PAYLOAD_CHANNELS-1:0] sample_resampled_valid;
+
+    genvar resampler_index;
+    generate
+        for (resampler_index=0; resampler_index<PAYLOAD_CHANNELS; ++resampler_index) begin
+            resampler eth_resampler (
+                .clk(eth_clk),
+                .rst(~eth_rst_n),
+                
+                .sample_period_in(RESAMPLER_SP_IN),
+                .sample_period_farrow_out((RESAMPLER_SP_IN>>2) + sample_period_offset),
+
+                .sample_in(
+                    sample_fifo[
+                        PAYLOAD_BIT_DEPTH*(resampler_index+1)-1 : 
+                        PAYLOAD_BIT_DEPTH*resampler_index
+                    ]
+                ),
+                .sample_in_valid(sample_fifo_valid),
+
+                .sample_out(
+                    sample_resampled[
+                        PAYLOAD_BIT_DEPTH*(resampler_index+1)-1 : 
+                        PAYLOAD_BIT_DEPTH*resampler_index
+                    ]
+                ),
+                .sample_out_valid(sample_resampled_valid[resampler_index])
+            );
+        end
+    endgenerate
+
+
     always_ff @ (posedge eth_clk) begin
         if (~eth_rst_n) begin
             buffer_full <= 2'b0;
@@ -69,9 +120,9 @@ module audio_eth_transmit
             buffer_valid <= 1'b0;
             sample_index <= 0;
         end else begin
-            if (sample_fifo_valid) begin
+            if (sample_resampled_valid[0]) begin
                 audio_buffer[buffer_filling] <= {
-                    sample_fifo,
+                    sample_resampled,
                     audio_buffer[buffer_filling][BUFFER_WIDTH-1:SAMPLE_FIFO_WIDTH]
                 };
                 

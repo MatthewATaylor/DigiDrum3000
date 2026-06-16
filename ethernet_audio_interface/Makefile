@@ -9,7 +9,7 @@ OBJ_FILES := $(SRC_FILES:%=$(BUILD_DIR)/%.o)
 DEP_FILES := $(OBJ_FILES:.o=.d)
 
 INC_FLAG := $(addprefix -I,$(INCLUDE_DIR)) -I/usr/include/pipewire-0.3 -I/usr/include/spa-0.2
-LDLIBS=-lm -lpipewire-0.3
+LDLIBS=-lm -lrt -lpipewire-0.3
 CFLAGS=$(INC_FLAG) -Wall -Wextra -D_REENTRANT
 
 .PHONY: clean
