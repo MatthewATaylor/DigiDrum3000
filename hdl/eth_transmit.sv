@@ -12,7 +12,9 @@ module eth_transmit
         output logic [1:0] eth_txd,
 
         input  wire  [PAYLOAD_BUFFER_WIDTH-1:0] payload_buffer,
-        input  wire                             payload_buffer_valid
+        input  wire                             payload_buffer_valid,
+
+        output logic [15:0] packet_tx_counter
     );
 
     localparam BITS_PER_CYCLE = 2;
@@ -77,6 +79,7 @@ module eth_transmit
             eth_txen <= 0;
             eth_txd <= 2'b00;
             eth_txd_next <= 2'b00;
+            packet_tx_counter <= 16'b0;
         end else begin
             case (state)
                 IDLE: begin
@@ -84,6 +87,7 @@ module eth_transmit
                         state <= PREAMBLE;
                         cycle_counter <= 0;
                         eth_txd_next <= 2'b01;
+                        packet_tx_counter <= packet_tx_counter + 16'b1;
                     end else begin
                         cycle_counter <= cycle_counter + 1;
                     end

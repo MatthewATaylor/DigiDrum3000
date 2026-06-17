@@ -18,7 +18,9 @@ module audio_eth_transmit
         output logic       eth_txen,
         output logic [1:0] eth_txd,
         inout  wire        eth_crsdv,
-        inout  wire  [1:0] eth_rxd
+        inout  wire  [1:0] eth_rxd,
+
+        input  wire sw_latency_timer
     );
 
     localparam        SAMPLE_FIFO_WIDTH = PAYLOAD_BIT_DEPTH*PAYLOAD_CHANNELS;
@@ -53,6 +55,7 @@ module audio_eth_transmit
         .receiver_axis_prog_empty()
     );
 
+    logic [15:0] packet_tx_counter;
     eth_transmit #(
         .PAYLOAD_BUFFER_WIDTH(BUFFER_WIDTH)
     ) eth_transmit_i (
@@ -62,7 +65,9 @@ module audio_eth_transmit
         .eth_txd(eth_txd),
 
         .payload_buffer(audio_buffer[~buffer_filling]),
-        .payload_buffer_valid(buffer_valid)
+        .payload_buffer_valid(buffer_valid),
+
+        .packet_tx_counter(packet_tx_counter)
     );
 
     logic [15:0] sample_period_offset;
@@ -76,6 +81,35 @@ module audio_eth_transmit
         .sample_period_offset(sample_period_offset),
         .packet_rx_counter(packet_rx_counter)
     );
+
+
+    logic        latency_timer_running;
+    logic [31:0] eth_latency_counter;
+    logic [15:0] packet_rx_counter_prev;
+    logic [15:0] packet_tx_counter_prev;
+    always_ff @ (posedge eth_clk) begin
+        if (~eth_rst_n) begin
+            latency_timer_running <= 1'b0;
+            eth_latency_counter <= 32'b0;
+            packet_rx_counter_prev <= 16'b0;
+            packet_tx_counter_prev <= 16'b0;
+        end else begin
+            if (latency_timer_running) begin
+                if (packet_rx_counter != packet_rx_counter_prev) begin
+                    latency_timer_running <= 1'b0;
+                end else begin
+                    eth_latency_counter <= eth_latency_counter + 32'b1;
+                end
+            end else begin
+                if (packet_tx_counter != packet_tx_counter_prev && sw_latency_timer) begin
+                    latency_timer_running <= 1'b1;
+                    eth_latency_counter <= 32'b0;
+                end
+            end
+            packet_rx_counter_prev <= packet_rx_counter;
+            packet_tx_counter_prev <= packet_tx_counter;
+        end
+    end
 
 
     // Adaptive resampling for clock drift between FPGA and Ethernet audio receiver

@@ -3,9 +3,10 @@
 //   Center: reset
 //   Up/Down/Left/Right: instrument trigger
 // Switches:
-//   sw[0]: slow/fast delay (if UART controller is off)
-//   sw[1]: UART controller on/off
-//   sw[2]: expression pedal controls on/off
+//   sw[ 0]: slow/fast delay (if UART controller is off)
+//   sw[ 1]: UART controller on/off
+//   sw[ 2]: expression pedal controls on/off
+//   sw[15]: Ethernet latency timer on/off
 
 `timescale 1ns / 1ps
 `default_nettype none
@@ -799,7 +800,9 @@ module top_level
         .eth_txen(eth_txen),
         .eth_txd(eth_txd),
         .eth_crsdv(eth_mode[2]),
-        .eth_rxd(eth_mode[1:0])
+        .eth_rxd(eth_mode[1:0]),
+
+        .sw_latency_timer(sw[15])
     );
 
     dac_controller dac_controller_i (
@@ -830,10 +833,12 @@ module top_level
 
     logic [31:0] ss_val;
     always_comb begin
-        ss_val = {
-            audio_eth_transmit_i.packet_rx_counter,
-            audio_eth_transmit_i.sample_period_offset
-        };
+        //ss_val = {
+        //    audio_eth_transmit_i.packet_rx_counter,
+        //    audio_eth_transmit_i.sample_period_offset
+        //};
+        
+        ss_val = audio_eth_transmit_i.eth_latency_counter;
 
         //if (sample_load_complete) begin
         //    ss_val = {
