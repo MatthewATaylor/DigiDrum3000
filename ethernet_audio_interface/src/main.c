@@ -1,5 +1,8 @@
 // To run without sudo:
-// sudo setcap cap_net_raw+ep ./build/ethernet_audio_interface
+// sudo setcap "cap_sys_nice+ep cap_net_raw+ep" ./build/ethernet_audio_interface
+
+// CPU frequency scaling
+// sudo cpupower frequency-set -g performance
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +16,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <time.h>
+#include <sched.h>
 
 #include <pipewire/pipewire.h>
 #include <spa/param/audio/format-utils.h>
@@ -29,6 +33,7 @@
 #define RING_BYTES           (RING_FRAMES * FRAME_BYTES)
 #define ETH_TX_PAYLOAD_BYTES 46
 #define ETHERTYPE_TX         0xB588  // Local experimental
+#define NODE_QUANTUM         128
 
 
 static const uint8_t MAC_FPGA[6]      = {0x02, 0xDE, 0xAD, 0xBE, 0xEF, 0x67};
@@ -112,7 +117,6 @@ static void on_process(void *userdata) {
             n_bytes
         );
         spa_ringbuffer_read_update(&s->ring, read_idx + n_frames);
-        //printf("Read %d frames from ring buffer at index: %d\n", n_frames, read_idx % RING_FRAMES);
     } else {
         // Underrun (fill with zeros)
         memset(out, 0, n_bytes);
@@ -159,28 +163,27 @@ static void *eth_thread(void *arg) {
     int16_t audio_buf[AUDIO_BUF_FRAMES*NUM_CHANNELS];
     const size_t AUDIO_BUF_BYTES = sizeof(audio_buf);
 
-    struct timespec ts;
-    time_t current_t_s;
-    long   current_t_ns;
-    time_t prev_t_s = 0;
-    long   prev_t_ns = 0;
-    double elapsed_t_s;
-    double sample_rate_received;
+    //struct timespec ts;
+    //time_t current_t_s;
+    //long   current_t_ns;
+    //time_t prev_t_s = 0;
+    //long   prev_t_ns = 0;
+    //double elapsed_t_s;
+    //double sample_rate_received;
+
+    int16_t sample_period_offset;
+    double  buffer_fill_error;
+    double  buffer_fill_error_avg = 0;
+    double  buffer_fill_error_P = 1./16.;
+    double  buffer_fill_error_I = 1./16.;
+
+    //uint32_t loop_counter = 0;
 
     while (1) {
         ssize_t n = recv(s->sock, buf, sizeof(buf), 0);
         if (n < 0) {
             perror("recv");
             break;
-        }
-
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        current_t_s = ts.tv_sec;
-        current_t_ns = ts.tv_nsec;
-        if (prev_t_s != 0) {
-            elapsed_t_s = ((double)(current_t_s - prev_t_s)) + 1.0e-9 * (current_t_ns - prev_t_ns);
-            sample_rate_received = AUDIO_BUF_FRAMES / elapsed_t_s;
-            //printf("Sample rate received: %f\n", sample_rate_received);
         }
 
         if ((size_t)n != FRAME_LEN_EXPECTED) {
@@ -191,6 +194,17 @@ static void *eth_thread(void *arg) {
         struct ethhdr *eth = (struct ethhdr *)buf;
         if (!mac_addr_match(eth->h_dest,   MAC_BROADCAST)) continue;
         if (!mac_addr_match(eth->h_source, MAC_FPGA))      continue;
+
+        //clock_gettime(CLOCK_MONOTONIC, &ts);
+        //current_t_s = ts.tv_sec;
+        //current_t_ns = ts.tv_nsec;
+        //if (prev_t_s != 0) {
+        //    elapsed_t_s = ((double)(current_t_s - prev_t_s)) + 1.0e-9 * (current_t_ns - prev_t_ns);
+        //    sample_rate_received = AUDIO_BUF_FRAMES / elapsed_t_s;
+        //    if (sample_rate_received < 44.0e3 && sample_rate_received > 52.0e3) {
+        //        printf("Anomalous sample rate received: %f\n", sample_rate_received);
+        //    }
+        //}
 
         uint8_t *payload = buf + ETH_HLEN;
 
@@ -226,13 +240,38 @@ static void *eth_thread(void *arg) {
         );
         spa_ringbuffer_write_update(&s->ring, write_idx + AUDIO_BUF_FRAMES);
 
-        int sample_period_offset = filled_frames - RING_FRAMES/2;
-        sample_period_offset /= 16;
+        //buffer_fill_error = (double)filled_frames - RING_FRAMES/2.0;
+        //buffer_fill_error_avg = 0.75*buffer_fill_error_avg + 0.25*buffer_fill_error;
+        //if (buffer_fill_error <= 2*AUDIO_BUF_FRAMES && buffer_fill_error >= -2*AUDIO_BUF_FRAMES) {
+        //    buffer_fill_error_P = 0;
+        //} else {
+        //    buffer_fill_error_P = 1./32.;
+        //}
+        //sample_period_offset = (int16_t) (
+        //    buffer_fill_error_P * buffer_fill_error +
+        //    buffer_fill_error_I * buffer_fill_error_avg
+        //);
+        //if (sample_period_offset > 32) {
+        //    sample_period_offset = 32;
+        //} else if (sample_period_offset < -32) {
+        //    sample_period_offset = -32;
+        //}
+        
+        buffer_fill_error = (double)filled_frames - RING_FRAMES/2.;
+        if (buffer_fill_error >= -NODE_QUANTUM/2. && buffer_fill_error <= NODE_QUANTUM/2.) {
+            buffer_fill_error = 0.;
+        }
+        buffer_fill_error_avg = 0.5*buffer_fill_error_avg + 0.5*buffer_fill_error;
+        sample_period_offset = (int16_t) (
+            buffer_fill_error_P * buffer_fill_error +
+            buffer_fill_error_I * buffer_fill_error_avg
+        );
         if (sample_period_offset > 32) {
             sample_period_offset = 32;
         } else if (sample_period_offset < -32) {
             sample_period_offset = -32;
         }
+
         //printf("Filled frames: %03d  |  Sample period offset: %03d\n", filled_frames, sample_period_offset);
 
         transmit_sp_offset(
@@ -248,8 +287,9 @@ static void *eth_thread(void *arg) {
         //    filled_frames
         //);
 
-        prev_t_s = current_t_s;
-        prev_t_ns = current_t_ns;
+        //prev_t_s = current_t_s;
+        //prev_t_ns = current_t_ns;
+        //++loop_counter;
     }
 
     return 0;
@@ -312,6 +352,17 @@ int main(int argc, char *argv[]) {
     s.eth_tx.ethertype = ETHERTYPE_TX;
     memset(s.eth_tx.payload, 0, 44);  // Padding
 
+    // Ethernet thread
+    pthread_t eth_tid;
+    pthread_create(&eth_tid, NULL, eth_thread, &s);
+    struct sched_param param;
+    param.sched_priority = 80; 
+    if (pthread_setschedparam(eth_tid, SCHED_FIFO, &param) != 0) {
+        perror("pthread_setschedparam failed");
+        return 1;
+    }
+
+
     pw_init(&argc, &argv);
 
     s.pw_loop = pw_thread_loop_new("eth-audio-src", NULL);
@@ -365,10 +416,6 @@ int main(int argc, char *argv[]) {
 
     pw_thread_loop_unlock(s.pw_loop);
     pw_thread_loop_start(s.pw_loop);
-
-    // Ethernet thread
-    pthread_t eth_tid;
-    pthread_create(&eth_tid, NULL, eth_thread, &s);
 
     printf("Streaming audio...\n");
 
