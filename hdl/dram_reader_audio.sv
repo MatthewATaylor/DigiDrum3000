@@ -38,11 +38,20 @@ module dram_reader_audio
     logic [23:0]  data_addr;
     assign data_addr = unstacker_chunk_axis_tdata[151:128];
 
+    logic addr_offsets_valid_reg;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            addr_offsets_valid_reg <= 1'b0;
+        end else begin
+            addr_offsets_valid_reg <= addr_offsets_valid;
+        end
+    end
+
     logic [INSTRUMENT_COUNT-1:0] instr_one_hot;
     always_comb begin
         for (int i=0; i<INSTRUMENT_COUNT; i++) begin
             instr_one_hot[i] =
-                addr_offsets_valid &&
+                addr_offsets_valid_reg &&
                 (data_addr >= addr_offsets[i]) &&
                 (data_addr < addr_offsets[i+1]);
         end

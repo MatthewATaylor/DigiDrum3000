@@ -25,7 +25,7 @@
 
 #define IFACE_NAME           "enp0s20f0u2u4"
 #define AUDIO_BUF_FRAMES     32
-#define NUM_CHANNELS         12
+#define NUM_CHANNELS         16
 #define SAMPLE_RATE          48000
 #define RING_FRAMES          512
 #define RING_SAMPLES         (RING_FRAMES * NUM_CHANNELS)

@@ -73,7 +73,13 @@ module top_level
         // TDM DAC (audio out)
         output logic        dac_copi,
         output logic        dac_bclk,
-        output logic        dac_fsync
+        output logic        dac_fsync,
+
+        // TDM ADC (audio in)
+        input  wire         adc_cipo,
+        output logic        adc_bclk,
+        output logic        adc_fsync,
+        output logic        adc_shdnz
     );
 
     localparam INSTRUMENT_COUNT = 10;
@@ -655,6 +661,19 @@ module top_level
         .init_calib_complete (init_calib_complete_dram_ctrl)
     );
 
+    logic [63:0] adc_samples_out;
+    audio_adc_controller audio_adc_controller_i (
+        .clk(clk_audio),
+        .rst(rst_audio),
+
+        .adc_cipo(adc_cipo),
+        .adc_bclk(adc_bclk),
+        .adc_fsync(adc_fsync),
+        .adc_shdnz(adc_shdnz),
+
+        .samples_out(adc_samples_out)
+    );
+
     logic [15:0] instrument_samples_resampled [INSTRUMENT_COUNT-1:0];
     logic [15:0] sample_processed_l;
     logic [15:0] sample_processed_r;
@@ -696,7 +715,9 @@ module top_level
         .sample_out_r(sample_processed_r),
         .instrument_samples_out(instrument_samples_resampled),
         .sample_out_valid(),
-        .sample_out_valid_base(sample_processed_valid)
+        .sample_out_valid_base(sample_processed_valid),
+
+        .ext_samples_in(adc_samples_out)
     );
 
 
@@ -779,6 +800,10 @@ module top_level
         .rst(rst_audio),
         .sample_in(
             {
+                adc_samples_out[63:48],
+                adc_samples_out[47:32],
+                adc_samples_out[31:16],
+                adc_samples_out[15:0],
                 instrument_samples_resampled[9],
                 instrument_samples_resampled[8],
                 instrument_samples_resampled[7],

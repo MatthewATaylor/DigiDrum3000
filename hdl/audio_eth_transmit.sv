@@ -3,7 +3,7 @@
 
 module audio_eth_transmit
     #(
-        parameter PAYLOAD_CHANNELS  = 12,
+        parameter PAYLOAD_CHANNELS  = 16,
         parameter PAYLOAD_SAMPLES   = 32,
         parameter PAYLOAD_BIT_DEPTH = 16
     )
@@ -116,7 +116,6 @@ module audio_eth_transmit
 
     logic [SAMPLE_FIFO_WIDTH-1:0] sample_resampled;
     logic  [PAYLOAD_CHANNELS-1:0] sample_resampled_valid;
-
     genvar resampler_index;
     generate
         for (resampler_index=0; resampler_index<PAYLOAD_CHANNELS; ++resampler_index) begin
@@ -145,6 +144,24 @@ module audio_eth_transmit
             );
         end
     endgenerate
+
+
+    //logic sample_resampled_valid;
+    //resampler_shared #(
+    //    .SAMPLE_COUNT(PAYLOAD_CHANNELS)
+    //) resampler_shared_i (
+    //    .clk(clk),
+    //    .rst(rst),
+
+    //    .sample_period_in(RESAMPLER_SP_IN),
+    //    .sample_period_farrow_out((RESAMPLER_SP_IN>>2) + sample_period_offset),
+
+    //    .sample_in(sample_fifo),
+    //    .sample_in_valid(sample_fifo_valid),
+
+    //    .sample_out(sample_resampled),
+    //    .sample_out_valid(sample_resampled_valid)
+    //);
 
 
     always_ff @ (posedge eth_clk) begin

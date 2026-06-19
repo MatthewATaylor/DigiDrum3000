@@ -40,11 +40,13 @@ module audio_processor
         output logic [15:0] sample_out_r,
         output logic [15:0] instrument_samples_out [INSTRUMENT_COUNT-1:0],
         output logic        sample_out_valid,
-        output logic        sample_out_valid_base
+        output logic        sample_out_valid_base,
+
+        input  wire  [16*4-1:0] ext_samples_in
     );
 
-    logic [15:0] sample_from_base;
-    logic        valid_from_base;
+    logic [15:0] sample_from_resampler;
+    logic        valid_from_resampler;
     resampler resampler_i (
         .clk(clk),
         .rst(rst),
@@ -52,9 +54,39 @@ module audio_processor
         .sample_period_farrow_out(14'd625),
         .sample_in(sample_from_dram),
         .sample_in_valid(valid_from_dram),
-        .sample_out(sample_from_base),
-        .sample_out_valid(valid_from_base)
+        .sample_out(sample_from_resampler),
+        .sample_out_valid(valid_from_resampler)
     );
+
+    logic [19:0] sample_from_resampler_plus_ext;
+    logic [15:0] sample_from_base;
+    logic        valid_from_base;
+    clipper #(
+        .WIDTH_FULL(20),
+        .WIDTH_CLIP(16),
+        .RIGHT_SHIFT(0)
+    ) clipper_resampler_ext (
+        .din(sample_from_resampler_plus_ext),
+        .dout(sample_from_base)
+    );
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            sample_from_resampler_plus_ext <= 20'b0;
+        end else begin
+            if (valid_from_resampler) begin
+                sample_from_resampler_plus_ext <=
+                    $signed(sample_from_resampler) +
+                    $signed(ext_samples_in[63:48]) +
+                    $signed(ext_samples_in[47:32]) +
+                    $signed(ext_samples_in[31:16]) +
+                    $signed(ext_samples_in[15: 0]);
+                valid_from_base <= 1'b1;
+            end else begin
+                valid_from_base <= 1'b0;
+            end
+        end
+    end
+
     assign sample_out_valid_base = valid_from_base;
 
     // Resample instrument_samples for dry recording of each instrument
@@ -73,6 +105,29 @@ module audio_processor
             );
         end
     endgenerate
+    //logic [16*INSTRUMENT_COUNT-1:0] instrument_samples_packed;
+    //logic [16*INSTRUMENT_COUNT-1:0] instrument_samples_out_packed;
+    //genvar instr_index;
+    //generate
+    //    for (instr_index=0; instr_index<INSTRUMENT_COUNT; ++instr_index) begin
+    //        assign instrument_samples_packed[16*(instr_index+1)-1 : 16*instr_index] =
+    //            instrument_samples[instr_index];
+    //        assign instrument_samples_out[instr_index] =
+    //            instrument_samples_out_packed[16*(instr_index+1)-1 : 16*instr_index];
+    //    end
+    //endgenerate
+    //resampler_shared #(
+    //    .SAMPLE_COUNT(INSTRUMENT_COUNT)
+    //) resampler_shared_i (
+    //    .clk(clk),
+    //    .rst(rst),
+    //    .sample_period_in(sample_period_dram_out),
+    //    .sample_period_farrow_out(14'd625),
+    //    .sample_in(instrument_samples_packed),
+    //    .sample_in_valid(valid_from_dram),
+    //    .sample_out(instrument_samples_out_packed),
+    //    .sample_out_valid()
+    //);
 
     logic [15:0] sample_to_delay;
     logic        valid_to_delay;
