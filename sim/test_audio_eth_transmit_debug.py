@@ -8,6 +8,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge, ReadOnly,with_timeout
 from cocotb.utils import get_sim_time as gst
 from cocotb_tools.runner import get_runner
+from cocotb.types import LogicArray
 import matplotlib.pyplot as plt
 import wave
 import numpy as np
@@ -65,15 +66,17 @@ test_file = os.path.basename(__file__).replace(".py","")
 async def test_b(dut):
     cocotb.start_soon(Clock(dut.eth_clk, 20, units="ns").start())
     dut.eth_rst_n.value = 0
-    dut.payload_buffer_dout.value = 0
-    dut.payload_buffer_valid.value = 0
+    dut.sample_valid_debug.value = 0
+    dut.sample_resampled.value = 0
     await ClockCycles(dut.eth_clk, 2)
     dut.eth_rst_n.value = 1
-    await ClockCycles(dut.eth_clk, 64)
-    dut.payload_buffer_valid.value = 1
-    await ClockCycles(dut.eth_clk, 1)
-    dut.payload_buffer_valid.value = 0
-    await ClockCycles(dut.eth_clk, 20000)
+    for i in range(4000):
+        await ClockCycles(dut.eth_clk, 1)
+        dut.sample_valid_debug.value = 1
+        dut.sample_resampled.value = LogicArray("00000000"*26 + "10110011"*2 + "00011100"*2 + "11111111"*2)
+        await ClockCycles(dut.eth_clk, 1)
+        dut.sample_valid_debug.value = 0
+        await ClockCycles(dut.eth_clk, 30)
 
 
 def is_runner():
@@ -82,11 +85,13 @@ def is_runner():
     #sim = os.getenv("SIM","vivado")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
-    sources = [proj_path / "hdl" / "eth_transmit.sv"]
+    sources = [proj_path / "hdl" / "audio_eth_transmit_debug.sv"]
+    sources += [proj_path / "hdl" / "eth_transmit.sv"]
     sources += [proj_path / "hdl" / "crc32.sv"]
+    sources += [proj_path / "hdl" / "xilinx_single_port_ram_read_first.v"]
     build_test_args = ["-Wall"]
-    parameters = {'PAYLOAD_BUFFER_DEPTH': 512, 'PAYLOAD_BIT_DEPTH': 16}
-    hdl_toplevel = "eth_transmit"
+    parameters = {}
+    hdl_toplevel = "audio_eth_transmit_debug"
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
     runner.build(

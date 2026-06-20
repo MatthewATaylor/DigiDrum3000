@@ -3,7 +3,8 @@
 
 module eth_transmit
     #(
-        parameter PAYLOAD_BUFFER_WIDTH
+        parameter PAYLOAD_BUFFER_DEPTH,
+        parameter PAYLOAD_BIT_DEPTH
     )
     (
         input  wire        eth_clk,
@@ -11,8 +12,9 @@ module eth_transmit
         output logic       eth_txen,
         output logic [1:0] eth_txd,
 
-        input  wire  [PAYLOAD_BUFFER_WIDTH-1:0] payload_buffer,
-        input  wire                             payload_buffer_valid,
+        output logic [$clog2(PAYLOAD_BUFFER_DEPTH)-1:0] payload_buffer_addr,
+        input  wire  [PAYLOAD_BIT_DEPTH-1:0]            payload_buffer_dout,
+        input  wire                                     payload_buffer_valid,
 
         output logic [15:0] packet_tx_counter
     );
@@ -31,7 +33,7 @@ module eth_transmit
     localparam SIZE_BYTES  = 2;
     localparam SIZE_CYCLES = SIZE_BYTES * 8 / BITS_PER_CYCLE;
 
-    localparam [15:0] PAYLOAD_BYTES      = PAYLOAD_BUFFER_WIDTH / 8;
+    localparam [15:0] PAYLOAD_BYTES      = PAYLOAD_BUFFER_DEPTH * PAYLOAD_BIT_DEPTH / 8;
     localparam [15:0] PAYLOAD_BYTES_MSBF = {PAYLOAD_BYTES[7:0], PAYLOAD_BYTES[15:8]};
     localparam        PAYLOAD_CYCLES     = PAYLOAD_BYTES * 8 / BITS_PER_CYCLE;
 
@@ -40,8 +42,6 @@ module eth_transmit
 
     localparam IPG_BYTES  = 12;
     localparam IPG_CYCLES = IPG_BYTES * 8 / BITS_PER_CYCLE;
-
-    localparam INIT_COMPLEMENT_CYCLES = 16;
 
     enum {
         IDLE,
@@ -62,6 +62,9 @@ module eth_transmit
     logic [$clog2(PAYLOAD_BYTES*8)-1:0] data_index_lsb;
     assign data_index_lsb = (cycle_counter+1) << 1;
 
+    logic [$clog2(PAYLOAD_BYTES*8)-1:0] data_index_lsb_bram;
+    assign data_index_lsb_bram = data_index_lsb + 6;  // Offset for BRAM latency
+
     // Send next eth_txd value to crc32.
     // This avoids waiting 1 extra clock cycle at the end of crc calculation.
     logic [1:0] eth_txd_next;
@@ -73,21 +76,26 @@ module eth_transmit
 
     always_ff @ (posedge eth_clk) begin
         if (~eth_rst_n) begin
+            eth_txen <= 0;
+            eth_txd <= 2'b00;
+            payload_buffer_addr <= 0;
+
             state <= IDLE;
             cycle_counter <= 0;
             crc_en <= 0;
-            eth_txen <= 0;
-            eth_txd <= 2'b00;
             eth_txd_next <= 2'b00;
             packet_tx_counter <= 16'b0;
         end else begin
             case (state)
                 IDLE: begin
-                    if (cycle_counter >= IPG_CYCLES - 1 && payload_buffer_valid) begin
-                        state <= PREAMBLE;
-                        cycle_counter <= 0;
-                        eth_txd_next <= 2'b01;
-                        packet_tx_counter <= packet_tx_counter + 16'b1;
+                    if (cycle_counter >= IPG_CYCLES - 1) begin
+                        if (payload_buffer_valid) begin
+                            state <= PREAMBLE;
+                            cycle_counter <= 0;
+                            eth_txd_next <= 2'b01;
+                            packet_tx_counter <= packet_tx_counter + 16'b1;
+                            payload_buffer_addr <= 0;
+                        end
                     end else begin
                         cycle_counter <= cycle_counter + 1;
                     end
@@ -148,7 +156,7 @@ module eth_transmit
                     if (cycle_counter >= SIZE_CYCLES - 1) begin
                         state <= PAYLOAD;
                         cycle_counter <= 0;
-                        eth_txd_next <= payload_buffer[1:0];
+                        eth_txd_next <= payload_buffer_dout[1:0];
                     end else begin
                         cycle_counter <= cycle_counter + 1;
                         eth_txd_next <= {
@@ -167,9 +175,10 @@ module eth_transmit
                         cycle_counter <= 0;
                     end else begin
                         cycle_counter <= cycle_counter + 1;
+                        payload_buffer_addr <= data_index_lsb_bram >> 4;
                         eth_txd_next <= {
-                            payload_buffer[data_index_lsb+1],
-                            payload_buffer[data_index_lsb]
+                            payload_buffer_dout[data_index_lsb[3:0]+1],
+                            payload_buffer_dout[data_index_lsb[3:0]]
                         };
                     end
 
