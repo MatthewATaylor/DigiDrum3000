@@ -1,6 +1,6 @@
 # DigiDrum3000
 
-A real-time FPGA drum sampler, audio effects processor, and audio interface.
+A real-time FPGA drum sampler, audio effects processor, and audio interface. Visit the [project webpage](https://matthewalantaylor.net/fpga-drums.html) for more information, including a selection of audio demos.
 
 ## Branches
 - **nexys_a7:** Most recent revision of the project, compatibile with the Nexys A7 FPGA development board (AMD Artix-7). Includes Ethernet audio interface functionality and expression pedal control.
